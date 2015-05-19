@@ -21,7 +21,25 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
   import ExJsonSchema.JsonSchemaTestSuiteTest.Helpers
   import ExJsonSchema.Validator, only: [valid?: 2]
 
-  @tests ~w(dependencies items maximum maxItems minimum minItems required type)
+  @tests ~w(
+    default
+    dependencies
+    enum
+    items
+    maximum
+    maxItems
+    maxLength
+    minimum
+    minItems
+    minLength
+    minProperties
+    multipleOf
+    pattern
+    required
+    type
+    optional/bignum
+    optional/zeroTerminatedFloats
+  )
 
   Enum.each @tests, fn feature ->
     fixture = load_schema_fixture(feature)

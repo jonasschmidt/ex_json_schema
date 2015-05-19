@@ -59,6 +59,10 @@ defmodule ExJsonSchema.Validator do
     Dependencies.valid?(dependencies, data)
   end
 
+  defp aspect_valid?(_, {"enum", enum}, data) do
+    Enum.any? enum, &(&1 === data)
+  end
+
   defp aspect_valid?(_, {"items", schema}, items) when is_list(items) and is_map(schema) do
     Enum.all? items, &property_valid?(schema, &1)
   end
@@ -77,6 +81,18 @@ defmodule ExJsonSchema.Validator do
     Enum.count(items) <= max_items
   end
 
+  defp aspect_valid?(_, {"uniqueItems", true}, items) when is_list(items) do
+    Enum.uniq(items) == items
+  end
+
+  defp aspect_valid?(_, {"minLength", minLength}, data) when is_binary(data) do
+    String.length(data) >= minLength
+  end
+
+  defp aspect_valid?(_, {"maxLength", maxLength}, data) when is_binary(data) do
+    String.length(data) <= maxLength
+  end
+
   defp aspect_valid?(schema, {"minimum", minimum}, data) when is_number(data) do
     case schema["exclusiveMinimum"] do
       true -> data > minimum
@@ -89,6 +105,19 @@ defmodule ExJsonSchema.Validator do
       true -> data < maximum
       _ -> data <= maximum
     end
+  end
+
+  defp aspect_valid?(_, {"minProperties", minProperties}, data) when is_map(data) do
+    Map.size(data) >= minProperties
+  end
+
+  defp aspect_valid?(_, {"multipleOf", multipleOf}, data) when is_number(data) do
+    factor = data / multipleOf
+    Float.floor(factor) == factor
+  end
+
+  defp aspect_valid?(_, {"pattern", pattern}, data) when is_binary(data) do
+    pattern |> Regex.compile! |> Regex.match?(data)
   end
 
   defp aspect_valid?(_, {_, _}, _json), do: true
