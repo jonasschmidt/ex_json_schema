@@ -42,9 +42,21 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
     pattern
     required
     type
+    uniqueItems
     optional/bignum
     optional/zeroTerminatedFloats
   )
+
+  # MISSING TESTS
+  #
+  # additionalItems
+  # additionalProperties
+  # definitions
+  # patternProperties
+  # properties
+  # ref
+  # refRemote
+  # optional/format
 
   Enum.each @tests, fn feature ->
     fixture = load_schema_fixture(feature)
