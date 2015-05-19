@@ -31,6 +31,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
     maximum
     maxItems
     maxLength
+    maxProperties
     minimum
     minItems
     minLength

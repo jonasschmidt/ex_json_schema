@@ -119,6 +119,10 @@ defmodule ExJsonSchema.Validator do
     Map.size(data) >= minProperties
   end
 
+  defp aspect_valid?(_, {"maxProperties", maxProperties}, data) when is_map(data) do
+    Map.size(data) <= maxProperties
+  end
+
   defp aspect_valid?(_, {"multipleOf", multipleOf}, data) when is_number(data) do
     factor = data / multipleOf
     Float.floor(factor) == factor
