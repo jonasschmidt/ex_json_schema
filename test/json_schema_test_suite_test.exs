@@ -37,6 +37,8 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
     minLength
     minProperties
     multipleOf
+    not
+    oneOf
     pattern
     required
     type

@@ -39,12 +39,20 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
-  defp aspect_valid?(_, {"allOf", allOf}, data) do
-    Enum.all? allOf, &valid?(&1, data)
+  defp aspect_valid?(_, {"allOf", all_of}, data) do
+    Enum.all? all_of, &valid?(&1, data)
   end
 
-  defp aspect_valid?(_, {"anyOf", anyOf}, data) do
-    Enum.any? anyOf, &valid?(&1, data)
+  defp aspect_valid?(_, {"anyOf", any_of}, data) do
+    Enum.any? any_of, &valid?(&1, data)
+  end
+
+  defp aspect_valid?(_, {"oneOf", one_of}, data) do
+    Enum.reduce(one_of, 0, &(&2 + if valid?(&1, data), do: 1, else: 0)) == 1
+  end
+
+  defp aspect_valid?(_, {"not", not_schema}, data) do
+    not valid?(not_schema, data)
   end
 
   defp aspect_valid?(_, {"properties", properties}, data = %{}) do
@@ -93,12 +101,12 @@ defmodule ExJsonSchema.Validator do
     Enum.uniq(items) == items
   end
 
-  defp aspect_valid?(_, {"minLength", minLength}, data) when is_binary(data) do
-    String.length(data) >= minLength
+  defp aspect_valid?(_, {"minLength", min_length}, data) when is_binary(data) do
+    String.length(data) >= min_length
   end
 
-  defp aspect_valid?(_, {"maxLength", maxLength}, data) when is_binary(data) do
-    String.length(data) <= maxLength
+  defp aspect_valid?(_, {"maxLength", max_length}, data) when is_binary(data) do
+    String.length(data) <= max_length
   end
 
   defp aspect_valid?(schema, {"minimum", minimum}, data) when is_number(data) do
@@ -115,16 +123,16 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
-  defp aspect_valid?(_, {"minProperties", minProperties}, data) when is_map(data) do
-    Map.size(data) >= minProperties
+  defp aspect_valid?(_, {"minProperties", min_properties}, data) when is_map(data) do
+    Map.size(data) >= min_properties
   end
 
-  defp aspect_valid?(_, {"maxProperties", maxProperties}, data) when is_map(data) do
-    Map.size(data) <= maxProperties
+  defp aspect_valid?(_, {"maxProperties", max_properties}, data) when is_map(data) do
+    Map.size(data) <= max_properties
   end
 
-  defp aspect_valid?(_, {"multipleOf", multipleOf}, data) when is_number(data) do
-    factor = data / multipleOf
+  defp aspect_valid?(_, {"multipleOf", multiple_of}, data) when is_number(data) do
+    factor = data / multiple_of
     Float.floor(factor) == factor
   end
 
