@@ -1,0 +1,5 @@
+%{"exjsx": {:hex, :exjsx, "3.1.0"},
+  "jsex": {:hex, :jsex, "2.0.0"},
+  "json": {:hex, :json, "0.3.2"},
+  "jsx": {:hex, :jsx, "2.4.0"},
+  "poison": {:hex, :poison, "1.4.0"}}

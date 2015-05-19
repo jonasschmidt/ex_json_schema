@@ -1,0 +1,2 @@
+defmodule ExJsonSchema do
+end
