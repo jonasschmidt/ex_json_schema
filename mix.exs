@@ -26,9 +26,7 @@ defmodule ExJsonSchema.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      {:poison, "~> 1.4"},
-      {:exjsx, "~> 3.1"},
-      {:json, "~> 0.3"}
+      {:poison, "~> 1.4"}
     ]
   end
 end
