@@ -22,6 +22,8 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
   import ExJsonSchema.Validator, only: [valid?: 2]
 
   @tests ~w(
+    allOf
+    anyOf
     default
     dependencies
     enum

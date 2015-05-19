@@ -39,6 +39,14 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
+  defp aspect_valid?(_, {"allOf", allOf}, data) do
+    Enum.all? allOf, &valid?(&1, data)
+  end
+
+  defp aspect_valid?(_, {"anyOf", anyOf}, data) do
+    Enum.any? anyOf, &valid?(&1, data)
+  end
+
   defp aspect_valid?(_, {"properties", properties}, data = %{}) do
     Enum.all? properties, fn {name, property} -> property_valid?(property, data[name]) end
   end
