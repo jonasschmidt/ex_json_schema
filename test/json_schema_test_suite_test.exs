@@ -40,6 +40,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
     not
     oneOf
     pattern
+    patternProperties
     required
     type
     uniqueItems
@@ -52,7 +53,6 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
   # additionalItems
   # additionalProperties
   # definitions
-  # patternProperties
   # properties
   # ref
   # refRemote

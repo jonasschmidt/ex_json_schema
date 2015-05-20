@@ -21,12 +21,6 @@ defmodule ExJsonSchema.Validator do
     Enum.all?(schema, &aspect_valid?(schema, &1, data))
   end
 
-  defp property_valid?(_, nil), do: true
-
-  defp property_valid?(property = %{}, data) do
-    Enum.all?(property, &aspect_valid?(property, &1, data))
-  end
-
   defp type_valid?(type, data) do
     case type do
       "null" -> is_nil(data)
@@ -57,6 +51,10 @@ defmodule ExJsonSchema.Validator do
 
   defp aspect_valid?(_, {"properties", properties}, data = %{}) do
     Enum.all? properties, fn {name, property} -> property_valid?(property, data[name]) end
+  end
+
+  defp aspect_valid?(_, {"patternProperties", pattern_properties}, data = %{}) do
+    Enum.all? pattern_properties, &pattern_property_valid?(&1, data)
   end
 
   defp aspect_valid?(_, {"type", type}, data) when is_list(type) do
@@ -141,4 +139,16 @@ defmodule ExJsonSchema.Validator do
   end
 
   defp aspect_valid?(_, {_, _}, _json), do: true
+
+  defp property_valid?(_, nil), do: true
+
+  defp property_valid?(property = %{}, data) do
+    Enum.all?(property, &aspect_valid?(property, &1, data))
+  end
+
+  defp pattern_property_valid?({pattern, schema}, data) do
+    regex = Regex.compile!(pattern)
+    matching_properties = Enum.filter data, &Regex.match?(regex, elem(&1, 0))
+    Enum.all? matching_properties, &valid?(schema, elem(&1, 1))
+  end
 end
