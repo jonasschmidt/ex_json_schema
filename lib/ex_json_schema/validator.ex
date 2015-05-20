@@ -21,18 +21,6 @@ defmodule ExJsonSchema.Validator do
     Enum.all?(schema, &aspect_valid?(schema, &1, data))
   end
 
-  defp type_valid?(type, data) do
-    case type do
-      "null" -> is_nil(data)
-      "boolean" -> is_boolean(data)
-      "string" -> is_binary(data)
-      "integer" -> is_integer(data)
-      "number" -> is_number(data)
-      "array" -> is_list(data)
-      "object" -> is_map(data)
-    end
-  end
-
   defp aspect_valid?(_, {"allOf", all_of}, data) do
     Enum.all? all_of, &valid?(&1, data)
   end
@@ -49,8 +37,8 @@ defmodule ExJsonSchema.Validator do
     not valid?(not_schema, data)
   end
 
-  defp aspect_valid?(_, {"properties", properties}, data = %{}) do
-    Enum.all? properties, fn {name, property} -> property_valid?(property, data[name]) end
+  defp aspect_valid?(schema, {"properties", _}, data = %{}) do
+    properties_valid?(schema, data)
   end
 
   defp aspect_valid?(_, {"patternProperties", pattern_properties}, data = %{}) do
@@ -78,12 +66,12 @@ defmodule ExJsonSchema.Validator do
   end
 
   defp aspect_valid?(_, {"items", schema}, items) when is_list(items) and is_map(schema) do
-    Enum.all? items, &property_valid?(schema, &1)
+    Enum.all? items, &valid?(schema, &1)
   end
 
   defp aspect_valid?(_, {"items", schemata}, items) when is_list(items) and is_list(schemata) do
     Enum.all? List.zip([items, schemata]), fn {item, schema} ->
-      property_valid?(schema, item)
+      valid?(schema, item)
     end
   end
 
@@ -140,10 +128,22 @@ defmodule ExJsonSchema.Validator do
 
   defp aspect_valid?(_, {_, _}, _json), do: true
 
-  defp property_valid?(_, nil), do: true
+  defp type_valid?(type, data) do
+    case type do
+      "null" -> is_nil(data)
+      "boolean" -> is_boolean(data)
+      "string" -> is_binary(data)
+      "integer" -> is_integer(data)
+      "number" -> is_number(data)
+      "array" -> is_list(data)
+      "object" -> is_map(data)
+    end
+  end
 
-  defp property_valid?(property = %{}, data) do
-    Enum.all?(property, &aspect_valid?(property, &1, data))
+  defp properties_valid?(schema, properties) do
+    schema["properties"]
+    |> Enum.filter(&Map.has_key?(properties, elem(&1, 0)))
+    |> Enum.all?(fn {name, property_schema} -> valid?(property_schema, properties[name]) end)
   end
 
   defp pattern_property_valid?({pattern, schema}, data) do
