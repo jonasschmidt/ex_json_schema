@@ -22,6 +22,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
   import ExJsonSchema.Validator, only: [valid?: 2]
 
   @tests ~w(
+    additionalProperties
     allOf
     anyOf
     default
@@ -41,6 +42,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
     oneOf
     pattern
     patternProperties
+    properties
     required
     type
     uniqueItems
@@ -51,9 +53,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
   # MISSING TESTS
   #
   # additionalItems
-  # additionalProperties
   # definitions
-  # properties
   # ref
   # refRemote
   # optional/format

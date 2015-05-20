@@ -38,11 +38,15 @@ defmodule ExJsonSchema.Validator do
   end
 
   defp aspect_valid?(schema, {"properties", _}, data = %{}) do
-    properties_valid?(schema, data)
+    all_properties_valid?(schema, data)
   end
 
-  defp aspect_valid?(_, {"patternProperties", pattern_properties}, data = %{}) do
-    Enum.all? pattern_properties, &pattern_property_valid?(&1, data)
+  defp aspect_valid?(schema, {"patternProperties", _}, data = %{}) do
+    all_properties_valid?(schema, data)
+  end
+
+  defp aspect_valid?(schema, {"additionalProperties", _}, data = %{}) do
+    all_properties_valid?(schema, data)
   end
 
   defp aspect_valid?(_, {"type", type}, data) when is_list(type) do
@@ -126,7 +130,7 @@ defmodule ExJsonSchema.Validator do
     pattern |> Regex.compile! |> Regex.match?(data)
   end
 
-  defp aspect_valid?(_, {_, _}, _json), do: true
+  defp aspect_valid?(_, _, _), do: true
 
   defp type_valid?(type, data) do
     case type do
@@ -140,15 +144,66 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
-  defp properties_valid?(schema, properties) do
-    schema["properties"]
-    |> Enum.filter(&Map.has_key?(properties, elem(&1, 0)))
-    |> Enum.all?(fn {name, property_schema} -> valid?(property_schema, properties[name]) end)
+  defp all_properties_valid?(schema, properties) do
+    validated_properties = validate_known_properties(schema, properties)
+
+    all_validated_properties_valid?(validated_properties)
+    and
+    additional_properties_valid?(
+      schema["additionalProperties"],
+      unvalidated_properties(properties, validated_properties))
   end
 
-  defp pattern_property_valid?({pattern, schema}, data) do
-    regex = Regex.compile!(pattern)
-    matching_properties = Enum.filter data, &Regex.match?(regex, elem(&1, 0))
-    Enum.all? matching_properties, &valid?(schema, elem(&1, 1))
+  defp validate_known_properties(schema, properties) do
+    validate_named_properties(schema["properties"], properties) ++
+      validate_pattern_properties(schema["patternProperties"], properties)
   end
+
+  defp validate_named_properties(nil, _), do: []
+
+  defp validate_named_properties(schema, properties) do
+    schema
+    |> Enum.filter(&Map.has_key?(properties, elem(&1, 0)))
+    |> Enum.map fn {name, property_schema} ->
+      {name, valid?(property_schema, properties[name])}
+    end
+  end
+
+  defp validate_pattern_properties(nil, _), do: []
+
+  defp validate_pattern_properties(schema, properties) do
+    Enum.flat_map(schema, &validate_pattern_property(&1, properties))
+  end
+
+  defp validate_pattern_property({pattern, schema}, properties) do
+    properties_matching(properties, pattern)
+    |> Enum.map fn {name, property} ->
+      {name, valid?(schema, property)}
+    end
+  end
+
+  defp properties_matching(properties, pattern) do
+    regex = Regex.compile!(pattern)
+    Enum.filter properties, &Regex.match?(regex, elem(&1, 0))
+  end
+
+  defp all_validated_properties_valid?(validated_properties) do
+    validated_properties |> Dict.values |> Enum.all?
+  end
+
+  defp unvalidated_properties(properties, validated_properties) do
+    unvalidated = Set.difference(keys_as_set(properties), keys_as_set(validated_properties))
+    Map.take(properties, unvalidated)
+  end
+
+  defp keys_as_set(properties) do
+    properties |> Dict.keys |> Enum.into(HashSet.new)
+  end
+
+  defp additional_properties_valid?(schema, properties) when is_map(schema) do
+    Enum.all? properties, &valid?(schema, elem(&1, 1))
+  end
+
+  defp additional_properties_valid?(false, properties) when map_size(properties) > 0, do: false
+  defp additional_properties_valid?(_, _), do: true
 end
