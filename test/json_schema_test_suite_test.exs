@@ -22,6 +22,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
   import ExJsonSchema.Validator, only: [valid?: 2]
 
   @tests ~w(
+    additionalItems
     additionalProperties
     allOf
     anyOf
@@ -52,7 +53,6 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
 
   # MISSING TESTS
   #
-  # additionalItems
   # definitions
   # ref
   # refRemote

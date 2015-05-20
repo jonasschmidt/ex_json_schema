@@ -17,9 +17,13 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
+  def valid?(schema = %{}, _) when map_size(schema) == 0, do: true
+
   def valid?(schema = %{}, data) do
     Enum.all?(schema, &aspect_valid?(schema, &1, data))
   end
+
+  def valid?(_, _), do: false
 
   defp aspect_valid?(_, {"allOf", all_of}, data) do
     Enum.all? all_of, &valid?(&1, data)
@@ -69,14 +73,14 @@ defmodule ExJsonSchema.Validator do
     Enum.any? enum, &(&1 === data)
   end
 
-  defp aspect_valid?(_, {"items", schema}, items) when is_list(items) and is_map(schema) do
-    Enum.all? items, &valid?(schema, &1)
+  defp aspect_valid?(schema, {"items", _}, items) do
+    schema = Map.merge(%{"additionalItems" => true}, schema)
+    items_valid?(schema, items)
   end
 
-  defp aspect_valid?(_, {"items", schemata}, items) when is_list(items) and is_list(schemata) do
-    Enum.all? List.zip([items, schemata]), fn {item, schema} ->
-      valid?(schema, item)
-    end
+  defp aspect_valid?(schema, {"additionalItems", _}, items) do
+    schema = Map.merge(%{"items" => %{}}, schema)
+    items_valid?(schema, items)
   end
 
   defp aspect_valid?(_, {"minItems", min_items}, items) when is_list(items) do
@@ -205,5 +209,25 @@ defmodule ExJsonSchema.Validator do
   end
 
   defp additional_properties_valid?(false, properties) when map_size(properties) > 0, do: false
+
   defp additional_properties_valid?(_, _), do: true
+
+  defp items_valid?(%{"items" => schema = %{}}, items) when is_list(items) do
+    Enum.all? items, &valid?(schema, &1)
+  end
+
+  defp items_valid?(%{"items" => schemata, "additionalItems" => additional_items}, items) when is_list(items) and is_list(schemata) do
+    items
+    |> Enum.with_index
+    |> Enum.all? fn {item, index} ->
+      schema = Enum.at(schemata, index, additional_items_schema(additional_items))
+      valid?(schema, item)
+    end
+  end
+
+  defp items_valid?(_, _), do: true
+
+  defp additional_items_schema(schema = %{}), do: schema
+  defp additional_items_schema(true), do: %{}
+  defp additional_items_schema(_), do: nil
 end
