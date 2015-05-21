@@ -27,6 +27,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
     allOf
     anyOf
     default
+    definitions
     dependencies
     enum
     items
@@ -44,6 +45,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
     pattern
     patternProperties
     properties
+    ref
     required
     type
     uniqueItems
@@ -53,8 +55,6 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
 
   # MISSING TESTS
   #
-  # definitions
-  # ref
   # refRemote
   # optional/format
 
@@ -66,7 +66,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
       Enum.each tests, fn t ->
         @test t
         test "[#{feature}] #{description}: #{@test["description"]}" do
-          assert valid?(@schema, @test["data"]) == @test["valid"]
+          assert valid?(ExJsonSchema.Schema.resolve(@schema), @test["data"]) == @test["valid"]
         end
       end
     end

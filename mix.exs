@@ -12,7 +12,7 @@ defmodule ExJsonSchema.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger]]
+    [applications: [:logger, :httpoison]]
   end
 
   # Dependencies can be Hex packages:
@@ -26,6 +26,7 @@ defmodule ExJsonSchema.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
+      {:httpoison, "~> 0.6"},
       {:poison, "~> 1.4"}
     ]
   end
