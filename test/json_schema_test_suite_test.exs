@@ -46,6 +46,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
     patternProperties
     properties
     ref
+    refRemote
     required
     type
     uniqueItems
@@ -55,7 +56,6 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
 
   # MISSING TESTS
   #
-  # refRemote
   # optional/format
 
   Enum.each @tests, fn feature ->
