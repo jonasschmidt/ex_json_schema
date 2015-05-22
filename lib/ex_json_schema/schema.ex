@@ -63,40 +63,26 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_property(root, {"$ref", ref}, scope) do
     ref = String.replace(scope <> ref, "##", "#")
-    {root, ref} = resolve_ref(root, ref, scope)
+    {root, ref} = resolve_ref(root, ref)
     {root, {"$ref", ref}}
   end
 
   defp resolve_property(root, tuple, _), do: {root, tuple}
 
-  defp resolve_ref(root, "#", _) do
-    {root, fn root -> {root, root.schema} end}
+  defp resolve_ref(root, "#") do
+    {root, &root_schema_resolver/1}
   end
 
-  defp resolve_ref(root, url = "http" <> _, _scope) do
+  defp resolve_ref(root, url = "http" <> _) do
     [url | fragments] = String.split(url, "#")
-
-    if root.refs[url] do
-      case fragments do
-        [ref = "/" <> _] ->
-          {root, fn root -> remote_schema = root.refs[url]; {%Root{schema: remote_schema, refs: root.refs}, resolve(%{"$ref" => "#" <> ref}).schema} end}
-        _ ->
-          {root, fn root -> remote_schema = root.refs[url]; {%Root{schema: remote_schema, refs: root.refs}, remote_schema} end}
-      end
-    else
-      root = %Root{root | refs: Map.put(root.refs, url, true)}
-      remote_schema = fetch_remote_schema(root, url)
-      root = %Root{root | refs: Map.put(root.refs, url, remote_schema.schema)}
-      case fragments do
-        [ref = "/" <> _] ->
-          {root, fn root -> {%Root{remote_schema | refs: root.refs}, resolve(%{"$ref" => "#" <> ref}).schema} end}
-        _ ->
-          {root, fn root -> {%Root{remote_schema | refs: root.refs}, remote_schema.schema} end}
-      end
-    end
+    {resolve_and_cache_remote_schema(root, url), url_ref_resolver(url, fragments)}
   end
 
-  defp resolve_ref(root, ref, _) do
+  defp resolve_ref(root, ref = "#" <> _) do
+    {root, relative_ref_resolver(ref)}
+  end
+
+  defp relative_ref_resolver(ref) do
     ["#" | keys] = String.split(ref, "/")
     keys = Enum.map keys, fn key ->
       if Regex.match?(~r/^[0-9]$/, key) do
@@ -105,10 +91,39 @@ defmodule ExJsonSchema.Schema do
         key
       end
     end
-    {root, fn root -> {root, get_in(root.schema, keys)} end}
+    fn root -> {root, get_in(root.schema, keys)} end
   end
 
-  defp fetch_remote_schema(root, url) do
-    resolve_root(root, RemoteSchema.get!(url).body)
+  defp url_ref_resolver(url, [ref = "/" <> _]) do
+    url_with_relative_ref_resolver(url, relative_ref_resolver("#" <> ref))
+  end
+
+  defp url_ref_resolver(url, _) do
+    url_with_relative_ref_resolver(url, &root_schema_resolver/1)
+  end
+
+  defp url_with_relative_ref_resolver(url, relative_ref_resolver) do
+    fn root ->
+      remote_schema = root.refs[url]
+      relative_ref_resolver.(%{root | schema: remote_schema})
+    end
+  end
+
+  defp root_schema_resolver(root) do
+    {root, root.schema}
+  end
+
+  defp resolve_and_cache_remote_schema(root, url) do
+    unless root.refs[url] do
+      remote_schema = RemoteSchema.get!(url).body
+      root = root_with_ref(root, url, true)
+      resolved_root = resolve_root(root, remote_schema)
+      root = root_with_ref(root, url, resolved_root.schema)
+    end
+    root
+  end
+
+  defp root_with_ref(root, url, ref) do
+    %{root | refs: Map.put(root.refs, url, ref)}
   end
 end

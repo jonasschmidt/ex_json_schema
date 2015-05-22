@@ -17,9 +17,11 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
-  def valid?(root = %ExJsonSchema.Schema.Root{}, data), do: valid?(root, root.schema, data)
+  alias ExJsonSchema.Schema.Root, as: Root
 
-  def valid?(root = %{}, data), do: valid?(%ExJsonSchema.Schema.Root{schema: root}, root, data)
+  def valid?(root = %Root{}, data), do: valid?(root, root.schema, data)
+
+  def valid?(root = %{}, data), do: valid?(%Root{schema: root}, root, data)
 
   def valid?(_, schema = %{}, _) when map_size(schema) == 0, do: true
 
