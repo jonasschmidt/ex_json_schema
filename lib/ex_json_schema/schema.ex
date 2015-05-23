@@ -41,8 +41,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp do_resolve(root, schema, scope) do
-    schema
-    |> Enum.reduce {root, schema}, fn (property, {root, schema}) ->
+    Enum.reduce schema, {root, %{}}, fn (property, {root, schema}) ->
       {root, {k, v}} = resolve_property(root, property, scope)
       {root, Map.put(schema, k, v)}
     end
@@ -56,9 +55,9 @@ defmodule ExJsonSchema.Schema do
   defp resolve_property(root, {key, values}, scope) when is_list(values) do
     {root, values} = Enum.reduce values, {root, []}, fn (value, {root, values}) ->
       {root, resolved} = resolve_with_root(root, value, scope)
-      {root, values ++ [resolved]}
+      {root, [resolved | values]}
     end
-    {root, {key, values}}
+    {root, {key, Enum.reverse(values)}}
   end
 
   defp resolve_property(root, {"$ref", ref}, scope) do
