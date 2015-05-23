@@ -1,0 +1,9 @@
+language: elixir
+otp_release:
+  - 17.4
+sudo: required
+before_install:
+  - sudo pip install Flask
+  - git submodule update --init --recursive
+before_script:
+  - ./test/fixtures/JSON-Schema-Test-Suite/bin/jsonschema_suite serve &
