@@ -1,19 +1,6 @@
 defmodule ExJsonSchema.Schema do
-  defmodule RemoteSchema do
-    use HTTPoison.Base
-
-    def process_url(url) do
-      url
-    end
-
-    def process_response_body(body) do
-      body |> Poison.Parser.parse!
-    end
-  end
-
-  defmodule Root do
-    defstruct schema: %{}, refs: %{}
-  end
+  alias ExJsonSchema.Schema.Root
+  alias ExJsonSchema.Schema.RemoteSchema
 
   def resolve(root = %Root{}), do: resolve_root(root, root.schema)
 
