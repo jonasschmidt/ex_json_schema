@@ -1,7 +1,6 @@
 language: elixir
 otp_release:
   - 17.4
-sudo: required
 before_install:
   - sudo pip install Flask
   - git submodule update --init --recursive
