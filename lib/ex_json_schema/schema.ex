@@ -101,12 +101,23 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_and_cache_remote_schema(root, url) do
     unless root.refs[url] do
-      remote_schema = RemoteSchema.get!(url).body
-      root = root_with_ref(root, url, true)
-      resolved_root = resolve_root(root, remote_schema)
-      root = root_with_ref(root, url, resolved_root.schema)
+      root = fetch_and_resolve_remote_schema(root, url)
     end
     root
+  end
+
+  defp fetch_and_resolve_remote_schema(root, url = "http://json-schema.org/draft-04/schema") do
+    resolve_remote_schema(root, url, Poison.decode!(File.read!("draft4.json")))
+  end
+
+  defp fetch_and_resolve_remote_schema(root, url) do
+    resolve_remote_schema(root, url, RemoteSchema.get!(url).body)
+  end
+
+  defp resolve_remote_schema(root, url, remote_schema) do
+    root = root_with_ref(root, url, true)
+    resolved_root = resolve_root(root, remote_schema)
+    root_with_ref(root, url, resolved_root.schema)
   end
 
   defp root_with_ref(root, url, ref) do
