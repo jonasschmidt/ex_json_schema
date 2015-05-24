@@ -1,4 +1,4 @@
-ExJsonSchema
+Elixir JSON Schema Validator
 ============
 
-** TODO: Add description **
+Work in progress...
