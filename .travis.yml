@@ -7,3 +7,6 @@ before_install:
   - git submodule update --init --recursive
 before_script:
   - ./test/fixtures/JSON-Schema-Test-Suite/bin/jsonschema_suite serve &
+notifications:
+  email:
+    - jonas.schmidt@gmx.com
