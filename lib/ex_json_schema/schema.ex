@@ -1,6 +1,13 @@
 defmodule ExJsonSchema.Schema do
+  defmodule UnsupportedSchemaVersionError do
+    defexception message: "unsupported schema version"
+  end
+
   alias ExJsonSchema.Schema.Meta
   alias ExJsonSchema.Schema.Root
+
+  @current_schema_url "http://json-schema.org/schema"
+  @draft4_schema_url "http://json-schema.org/draft-04/schema"
 
   def resolve(root = %Root{}), do: resolve_root(root, root.schema)
 
@@ -9,8 +16,21 @@ defmodule ExJsonSchema.Schema do
   def resolve(non_schema), do: non_schema
 
   defp resolve_root(root, schema) do
+    assert_supported_schema_version(Map.get(schema, "$schema", @current_schema_url <> "#"))
     {root, schema} = resolve_with_root(root, schema)
     %Root{root | schema: schema}
+  end
+
+  defp assert_supported_schema_version(version) do
+    unless supported_schema_version?(version), do: raise UnsupportedSchemaVersionError
+  end
+
+  defp supported_schema_version?(version) do
+    case version do
+      @current_schema_url <> _ -> true
+      @draft4_schema_url <> _ -> true
+      _ -> false
+    end
   end
 
   defp resolve_with_root(root, schema, scope \\ "")
@@ -107,7 +127,7 @@ defmodule ExJsonSchema.Schema do
     root
   end
 
-  defp fetch_and_resolve_remote_schema(root, url = "http://json-schema.org/draft-04/schema") do
+  defp fetch_and_resolve_remote_schema(root, url) when url == @current_schema_url or url == @draft4_schema_url do
     resolve_remote_schema(root, url, Meta.draft4)
   end
 

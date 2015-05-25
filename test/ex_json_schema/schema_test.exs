@@ -3,6 +3,19 @@ defmodule ExJsonSchema.SchemaTest do
 
   import ExJsonSchema.Schema, only: [resolve: 1]
 
+  test "only resolves draft 4 schemata" do
+    versionless_schema = %{}
+    current_schema = %{"$schema" => "http://json-schema.org/schema#"}
+    draft4_schema = %{"$schema" => "http://json-schema.org/draft-04/schema#"}
+    draft3_schema = %{"$schema" => "http://json-schema.org/draft-03/schema#"}
+    unknown_schema = %{"$schema" => "http://foo.schema.org/schema#"}
+    assert is_map(resolve(versionless_schema)) == true
+    assert is_map(resolve(current_schema)) == true
+    assert is_map(resolve(draft4_schema)) == true
+    assert_raise ExJsonSchema.Schema.UnsupportedSchemaVersionError, fn -> resolve(draft3_schema) end
+    assert_raise ExJsonSchema.Schema.UnsupportedSchemaVersionError, fn -> resolve(unknown_schema) end
+  end
+
   test "resolves a schema" do
     schema = %{"foo" => 1, "bar" => %{"baz" => 3}}
     assert resolve(schema) == %ExJsonSchema.Schema.Root{refs: %{}, schema: schema}
