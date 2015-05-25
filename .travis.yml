@@ -5,7 +5,7 @@ before_install:
   - sudo pip install Flask
   - git submodule update --init --recursive
 before_script:
-  - ./test/fixtures/JSON-Schema-Test-Suite/bin/jsonschema_suite serve &
+  - ./test/JSON-Schema-Test-Suite/bin/jsonschema_suite serve &
 notifications:
   email:
     - jonas.schmidt@gmx.com

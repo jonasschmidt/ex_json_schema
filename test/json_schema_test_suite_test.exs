@@ -1,15 +1,15 @@
 defmodule ExJsonSchema.JsonSchemaTestSuiteTest.Helpers do
   use ExUnit.Case, async: true
 
-  @schema_fixtures_path "test/fixtures/JSON-Schema-Test-Suite/tests/draft4/"
+  @schema_tests_path "test/JSON-Schema-Test-Suite/tests/draft4/"
 
-  def schema_fixture_path(filename) do
-    Path.join(@schema_fixtures_path, filename)
+  def schema_test_path(filename) do
+    Path.join(@schema_tests_path, filename)
   end
 
-  def load_schema_fixture(name) do
+  def load_schema_test(name) do
     name <> ".json"
-    |> schema_fixture_path
+    |> schema_test_path
     |> File.read!()
     |> Poison.Parser.parse!
   end
@@ -59,7 +59,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
   # optional/format
 
   Enum.each @tests, fn feature ->
-    fixture = load_schema_fixture(feature)
+    fixture = load_schema_test(feature)
     Enum.each fixture, fn fixture ->
       %{"description" => description, "schema" => schema, "tests" => tests} = fixture
       @schema schema
