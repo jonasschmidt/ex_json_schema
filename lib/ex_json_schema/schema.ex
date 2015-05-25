@@ -1,6 +1,5 @@
 defmodule ExJsonSchema.Schema do
   alias ExJsonSchema.Schema.Meta
-  alias ExJsonSchema.Schema.RemoteSchema
   alias ExJsonSchema.Schema.Root
 
   def resolve(root = %Root{}), do: resolve_root(root, root.schema)
@@ -112,7 +111,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp fetch_and_resolve_remote_schema(root, url) do
-    resolve_remote_schema(root, url, RemoteSchema.get!(url).body)
+    resolve_remote_schema(root, url, remote_schema_resolver.(url))
   end
 
   defp resolve_remote_schema(root, url, remote_schema) do
@@ -123,5 +122,9 @@ defmodule ExJsonSchema.Schema do
 
   defp root_with_ref(root, url, ref) do
     %{root | refs: Map.put(root.refs, url, ref)}
+  end
+
+  defp remote_schema_resolver do
+    Application.get_env(:ex_json_schema, :remote_schema_resolver)
   end
 end
