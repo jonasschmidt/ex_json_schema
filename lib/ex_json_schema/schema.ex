@@ -28,10 +28,11 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp do_resolve(root, schema, scope) do
-    Enum.reduce schema, {root, %{}}, fn (property, {root, schema}) ->
+    {root, schema} = Enum.reduce schema, {root, %{}}, fn (property, {root, schema}) ->
       {root, {k, v}} = resolve_property(root, property, scope)
       {root, Map.put(schema, k, v)}
     end
+    {root, schema |> sanitize_properties |> sanitize_items}
   end
 
   defp resolve_property(root, {key, value}, scope) when is_map(value) do
@@ -126,5 +127,19 @@ defmodule ExJsonSchema.Schema do
 
   defp remote_schema_resolver do
     Application.get_env(:ex_json_schema, :remote_schema_resolver)
+  end
+
+  defp sanitize_properties(schema) do
+    if Enum.any?(~w(patternProperties additionalProperties), &Map.has_key?(schema, &1)) and not Map.has_key?(schema, "properties") do
+      schema = Map.put(schema, "properties", %{})
+    end
+    schema
+  end
+
+  defp sanitize_items(schema) do
+    if Map.has_key?(schema, "items") and not Map.has_key?(schema, "additionalItems") do
+      schema = Map.put(schema, "additionalItems", true)
+    end
+    schema
   end
 end

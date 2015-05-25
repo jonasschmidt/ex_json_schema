@@ -38,20 +38,16 @@ defmodule ExJsonSchema.Validator do
     not valid?(root, not_schema, data)
   end
 
+  defp aspect_valid?(_, _, {"type", type}, data) do
+    Type.valid?(type, data)
+  end
+
   defp aspect_valid?(root, schema, {"properties", _}, data = %{}) do
     Properties.valid?(root, schema, data)
   end
 
-  defp aspect_valid?(root, schema, {"patternProperties", _}, data = %{}) do
-    Properties.valid?(root, schema, data)
-  end
-
-  defp aspect_valid?(root, schema, {"additionalProperties", _}, data = %{}) do
-    Properties.valid?(root, schema, data)
-  end
-
-  defp aspect_valid?(_, _, {"type", type}, data) do
-    Type.valid?(type, data)
+  defp aspect_valid?(root, schema, {"items", _}, items) do
+    Items.valid?(root, schema, items)
   end
 
   defp aspect_valid?(_, _, {"required", required}, data) do
@@ -64,16 +60,6 @@ defmodule ExJsonSchema.Validator do
 
   defp aspect_valid?(_, _, {"enum", enum}, data) do
     Enum.any? enum, &(&1 === data)
-  end
-
-  defp aspect_valid?(root, schema, {"items", _}, items) do
-    schema = Map.merge(%{"additionalItems" => true}, schema)
-    Items.valid?(root, schema, items)
-  end
-
-  defp aspect_valid?(root, schema, {"additionalItems", _}, items) do
-    schema = Map.merge(%{"items" => %{}}, schema)
-    Items.valid?(root, schema, items)
   end
 
   defp aspect_valid?(_, _, {"minItems", min_items}, items) when is_list(items) do
