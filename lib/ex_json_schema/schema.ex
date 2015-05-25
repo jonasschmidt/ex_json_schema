@@ -1,6 +1,7 @@
 defmodule ExJsonSchema.Schema do
-  alias ExJsonSchema.Schema.Root
+  alias ExJsonSchema.Schema.Meta
   alias ExJsonSchema.Schema.RemoteSchema
+  alias ExJsonSchema.Schema.Root
 
   def resolve(root = %Root{}), do: resolve_root(root, root.schema)
 
@@ -107,7 +108,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp fetch_and_resolve_remote_schema(root, url = "http://json-schema.org/draft-04/schema") do
-    resolve_remote_schema(root, url, Poison.decode!(File.read!("draft4.json")))
+    resolve_remote_schema(root, url, Meta.draft4)
   end
 
   defp fetch_and_resolve_remote_schema(root, url) do
