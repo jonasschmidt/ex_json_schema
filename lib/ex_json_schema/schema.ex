@@ -3,10 +3,14 @@ defmodule ExJsonSchema.Schema do
     defexception message: "unsupported schema version"
   end
 
+  defmodule InvalidSchemaError do
+    defexception message: "invalid schema"
+  end
+
   alias ExJsonSchema.Schema.Meta
   alias ExJsonSchema.Schema.Root
 
-  @current_schema_url "http://json-schema.org/schema"
+  @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
 
   def resolve(root = %Root{}), do: resolve_root(root, root.schema)
@@ -16,7 +20,8 @@ defmodule ExJsonSchema.Schema do
   def resolve(non_schema), do: non_schema
 
   defp resolve_root(root, schema) do
-    assert_supported_schema_version(Map.get(schema, "$schema", @current_schema_url <> "#"))
+    assert_supported_schema_version(Map.get(schema, "$schema", @current_draft_schema_url <> "#"))
+    assert_valid_schema(schema)
     {root, schema} = resolve_with_root(root, schema)
     %Root{root | schema: schema}
   end
@@ -25,9 +30,17 @@ defmodule ExJsonSchema.Schema do
     unless supported_schema_version?(version), do: raise UnsupportedSchemaVersionError
   end
 
+  defp assert_valid_schema(schema) do
+    unless meta?(schema) do
+      unless ExJsonSchema.Validator.valid?(resolve(Meta.draft4), schema) do
+        raise InvalidSchemaError
+      end
+    end
+  end
+
   defp supported_schema_version?(version) do
     case version do
-      @current_schema_url <> _ -> true
+      @current_draft_schema_url <> _ -> true
       @draft4_schema_url <> _ -> true
       _ -> false
     end
@@ -127,7 +140,7 @@ defmodule ExJsonSchema.Schema do
     root
   end
 
-  defp fetch_and_resolve_remote_schema(root, url) when url == @current_schema_url or url == @draft4_schema_url do
+  defp fetch_and_resolve_remote_schema(root, url) when url == @current_draft_schema_url or url == @draft4_schema_url do
     resolve_remote_schema(root, url, Meta.draft4)
   end
 
@@ -161,5 +174,9 @@ defmodule ExJsonSchema.Schema do
       schema = Map.put(schema, "additionalItems", true)
     end
     schema
+  end
+
+  defp meta?(schema) do
+    String.starts_with?(Map.get(schema, "id", ""), @draft4_schema_url)
   end
 end
