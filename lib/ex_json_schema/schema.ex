@@ -103,7 +103,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp relative_ref_resolver(ref) do
-    ["#" | keys] = String.split(ref, "/")
+    ["#" | keys] = unescaped_ref_segments(ref)
     keys = Enum.map keys, fn key ->
       if Regex.match?(~r/^[0-9]$/, key) do
         fn :get, data, _ -> Enum.at(data, String.to_integer(key)) end
@@ -174,6 +174,17 @@ defmodule ExJsonSchema.Schema do
       schema = Map.put(schema, "additionalItems", true)
     end
     schema
+  end
+
+  defp unescaped_ref_segments(ref) do
+    ref
+    |> String.split("/")
+    |> Enum.map fn segment ->
+      segment
+      |> String.replace("~0", "~")
+      |> String.replace("~1", "/")
+      |> URI.decode
+    end
   end
 
   defp meta?(schema) do
