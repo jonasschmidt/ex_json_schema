@@ -7,7 +7,7 @@ defmodule ExJsonSchema.Validator do
   alias ExJsonSchema.Schema.Root
 
   def validate(root = %Root{}, data) do
-    errors = validate(root, root.schema, data, ["#"])
+    errors = validate(root, root.schema, data, ["#"]) |> errors_with_string_paths
     case Enum.empty?(errors) do
       true -> :ok
       false -> {:error, errors}
@@ -26,6 +26,10 @@ defmodule ExJsonSchema.Validator do
   def valid?(root = %Root{}, data), do: valid?(root, root.schema, data)
   def valid?(schema = %{}, data), do: valid?(Schema.resolve(schema), data)
   def valid?(root, schema, data), do: validate(root, schema, data) |> Enum.empty?
+
+  defp errors_with_string_paths(errors) do
+    Enum.map errors, fn {msg, path} -> {msg, Enum.join(path, "/")} end
+  end
 
   defp validate_aspect(root, _, {"$ref", ref}, data) do
     {root, schema} = ref.(root)
