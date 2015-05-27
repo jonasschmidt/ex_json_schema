@@ -3,115 +3,194 @@ defmodule ExJsonSchema.Validator do
   alias ExJsonSchema.Validator.Items
   alias ExJsonSchema.Validator.Dependencies
   alias ExJsonSchema.Validator.Type
+  alias ExJsonSchema.Schema
   alias ExJsonSchema.Schema.Root
 
+  def validate(root = %Root{}, data) do
+    errors = validate(root, root.schema, data, ["#"])
+    case Enum.empty?(errors) do
+      true -> :ok
+      false -> {:error, errors}
+    end
+  end
+
+  def validate(schema = %{}, data) do
+    validate(Schema.resolve(schema), data)
+  end
+
+  def validate(root, schema, data, path \\ []) do
+    Enum.flat_map(schema, &validate_aspect(root, schema, &1, data))
+    |> Enum.map fn {msg, p} -> {msg, path ++ p} end
+  end
+
   def valid?(root = %Root{}, data), do: valid?(root, root.schema, data)
+  def valid?(schema = %{}, data), do: valid?(Schema.resolve(schema), data)
+  def valid?(root, schema, data), do: validate(root, schema, data) |> Enum.empty?
 
-  def valid?(root = %{}, data), do: valid?(%Root{schema: root}, root, data)
-
-  def valid?(_, schema = %{}, _) when map_size(schema) == 0, do: true
-
-  def valid?(root, schema = %{}, data) do
-    Enum.all?(schema, &aspect_valid?(root, schema, &1, data))
-  end
-
-  def valid?(_, _, _), do: false
-
-  defp aspect_valid?(root, _, {"$ref", ref}, data) do
+  defp validate_aspect(root, _, {"$ref", ref}, data) do
     {root, schema} = ref.(root)
-    valid?(root, schema, data)
+    validate(root, schema, data)
   end
 
-  defp aspect_valid?(root, _, {"allOf", all_of}, data) do
-    Enum.all? all_of, &valid?(root, &1, data)
-  end
+  defp validate_aspect(root, _, {"allOf", all_of}, data) do
+    invalid_indexes =
+      all_of
+      |> Enum.map(&valid?(root, &1, data))
+      |> Enum.with_index
+      |> Enum.filter(&(!elem(&1, 0)))
+      |> Dict.values
 
-  defp aspect_valid?(root, _, {"anyOf", any_of}, data) do
-    Enum.any? any_of, &valid?(root, &1, data)
-  end
-
-  defp aspect_valid?(root, _, {"oneOf", one_of}, data) do
-    Enum.reduce(one_of, 0, &(&2 + if valid?(root, &1, data), do: 1, else: 0)) == 1
-  end
-
-  defp aspect_valid?(root, _, {"not", not_schema}, data) do
-    not valid?(root, not_schema, data)
-  end
-
-  defp aspect_valid?(_, _, {"type", type}, data) do
-    Type.valid?(type, data)
-  end
-
-  defp aspect_valid?(root, schema, {"properties", _}, data = %{}) do
-    Properties.valid?(root, schema, data)
-  end
-
-  defp aspect_valid?(root, schema, {"items", _}, items) do
-    Items.valid?(root, schema, items)
-  end
-
-  defp aspect_valid?(_, _, {"required", required}, data) do
-    Enum.all? List.wrap(required), &Map.has_key?(data, &1)
-  end
-
-  defp aspect_valid?(root, _, {"dependencies", dependencies}, data) do
-    Dependencies.valid?(root, dependencies, data)
-  end
-
-  defp aspect_valid?(_, _, {"enum", enum}, data) do
-    Enum.any? enum, &(&1 === data)
-  end
-
-  defp aspect_valid?(_, _, {"minItems", min_items}, items) when is_list(items) do
-    Enum.count(items) >= min_items
-  end
-
-  defp aspect_valid?(_, _, {"maxItems", max_items}, items) when is_list(items) do
-    Enum.count(items) <= max_items
-  end
-
-  defp aspect_valid?(_, _, {"uniqueItems", true}, items) when is_list(items) do
-    Enum.uniq(items) == items
-  end
-
-  defp aspect_valid?(_, _, {"minLength", min_length}, data) when is_binary(data) do
-    String.length(data) >= min_length
-  end
-
-  defp aspect_valid?(_, _, {"maxLength", max_length}, data) when is_binary(data) do
-    String.length(data) <= max_length
-  end
-
-  defp aspect_valid?(_, schema, {"minimum", minimum}, data) when is_number(data) do
-    case schema["exclusiveMinimum"] do
-      true -> data > minimum
-      _ -> data >= minimum
+    case Enum.empty?(invalid_indexes) do
+      true -> []
+      false -> [{"Expected all of the schemata to match, but the schemata at the following indexes did not: #{Enum.join(invalid_indexes, ", ")}.", []}]
     end
   end
 
-  defp aspect_valid?(_, schema, {"maximum", maximum}, data) when is_number(data) do
-    case schema["exclusiveMaximum"] do
-      true -> data < maximum
-      _ -> data <= maximum
+  defp validate_aspect(root, _, {"anyOf", any_of}, data) do
+    case Enum.any?(any_of, &valid?(root, &1, data)) do
+      true -> []
+      false -> [{"Expected any of the schemata to match but none did.", []}]
     end
   end
 
-  defp aspect_valid?(_, _, {"minProperties", min_properties}, data) when is_map(data) do
-    Map.size(data) >= min_properties
+  defp validate_aspect(root, _, {"oneOf", one_of}, data) do
+    valid_indexes =
+      one_of
+      |> Enum.map(&valid?(root, &1, data))
+      |> Enum.with_index
+      |> Enum.filter(&(elem(&1, 0)))
+      |> Dict.values
+
+    case Enum.empty?(valid_indexes) do
+      true -> [{"Expected exactly one of the schemata to match, but none of them did.", []}]
+      false -> if Enum.count(valid_indexes) == 1 do
+          []
+        else
+          [{"Expected exactly one of the schemata to match, but the schemata at the following indexes did: #{Enum.join(valid_indexes, ", ")}.", []}]
+        end
+    end
   end
 
-  defp aspect_valid?(_, _, {"maxProperties", max_properties}, data) when is_map(data) do
-    Map.size(data) <= max_properties
+  defp validate_aspect(root, _, {"not", not_schema}, data) do
+    case valid?(root, not_schema, data) do
+      true -> [{"Expected schema not to match but it did.", []}]
+      false -> []
+    end
   end
 
-  defp aspect_valid?(_, _, {"multipleOf", multiple_of}, data) when is_number(data) do
+  defp validate_aspect(_, _, {"type", type}, data) do
+    Type.validate(type, data)
+  end
+
+  defp validate_aspect(root, schema, {"properties", _}, data = %{}) do
+    Properties.validate(root, schema, data)
+  end
+
+  defp validate_aspect(_, _, {"minProperties", min_properties}, data) when is_map(data) do
+    case Map.size(data) >= min_properties do
+      true -> []
+      false -> [{"Expected a minimum of #{min_properties} properties but got #{Map.size(data)}", []}]
+    end
+  end
+
+  defp validate_aspect(_, _, {"maxProperties", max_properties}, data) when is_map(data) do
+    case Map.size(data) <= max_properties do
+      true -> []
+      false -> [{"Expected a maximum of #{max_properties} properties but got #{Map.size(data)}", []}]
+    end
+  end
+
+  defp validate_aspect(_, _, {"required", required}, data) do
+    Enum.flat_map List.wrap(required), fn property ->
+      case Map.has_key?(data, property) do
+        true -> []
+        false -> [{"Required property #{property} was not present.", []}]
+      end
+    end
+  end
+
+  defp validate_aspect(root, _, {"dependencies", dependencies}, data) do
+    Dependencies.validate(root, dependencies, data)
+  end
+
+  defp validate_aspect(root, schema, {"items", _}, items) do
+    Items.validate(root, schema, items)
+  end
+
+  defp validate_aspect(_, _, {"minItems", min_items}, items) when is_list(items) do
+    case (count = Enum.count(items)) >= min_items do
+      true -> []
+      false -> [{"Expected a minimum of #{min_items} items but got #{count}.", []}]
+    end
+  end
+
+  defp validate_aspect(_, _, {"maxItems", max_items}, items) when is_list(items) do
+    case (count = Enum.count(items)) <= max_items do
+      true -> []
+      false -> [{"Expected a maximum of #{max_items} items but got #{count}.", []}]
+    end
+  end
+
+  defp validate_aspect(_, _, {"uniqueItems", true}, items) when is_list(items) do
+    case Enum.uniq(items) == items do
+      true -> []
+      false -> [{"Expected items to be unique but they were not.", []}]
+    end
+  end
+
+  defp validate_aspect(_, _, {"enum", enum}, data) do
+    case Enum.any?(enum, &(&1 === data)) do
+      true -> []
+      false -> [{"Value #{inspect(data)} is not allowed in enum.", []}]
+    end
+  end
+
+  defp validate_aspect(_, schema, {"minimum", minimum}, data) when is_number(data) do
+    exclusive? = schema["exclusiveMinimum"]
+    fun = if exclusive?, do: &Kernel.>/2, else: &Kernel.>=/2
+    case fun.(data, minimum) do
+      true -> []
+      false -> [{"Expected the value to be #{if exclusive?, do: ">", else: ">="} #{minimum}", []}]
+    end
+  end
+
+  defp validate_aspect(_, schema, {"maximum", maximum}, data) when is_number(data) do
+    exclusive? = schema["exclusiveMaximum"]
+    fun = if exclusive?, do: &Kernel.</2, else: &Kernel.<=/2
+    case fun.(data, maximum) do
+      true -> []
+      false -> [{"Expected the value to be #{if exclusive?, do: "<", else: "<="} #{maximum}", []}]
+    end
+  end
+
+  defp validate_aspect(_, _, {"multipleOf", multiple_of}, data) when is_number(data) do
     factor = data / multiple_of
-    Float.floor(factor) == factor
+    case Float.floor(factor) == factor do
+      true -> []
+      false -> [{"Expected value to be a multiple of #{multiple_of} but got #{data}.", []}]
+    end
   end
 
-  defp aspect_valid?(_, _, {"pattern", pattern}, data) when is_binary(data) do
-    pattern |> Regex.compile! |> Regex.match?(data)
+  defp validate_aspect(_, _, {"minLength", min_length}, data) when is_binary(data) do
+    case (length = String.length(data)) >= min_length do
+      true -> []
+      false -> [{"Expected value to have a minimum length of #{min_length} but was #{length}.", []}]
+    end
   end
 
-  defp aspect_valid?(_, _, _, _), do: true
+  defp validate_aspect(_, _, {"maxLength", max_length}, data) when is_binary(data) do
+    case (length = String.length(data)) <= max_length do
+      true -> []
+      false -> [{"Expected value to have a maximum length of #{max_length} but was #{length}.", []}]
+    end
+  end
+
+  defp validate_aspect(_, _, {"pattern", pattern}, data) when is_binary(data) do
+    case pattern |> Regex.compile! |> Regex.match?(data) do
+      true -> []
+      false -> [{"String #{inspect(data)} does not match pattern #{inspect(pattern)}.", []}]
+    end
+  end
+
+  defp validate_aspect(_, _, _, _), do: []
 end
