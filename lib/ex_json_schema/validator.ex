@@ -33,12 +33,7 @@ defmodule ExJsonSchema.Validator do
   end
 
   defp validate_aspect(root, _, {"allOf", all_of}, data) do
-    invalid_indexes =
-      all_of
-      |> Enum.map(&valid?(root, &1, data))
-      |> Enum.with_index
-      |> Enum.filter(&(!elem(&1, 0)))
-      |> Dict.values
+    invalid_indexes = validation_result_indexes(root, all_of, data, &(!elem(&1, 0)))
 
     case Enum.empty?(invalid_indexes) do
       true -> []
@@ -54,12 +49,7 @@ defmodule ExJsonSchema.Validator do
   end
 
   defp validate_aspect(root, _, {"oneOf", one_of}, data) do
-    valid_indexes =
-      one_of
-      |> Enum.map(&valid?(root, &1, data))
-      |> Enum.with_index
-      |> Enum.filter(&(elem(&1, 0)))
-      |> Dict.values
+    valid_indexes = validation_result_indexes(root, one_of, data, &(elem(&1, 0)))
 
     case Enum.empty?(valid_indexes) do
       true -> [{"Expected exactly one of the schemata to match, but none of them did.", []}]
@@ -193,4 +183,12 @@ defmodule ExJsonSchema.Validator do
   end
 
   defp validate_aspect(_, _, _, _), do: []
+
+  defp validation_result_indexes(root, schemata, data, filter) do
+    schemata
+    |> Enum.map(&valid?(root, &1, data))
+    |> Enum.with_index
+    |> Enum.filter(filter)
+    |> Dict.values
+  end
 end
