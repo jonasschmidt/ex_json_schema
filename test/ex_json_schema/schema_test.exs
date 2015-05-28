@@ -23,7 +23,7 @@ defmodule ExJsonSchema.SchemaTest do
 
   test "schema is validated against its meta-schema" do
     schema = %{"properties" => "foo"}
-    assert_raise ExJsonSchema.Schema.InvalidSchemaError, fn -> resolve(schema) end
+    assert_raise ExJsonSchema.Schema.InvalidSchemaError, "schema did not pass validation against its meta-schema", fn -> resolve(schema) end
   end
 
   test "resolves a reference" do
@@ -37,6 +37,11 @@ defmodule ExJsonSchema.SchemaTest do
     schema = %{"$ref" => "#"}
     resolved = resolve(schema)
     assert resolved.schema["$ref"].(resolved) == {resolved, resolved.schema}
+  end
+
+  test "catches invalid references" do
+    schema = %{"$ref" => "#/foo"}
+    assert_raise ExJsonSchema.Schema.InvalidSchemaError, "reference #/foo could not be resolved", fn -> resolve(schema) end
   end
 
   test "changing the resolution scope" do

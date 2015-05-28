@@ -1,6 +1,6 @@
 defmodule ExJsonSchema.Schema do
   defmodule UnsupportedSchemaVersionError do
-    defexception message: "unsupported schema version"
+    defexception message: "unsupported schema version, only draft 4 is supported"
   end
 
   defmodule InvalidSchemaError do
@@ -13,17 +13,17 @@ defmodule ExJsonSchema.Schema do
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
 
-  def resolve(root = %Root{}), do: resolve_root(root, root.schema)
+  def resolve(root = %Root{}), do: resolve_root(root)
 
-  def resolve(schema = %{}), do: resolve_root(%Root{schema: schema}, schema)
+  def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
   def resolve(non_schema), do: non_schema
 
-  defp resolve_root(root, schema) do
-    assert_supported_schema_version(Map.get(schema, "$schema", @current_draft_schema_url <> "#"))
-    assert_valid_schema(schema)
-    {root, schema} = resolve_with_root(root, schema)
-    %Root{root | schema: schema}
+  defp resolve_root(root) do
+    assert_supported_schema_version(Map.get(root.schema, "$schema", @current_draft_schema_url <> "#"))
+    assert_valid_schema(root.schema)
+    {root, schema} = resolve_with_root(root, root.schema)
+    %{root | schema: schema}
   end
 
   defp assert_supported_schema_version(version) do
@@ -33,7 +33,7 @@ defmodule ExJsonSchema.Schema do
   defp assert_valid_schema(schema) do
     unless meta?(schema) do
       unless ExJsonSchema.Validator.valid?(resolve(Meta.draft4), schema) do
-        raise InvalidSchemaError
+        raise InvalidSchemaError, message: "schema did not pass validation against its meta-schema"
       end
     end
   end
@@ -95,14 +95,19 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_ref(root, ref) do
     [url | fragments] = String.split(ref, "#")
+
     resolver = relative_resolver = case fragments do
       [fragment = "/" <> _] -> relative_ref_resolver(fragment)
       _ -> &root_schema_resolver/1
     end
+
     if url != "" do
       root = resolve_and_cache_remote_schema(root, url)
       resolver = url_with_relative_ref_resolver(url, relative_resolver)
     end
+
+    assert_reference_valid(resolver, root, ref)
+
     {root, resolver}
   end
 
@@ -144,8 +149,8 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp resolve_remote_schema(root, url, remote_schema) do
-    root = root_with_ref(root, url, true)
-    resolved_root = resolve_root(root, remote_schema)
+    root = root_with_ref(root, url, remote_schema)
+    resolved_root = resolve_root(%{root | schema: remote_schema})
     root_with_ref(root, url, resolved_root.schema)
   end
 
@@ -155,6 +160,13 @@ defmodule ExJsonSchema.Schema do
 
   defp remote_schema_resolver do
     Application.get_env(:ex_json_schema, :remote_schema_resolver)
+  end
+
+  defp assert_reference_valid(resolver, root, ref) do
+    case resolver.(root) do
+      {_, nil} -> raise InvalidSchemaError, message: "reference #{ref} could not be resolved"
+      _ ->
+    end
   end
 
   defp sanitize_properties(schema) do
