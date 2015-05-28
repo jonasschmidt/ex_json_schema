@@ -93,33 +93,28 @@ defmodule ExJsonSchema.Schema do
     {root, &root_schema_resolver/1}
   end
 
-  defp resolve_ref(root, url = "http" <> _) do
-    [url | fragments] = String.split(url, "#")
-    {resolve_and_cache_remote_schema(root, url), url_ref_resolver(url, fragments)}
-  end
-
-  defp resolve_ref(root, ref = "#" <> _) do
-    {root, relative_ref_resolver(ref)}
+  defp resolve_ref(root, ref) do
+    [url | fragments] = String.split(ref, "#")
+    resolver = relative_resolver = case fragments do
+      [fragment = "/" <> _] -> relative_ref_resolver(fragment)
+      _ -> &root_schema_resolver/1
+    end
+    if url != "" do
+      root = resolve_and_cache_remote_schema(root, url)
+      resolver = url_with_relative_ref_resolver(url, relative_resolver)
+    end
+    {root, resolver}
   end
 
   defp relative_ref_resolver(ref) do
-    ["#" | keys] = unescaped_ref_segments(ref)
+    ["" | keys] = unescaped_ref_segments(ref)
     keys = Enum.map keys, fn key ->
-      if Regex.match?(~r/^[0-9]$/, key) do
-        fn :get, data, _ -> Enum.at(data, String.to_integer(key)) end
-      else
-        key
+      case Regex.match?(~r/^\d+$/, key) do
+        true -> fn :get, data, _ -> Enum.at(data, String.to_integer(key)) end
+        false -> key
       end
     end
     fn root -> {root, get_in(root.schema, keys)} end
-  end
-
-  defp url_ref_resolver(url, [ref = "/" <> _]) do
-    url_with_relative_ref_resolver(url, relative_ref_resolver("#" <> ref))
-  end
-
-  defp url_ref_resolver(url, _) do
-    url_with_relative_ref_resolver(url, &root_schema_resolver/1)
   end
 
   defp url_with_relative_ref_resolver(url, relative_ref_resolver) do
