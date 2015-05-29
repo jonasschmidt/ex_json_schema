@@ -52,7 +52,10 @@ defmodule ExJsonSchema.Validator do
 
     case Enum.empty?(invalid_indexes) do
       true -> []
-      false -> [{"Expected all of the schemata to match, but the schemata at the following indexes did not: #{Enum.join(invalid_indexes, ", ")}.", []}]
+      false ->
+        [{"Expected all of the schemata to match, " <>
+          "but the schemata at the following indexes did not: " <>
+          "#{Enum.join(invalid_indexes, ", ")}.", []}]
     end
   end
 
@@ -71,7 +74,9 @@ defmodule ExJsonSchema.Validator do
       false -> if Enum.count(valid_indexes) == 1 do
           []
         else
-          [{"Expected exactly one of the schemata to match, but the schemata at the following indexes did: #{Enum.join(valid_indexes, ", ")}.", []}]
+          [{"Expected exactly one of the schemata to match, " <>
+            "but the schemata at the following indexes did: " <>
+            "#{Enum.join(valid_indexes, ", ")}.", []}]
         end
     end
   end
