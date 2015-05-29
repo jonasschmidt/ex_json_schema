@@ -56,5 +56,6 @@ defmodule ExJsonSchema.Schema.Meta do
     "uniqueItems" => %{"default" => false, "type" => "boolean"}},
   "type" => "object"}
 
+  @spec draft4() :: ExJsonSchema.json
   def draft4, do: @draft4
 end

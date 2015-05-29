@@ -1,4 +1,7 @@
 defmodule ExJsonSchema.Validator.Type do
+  alias ExJsonSchema.Validator
+
+  @spec validate(String.t, ExJsonSchema.data) :: Validator.errors_with_list_paths
   def validate(type, data) do
     case valid?(type, data) do
       true -> []

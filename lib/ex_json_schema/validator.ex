@@ -6,6 +6,10 @@ defmodule ExJsonSchema.Validator do
   alias ExJsonSchema.Schema
   alias ExJsonSchema.Schema.Root
 
+  @type errors :: [{String.t, String.t}] | []
+  @type errors_with_list_paths :: [{String.t, [String.t | integer]}] | []
+
+  @spec validate(Root.t, ExJsonSchema.data) :: :ok | {:error, errors}
   def validate(root = %Root{}, data) do
     errors = validate(root, root.schema, data, ["#"]) |> errors_with_string_paths
     case Enum.empty?(errors) do
@@ -14,17 +18,24 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
+  @spec validate(ExJsonSchema.json, ExJsonSchema.data) :: :ok | {:error, errors}
   def validate(schema = %{}, data) do
     validate(Schema.resolve(schema), data)
   end
 
+  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data, [String.t | integer]) :: errors_with_list_paths
   def validate(root, schema, data, path \\ []) do
     Enum.flat_map(schema, &validate_aspect(root, schema, &1, data))
     |> Enum.map fn {msg, p} -> {msg, path ++ p} end
   end
 
+  @spec valid?(Root.t, ExJsonSchema.data) :: boolean
   def valid?(root = %Root{}, data), do: valid?(root, root.schema, data)
+
+  @spec valid?(ExJsonSchema.json, ExJsonSchema.data) :: boolean
   def valid?(schema = %{}, data), do: valid?(Schema.resolve(schema), data)
+
+  @spec valid?(Root.t, Schema.resolved, ExJsonSchema.data) :: boolean
   def valid?(root, schema, data), do: validate(root, schema, data) |> Enum.empty?
 
   defp errors_with_string_paths(errors) do
