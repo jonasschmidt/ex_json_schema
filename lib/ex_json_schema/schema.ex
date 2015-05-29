@@ -121,8 +121,10 @@ defmodule ExJsonSchema.Schema do
   defp relative_ref_resolver(ref) do
     ["" | keys] = unescaped_ref_segments(ref)
     keys = Enum.map keys, fn key ->
-      case Regex.match?(~r/^\d+$/, key) do
-        true -> fn :get, data, _ -> Enum.at(data, String.to_integer(key)) end
+      case key =~ ~r/^\d+$/ do
+        true ->
+          index = String.to_integer(key)
+          fn :get, data, _ -> Enum.at(data, index) end
         false -> key
       end
     end
