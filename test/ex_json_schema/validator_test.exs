@@ -1,4 +1,4 @@
-defmodule ExJsonSchemaTest do
+defmodule ExJsonSchema.ValidatorTest do
   use ExUnit.Case, async: true
 
   import ExJsonSchema.Validator, only: [validate: 2, valid?: 2]
