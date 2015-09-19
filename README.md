@@ -2,13 +2,25 @@
 
 [![Build Status](https://travis-ci.org/jonasschmidt/ex_json_schema.svg?branch=master)](https://travis-ci.org/jonasschmidt/ex_json_schema)
 
-A JSON Schema validator with full support for the draft v4 specification. Passes the official [JSON Schema Test Suite](https://github.com/json-schema/JSON-Schema-Test-Suite) (with the exception of the `optional/format` tests for now).
+A JSON Schema validator with full support for the draft 4 specification. Passes the official [JSON Schema Test Suite](https://github.com/json-schema/JSON-Schema-Test-Suite) (with the exception of the `optional/format` tests for now).
 
 ## Usage
 
+### Configuration
+
+If you have remote schemata that need to be fetched at runtime, you have to register a function that takes a URL and returns a `Map` of the parsed JSON. So in your Mix config file you should have something like this:
+
+```elixir
+config :ex_json_schema,
+  :remote_schema_resolver,
+  fn url -> HTTPoison.get!(url).body |> Poison.decode! end
+```
+
+You do not have to do that for the official draft 4 meta-schema found at http://json-schema.org/draft-04/schema# though. That schema is bundled with the project and will work out of the box without any network calls.
+
 ### Resolving a schema
 
-In this step the schema is validated against its meta-schema (the draft v4 schema definition) and `$ref`s are being resolved (making sure that the reference points to an existing fragment). You should only resolve a schema once to avoid the overhead of resolving it in every validation call.
+In this step the schema is validated against its meta-schema (the draft 4 schema definition) and `$ref`s are being resolved (making sure that the reference points to an existing fragment). You should only resolve a schema once to avoid the overhead of resolving it in every validation call.
 
 ```elixir
 iex> schema = %{
@@ -21,7 +33,7 @@ iex> schema = %{
 } |> ExJsonSchema.Schema.resolve
 ```
 
-Note that map keys are expected to be strings, since in practice that data will always come from some JSON parser.
+Note that `Map` keys are expected to be strings, since in practice that data will always come from some JSON parser.
 
 ### Validation
 
