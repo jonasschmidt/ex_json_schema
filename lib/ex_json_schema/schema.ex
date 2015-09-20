@@ -7,7 +7,7 @@ defmodule ExJsonSchema.Schema do
     defexception message: "invalid schema"
   end
 
-  alias ExJsonSchema.Schema.Meta
+  alias ExJsonSchema.Schema.Draft4
   alias ExJsonSchema.Schema.Root
 
   @type resolved :: %{String.t => ExJsonSchema.json_value | (Root.t -> {Root.t, resolved})}
@@ -37,7 +37,7 @@ defmodule ExJsonSchema.Schema do
 
   defp assert_valid_schema(schema) do
     unless meta?(schema) do
-      case ExJsonSchema.Validator.validate(resolve(Meta.draft4), schema) do
+      case ExJsonSchema.Validator.validate(resolve(Draft4.schema), schema) do
         {:error, errors} ->
           raise InvalidSchemaError, message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
         _ ->
@@ -150,7 +150,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp fetch_and_resolve_remote_schema(root, url) when url == @current_draft_schema_url or url == @draft4_schema_url do
-    resolve_remote_schema(root, url, Meta.draft4)
+    resolve_remote_schema(root, url, Draft4.schema)
   end
 
   defp fetch_and_resolve_remote_schema(root, url) do

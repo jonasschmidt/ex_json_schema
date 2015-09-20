@@ -1,5 +1,5 @@
-defmodule ExJsonSchema.Schema.Meta do
-  @draft4 %{"$schema" => "http://json-schema.org/draft-04/schema#", "default" => %{},
+defmodule ExJsonSchema.Schema.Draft4 do
+  @schema %{"$schema" => "http://json-schema.org/draft-04/schema#", "default" => %{},
   "definitions" => %{"positiveInteger" => %{"minimum" => 0,
       "type" => "integer"},
     "positiveIntegerDefault0" => %{"allOf" => [%{"$ref" => "#/definitions/positiveInteger"},
@@ -56,6 +56,6 @@ defmodule ExJsonSchema.Schema.Meta do
     "uniqueItems" => %{"default" => false, "type" => "boolean"}},
   "type" => "object"}
 
-  @spec draft4() :: ExJsonSchema.json
-  def draft4, do: @draft4
+  @spec schema() :: ExJsonSchema.json
+  def schema, do: @schema
 end
