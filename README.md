@@ -1,6 +1,6 @@
 # Elixir JSON Schema validator
 
-[![Build Status](https://travis-ci.org/jonasschmidt/ex_json_schema.svg?branch=master)](https://travis-ci.org/jonasschmidt/ex_json_schema)
+[![Build Status](https://travis-ci.org/jonasschmidt/ex_json_schema.svg?branch=master)](https://travis-ci.org/jonasschmidt/ex_json_schema) [![Hex.pm](http://img.shields.io/hexpm/v/ex_json_schema.svg)](https://hex.pm/packages/ex_json_schema) [![Hex.pm](http://img.shields.io/hexpm/l/ex_json_schema.svg)](LICENSE)
 
 A JSON Schema validator with full support for the draft 4 specification. Passes the official [JSON Schema Test Suite](https://github.com/json-schema/JSON-Schema-Test-Suite) (with the exception of the `optional/format` tests for now).
 
