@@ -2,17 +2,21 @@ defmodule ExJsonSchema.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :ex_json_schema,
-     version: "0.2.0",
-     elixir: "~> 1.0",
-     deps: deps]
+    [
+      app: :ex_json_schema,
+      version: "0.2.0",
+      elixir: "~> 1.0",
+      description: "A JSON Schema validator with full support for the draft 4 specification.",
+      deps: deps,
+      package: package
+    ]
   end
 
   # Configuration for the OTP application
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger]]
+    [applications: []]
   end
 
   # Dependencies can be Hex packages:
@@ -28,6 +32,15 @@ defmodule ExJsonSchema.Mixfile do
     [
       {:httpoison, "~> 0.6", only: :test},
       {:poison, "~> 1.4", only: :test}
+    ]
+  end
+
+  defp package do
+    [
+      files: ~w(lib mix.exs README.md LICENSE),
+      contributors: ["Jonas Schmidt"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/jonasschmidt/ex_json_schema"}
     ]
   end
 end

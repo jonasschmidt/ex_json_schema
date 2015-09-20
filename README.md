@@ -1,4 +1,4 @@
-# Elixir JSON Schema Validator
+# Elixir JSON Schema validator
 
 [![Build Status](https://travis-ci.org/jonasschmidt/ex_json_schema.svg?branch=master)](https://travis-ci.org/jonasschmidt/ex_json_schema)
 
@@ -59,9 +59,12 @@ iex> ExJsonSchema.Validator.validate(schema, %{"foo" => 1})
 
 Errors are tuples of a message and the path to the element not matching the schema. The path is following the same conventions used in JSON Schema for referencing JSON elements.
 
+### License
+
+Released under the [MIT license](LICENSE).
+
 ## TODO
 
-* Create Hex package
 * Update README with installation instructions
 * Implement format checks to pass the official `optional/format` tests
 * Add some source code documentation
