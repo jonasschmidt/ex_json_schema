@@ -4,11 +4,23 @@
 
 A JSON Schema validator with full support for the draft 4 specification. Passes the official [JSON Schema Test Suite](https://github.com/json-schema/JSON-Schema-Test-Suite) (with the exception of the `optional/format` tests for now).
 
-## Usage
+## Installation
 
-### Configuration
+Add the project to your Mix dependencies in `mix.exs`:
 
-If you have remote schemata that need to be fetched at runtime, you have to register a function that takes a URL and returns a `Map` of the parsed JSON. So in your Mix config file you should have something like this:
+```elixir
+defp deps do
+  [{:ex_json_schema, "~> 0.2.0"}]
+end
+```
+
+Update your dependencies with:
+
+```shell
+$ mix deps.get
+```
+
+If you have remote schemata that need to be fetched at runtime, you have to register a function that takes a URL and returns a `Map` of the parsed JSON. So in your Mix configuration in `config/config.exs` you should have something like this:
 
 ```elixir
 config :ex_json_schema,
@@ -35,7 +47,7 @@ iex> schema = %{
 
 Note that `Map` keys are expected to be strings, since in practice that data will always come from some JSON parser.
 
-### Validation
+## Usage
 
 If you're only interested in whether a piece of data is valid according to the schema:
 
@@ -59,13 +71,12 @@ iex> ExJsonSchema.Validator.validate(schema, %{"foo" => 1})
 
 Errors are tuples of a message and the path to the element not matching the schema. The path is following the same conventions used in JSON Schema for referencing JSON elements.
 
-### License
+## License
 
 Released under the [MIT license](LICENSE).
 
 ## TODO
 
-* Update README with installation instructions
 * Implement format checks to pass the official `optional/format` tests
 * Add some source code documentation
 * Add URLs resolved in remote schemata to root's refs
