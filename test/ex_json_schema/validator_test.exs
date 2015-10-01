@@ -14,6 +14,13 @@ defmodule ExJsonSchema.ValidatorTest do
       [{"Type mismatch. Expected Object but got String.", "#/bar"}])
   end
 
+  test "validation errors with a remote reference within a remote reference" do
+    assert_validation_errors(
+      %{"$ref" => "http://localhost:8000/subschema.json#/foo"},
+      "foo",
+      [{"Type mismatch. Expected Integer but got String.", "#"}])
+  end
+
   test "validation errors for not matching all of the schemata" do
     assert_validation_errors(
       %{"allOf" => [%{"type" => "number"}, %{"type" => "integer"}]},

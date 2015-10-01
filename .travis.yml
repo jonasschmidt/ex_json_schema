@@ -6,6 +6,7 @@ before_install:
   - git submodule update --init --recursive
 before_script:
   - ./test/JSON-Schema-Test-Suite/bin/jsonschema_suite serve &
+  - cd test/schemata && python -m SimpleHTTPServer &
 notifications:
   email:
     - jonas.schmidt@gmx.com

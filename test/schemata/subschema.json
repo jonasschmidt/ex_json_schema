@@ -1,0 +1,5 @@
+{
+  "foo": {
+    "$ref": "http://localhost:8000/subsubschema.json#/foo"
+  }
+}

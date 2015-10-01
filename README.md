@@ -79,5 +79,4 @@ Released under the [MIT license](LICENSE).
 
 * Implement format checks to pass the official `optional/format` tests
 * Add some source code documentation
-* Add URLs resolved in remote schemata to root's refs
 * Enable providing JSON for known schemata at resolve time

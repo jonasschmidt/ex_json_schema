@@ -160,6 +160,7 @@ defmodule ExJsonSchema.Schema do
   defp resolve_remote_schema(root, url, remote_schema) do
     root = root_with_ref(root, url, remote_schema)
     resolved_root = resolve_root(%{root | schema: remote_schema})
+    root = %{root | refs: resolved_root.refs}
     root_with_ref(root, url, resolved_root.schema)
   end
 
