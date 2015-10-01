@@ -1,7 +1,8 @@
 defmodule ExJsonSchema.Validator do
-  alias ExJsonSchema.Validator.Properties
-  alias ExJsonSchema.Validator.Items
   alias ExJsonSchema.Validator.Dependencies
+  alias ExJsonSchema.Validator.Format
+  alias ExJsonSchema.Validator.Items
+  alias ExJsonSchema.Validator.Properties
   alias ExJsonSchema.Validator.Type
   alias ExJsonSchema.Schema
   alias ExJsonSchema.Schema.Root
@@ -200,6 +201,10 @@ defmodule ExJsonSchema.Validator do
       true -> []
       false -> [{"String #{inspect(data)} does not match pattern #{inspect(pattern)}.", []}]
     end
+  end
+
+  defp validate_aspect(_, _, {"format", format}, data) do
+    Format.validate(format, data)
   end
 
   defp validate_aspect(_, _, _, _), do: []

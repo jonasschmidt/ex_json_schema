@@ -223,7 +223,46 @@ defmodule ExJsonSchema.ValidatorTest do
       [{"Type mismatch. Expected Integer but got String.", "#/foo/1/bar"}])
   end
 
-  def assert_validation_errors(schema, data, expected_errors) do
+  test "format validation always succeeds for non-string values" do
+    assert :ok == validate(%{"format" => "date-time"}, false)
+  end
+
+  test "validation errors for date-time format" do
+    assert_validation_errors(
+      %{"format" => "date-time"},
+      "2012-12-12 12:12:12",
+      [{"Expected \"2012-12-12 12:12:12\" to be a valid ISO 8601 date-time.", "#"}])
+  end
+
+  test "validation errors for email format" do
+    assert_validation_errors(
+      %{"format" => "email"},
+      "foo@",
+      [{"Expected \"foo@\" to be an email address.", "#"}])
+  end
+
+  test "validation errors for hostname format" do
+    assert_validation_errors(
+      %{"format" => "hostname"},
+      "foo-bar",
+      [{"Expected \"foo-bar\" to be a host name.", "#"}])
+  end
+
+  test "validation errors for ipv4 format" do
+    assert_validation_errors(
+      %{"format" => "ipv4"},
+      "12.12.12",
+      [{"Expected \"12.12.12\" to be an IPv4 address.", "#"}])
+  end
+
+  test "validation errors for ipv6 format" do
+    assert_validation_errors(
+      %{"format" => "ipv6"},
+      "12:12:12",
+      [{"Expected \"12:12:12\" to be an IPv6 address.", "#"}])
+  end
+
+  defp assert_validation_errors(schema, data, expected_errors) do
     {:error, errors} = validate(schema, data)
     assert errors == expected_errors
   end

@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/jonasschmidt/ex_json_schema.svg?branch=master)](https://travis-ci.org/jonasschmidt/ex_json_schema) [![Coverage Status](https://coveralls.io/repos/jonasschmidt/ex_json_schema/badge.svg?branch=travis-elixir-version&service=github)](https://coveralls.io/github/jonasschmidt/ex_json_schema?branch=travis-elixir-version) [![Hex.pm](http://img.shields.io/hexpm/v/ex_json_schema.svg)](https://hex.pm/packages/ex_json_schema) [![Hex.pm](http://img.shields.io/hexpm/l/ex_json_schema.svg)](LICENSE)
 
-A JSON Schema validator with full support for the draft 4 specification. Passes the official [JSON Schema Test Suite](https://github.com/json-schema/JSON-Schema-Test-Suite) (with the exception of the `optional/format` tests for now).
+A JSON Schema validator with full support for the draft 4 specification and zero dependencies. Passes the official [JSON Schema Test Suite](https://github.com/json-schema/JSON-Schema-Test-Suite).
 
 ## Installation
 
@@ -10,7 +10,7 @@ Add the project to your Mix dependencies in `mix.exs`:
 
 ```elixir
 defp deps do
-  [{:ex_json_schema, "~> 0.2.0"}]
+  [{:ex_json_schema, "~> 0.3.0"}]
 end
 ```
 
@@ -71,12 +71,15 @@ iex> ExJsonSchema.Validator.validate(schema, %{"foo" => 1})
 
 Errors are tuples of a message and the path to the element not matching the schema. The path is following the same conventions used in JSON Schema for referencing JSON elements.
 
+## Format support
+
+The validator supports all the formats specified by draft 4 (`date-time`, `email`, `hostname`, `ipv4`, `ipv6`), with the exception of the `uri` format which has confusing/broken requirements in the official test suite (see https://github.com/json-schema/JSON-Schema-Test-Suite/issues/77).
+
 ## License
 
 Released under the [MIT license](LICENSE).
 
 ## TODO
 
-* Implement format checks to pass the official `optional/format` tests
 * Add some source code documentation
 * Enable providing JSON for known schemata at resolve time
