@@ -4,10 +4,9 @@ elixir:
   - 1.1.0
   - 1.1.1
 before_install:
-  - sudo pip install Flask
   - git submodule update --init --recursive
 before_script:
-  - ./test/JSON-Schema-Test-Suite/bin/jsonschema_suite serve &
+  - cd test/JSON-Schema-Test-Suite/remotes && python -m SimpleHTTPServer 1234 &
   - cd test/schemata && python -m SimpleHTTPServer &
 notifications:
   email:
