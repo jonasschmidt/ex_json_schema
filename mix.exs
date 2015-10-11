@@ -8,7 +8,9 @@ defmodule ExJsonSchema.Mixfile do
       elixir: "~> 1.0",
       description: "A JSON Schema validator with full support for the draft 4 specification.",
       deps: deps,
-      package: package
+      package: package,
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [coveralls: :test]
     ]
   end
 
@@ -31,7 +33,8 @@ defmodule ExJsonSchema.Mixfile do
   defp deps do
     [
       {:httpoison, "~> 0.6", only: :test},
-      {:poison, "~> 1.4", only: :test}
+      {:poison, "~> 1.4", only: :test},
+      {:excoveralls, "~> 0.3", only: :test}
     ]
   end
 
