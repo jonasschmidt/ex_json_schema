@@ -21,9 +21,6 @@ defmodule ExJsonSchema.Schema do
   @spec resolve(ExJsonSchema.json) :: Root.t | no_return
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
-  @spec resolve(any) :: any
-  def resolve(non_schema), do: non_schema
-
   defp resolve_root(root) do
     assert_supported_schema_version(Map.get(root.schema, "$schema", @current_draft_schema_url <> "#"))
     assert_valid_schema(root.schema)

@@ -3,6 +3,10 @@ defmodule ExJsonSchema.SchemaTest do
 
   import ExJsonSchema.Schema, only: [resolve: 1]
 
+  test "fails when trying to resolve something that is not a schema" do
+    assert_raise FunctionClauseError, fn -> resolve("foo") end
+  end
+
   test "only resolves draft 4 schemata" do
     versionless_schema = %{}
     current_schema = %{"$schema" => "http://json-schema.org/schema#"}
