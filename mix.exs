@@ -38,7 +38,7 @@ defmodule ExJsonSchema.Mixfile do
   defp package do
     [
       files: ~w(lib mix.exs README.md LICENSE),
-      contributors: ["Jonas Schmidt"],
+      maintainers: ["Jonas Schmidt"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/jonasschmidt/ex_json_schema"}
     ]
