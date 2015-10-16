@@ -5,9 +5,6 @@ elixir:
   - 1.1.1
 before_install:
   - git submodule update --init --recursive
-before_script:
-  - cd test/JSON-Schema-Test-Suite/remotes && python -m SimpleHTTPServer 1234 &
-  - cd test/schemata && python -m SimpleHTTPServer &
 script:
   - "MIX_ENV=test mix coveralls.travis"
 notifications:
