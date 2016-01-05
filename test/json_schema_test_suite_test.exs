@@ -26,9 +26,9 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
   import ExJsonSchema.Validator, only: [valid?: 2]
 
   @tests Path.wildcard("#{schema_tests_path}**/*.json")
-    |> Enum.map fn path ->
+    |> Enum.map(fn path ->
       path |> String.replace(schema_tests_path, "") |> String.replace(".json", "")
-    end
+    end)
 
   @ignored_tests %{
     "optional/format" => %{

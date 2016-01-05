@@ -6,9 +6,9 @@ defmodule ExJsonSchema.Validator.Dependencies do
   def validate(root, dependencies, data) when is_map(data) do
     dependencies
     |> Enum.filter(&Map.has_key?(data, elem(&1, 0)))
-    |> Enum.flat_map fn {property, dependency} ->
+    |> Enum.flat_map(fn {property, dependency} ->
       validate_dependency(root, property, dependency, data)
-    end
+    end)
   end
 
   @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: []

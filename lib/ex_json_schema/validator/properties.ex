@@ -23,9 +23,9 @@ defmodule ExJsonSchema.Validator.Properties do
   defp validate_named_properties(root, schema, properties) do
     schema
     |> Enum.filter(&Map.has_key?(properties, elem(&1, 0)))
-    |> Enum.map fn {name, property_schema} ->
+    |> Enum.map(fn {name, property_schema} ->
       {name, Validator.validate(root, property_schema, properties[name], [name])}
-    end
+    end)
   end
 
   defp validate_pattern_properties(_, nil, _), do: []
@@ -36,9 +36,9 @@ defmodule ExJsonSchema.Validator.Properties do
 
   defp validate_pattern_property(root, {pattern, schema}, properties) do
     properties_matching(properties, pattern)
-    |> Enum.map fn {name, property} ->
+    |> Enum.map(fn {name, property} ->
       {name, Validator.validate(root, schema, property, [name])}
-    end
+    end)
   end
 
   defp validate_additional_properties(root, schema, properties) when is_map(schema) do
