@@ -37,7 +37,7 @@ defmodule ExJsonSchema.Schema do
       case ExJsonSchema.Validator.validate(resolve(Draft4.schema), schema) do
         {:error, errors} ->
           raise InvalidSchemaError, message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
-        _ ->
+        _ -> nil
       end
     end
   end
@@ -172,7 +172,7 @@ defmodule ExJsonSchema.Schema do
   defp assert_reference_valid(resolver, root, ref) do
     case resolver.(root) do
       {_, nil} -> raise InvalidSchemaError, message: "reference #{ref} could not be resolved"
-      _ ->
+      _ -> nil
     end
   end
 
@@ -193,12 +193,12 @@ defmodule ExJsonSchema.Schema do
   defp unescaped_ref_segments(ref) do
     ref
     |> String.split("/")
-    |> Enum.map fn segment ->
+    |> Enum.map(fn segment ->
       segment
       |> String.replace("~0", "~")
       |> String.replace("~1", "/")
       |> URI.decode
-    end
+    end)
   end
 
   defp meta?(schema) do
