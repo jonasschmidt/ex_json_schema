@@ -3,10 +3,13 @@ elixir:
   - 1.0.5
   - 1.1.0
   - 1.1.1
+env:
+  global:
+    - MIX_ENV=test
 before_install:
   - git submodule update --init --recursive
 script:
-  - "MIX_ENV=test mix coveralls.travis"
+  - "mix do deps.get, deps.compile, compile --warnings-as-errors, coveralls.travis"
 notifications:
   email:
     - jonas.schmidt@gmx.com
