@@ -7,6 +7,13 @@ defmodule ExJsonSchema.ValidatorTest do
     assert valid?(%{}, %{"foo" => "bar"}) == true
   end
 
+  test "required properties are not validated when the data is not a map" do
+    assert_validation_errors(
+      %{"required" => ["foo"], "type" => "object"},
+      "foo",
+      [{"Type mismatch. Expected Object but got String.", "#"}])
+  end
+
   test "validation errors with a reference" do
     assert_validation_errors(
       %{"foo" => %{"type" => "object"}, "properties" => %{"bar" => %{"$ref" => "#/foo"}}},

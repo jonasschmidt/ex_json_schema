@@ -111,7 +111,7 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
-  defp validate_aspect(_, _, {"required", required}, data) do
+  defp validate_aspect(_, _, {"required", required}, data = %{}) do
     Enum.flat_map List.wrap(required), fn property ->
       case Map.has_key?(data, property) do
         true -> []
