@@ -100,19 +100,20 @@ defmodule ExJsonSchema.Schema do
   defp resolve_ref(root, ref) do
     [url | fragments] = String.split(ref, "#")
 
-    resolver = relative_resolver = case fragments do
+    relative_resolver = case fragments do
       [fragment = "/" <> _] -> relative_ref_resolver(fragment)
       _ -> &root_schema_resolver/1
     end
 
-    if url != "" do
-      root = resolve_and_cache_remote_schema(root, url)
-      resolver = url_with_relative_ref_resolver(url, relative_resolver)
-    end
+    {newroot, resolver} = 
+      if url != "" do
+        {resolve_and_cache_remote_schema(root, url), relative_resolver} 
+        {root, url_with_relative_ref_resolver(url, relative_resolver)}
+      end
 
-    assert_reference_valid(resolver, root, ref)
+    assert_reference_valid(resolver, newroot, ref)
 
-    {root, resolver}
+    {newroot, resolver}
   end
 
   defp relative_ref_resolver(ref) do
@@ -140,10 +141,8 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp resolve_and_cache_remote_schema(root, url) do
-    unless root.refs[url] do
-      root = fetch_and_resolve_remote_schema(root, url)
-    end
-    root
+    if root.refs[url], do: root,
+    else: fetch_and_resolve_remote_schema(root, url)
   end
 
   defp fetch_and_resolve_remote_schema(root, url) when url == @current_draft_schema_url or url == @draft4_schema_url do
@@ -178,16 +177,18 @@ defmodule ExJsonSchema.Schema do
 
   defp sanitize_properties(schema) do
     if Enum.any?(~w(patternProperties additionalProperties), &Map.has_key?(schema, &1)) and not Map.has_key?(schema, "properties") do
-      schema = Map.put(schema, "properties", %{})
+      Map.put(schema, "properties", %{})
+    else
+      schema
     end
-    schema
   end
 
   defp sanitize_items(schema) do
     if Map.has_key?(schema, "items") and not Map.has_key?(schema, "additionalItems") do
-      schema = Map.put(schema, "additionalItems", true)
+      Map.put(schema, "additionalItems", true)
+    else
+      schema
     end
-    schema
   end
 
   defp unescaped_ref_segments(ref) do
