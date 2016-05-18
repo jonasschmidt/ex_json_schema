@@ -107,8 +107,10 @@ defmodule ExJsonSchema.Schema do
 
     {newroot, resolver} = 
       if url != "" do
-        {resolve_and_cache_remote_schema(root, url), relative_resolver} 
-        {root, url_with_relative_ref_resolver(url, relative_resolver)}
+        {resolve_and_cache_remote_schema(root, url),
+         url_with_relative_ref_resolver(url, relative_resolver)}
+      else
+        {root, relative_resolver}
       end
 
     assert_reference_valid(resolver, newroot, ref)
