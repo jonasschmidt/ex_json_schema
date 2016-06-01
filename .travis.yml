@@ -1,15 +1,16 @@
 language: elixir
 elixir:
-  - 1.0.5
   - 1.1.1
-  - 1.2.0
+  - 1.2.5
+otp_release:
+  - 18.2.1
 env:
   global:
     - MIX_ENV=test
 before_install:
   - git submodule update --init --recursive
 script:
-  - "mix do deps.get, deps.compile, compile --warnings-as-errors, coveralls.travis"
+  - "yes | mix do deps.get, deps.compile, compile --warnings-as-errors, coveralls.travis"
 notifications:
   email:
     - jonas.schmidt@gmx.com
