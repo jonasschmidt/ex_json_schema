@@ -69,7 +69,7 @@ defmodule ExJsonSchema.Schema do
       {root, {k, v}} = resolve_property(root, property, scope)
       {root, Map.put(schema, k, v)}
     end
-    {root, schema |> sanitize_properties |> sanitize_items}
+    {root, schema |> sanitize_properties_attribute |> sanitize_additional_items_attribute}
   end
 
   defp resolve_property(root, {key, value}, scope) when is_map(value) do
@@ -99,24 +99,22 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_ref(root, ref) do
     [url | fragments] = String.split(ref, "#")
-
-    relative_resolver = case fragments do
-      [fragment = "/" <> _] -> relative_ref_resolver(fragment)
-      _ -> &root_schema_resolver/1
-    end
-
-    {newroot, resolver} = 
-      if url != "" do
-        {resolve_and_cache_remote_schema(root, url),
-         url_with_relative_ref_resolver(url, relative_resolver)}
-      else
-        {root, relative_resolver}
-      end
-
-    assert_reference_valid(resolver, newroot, ref)
-
-    {newroot, resolver}
+    {root, resolver} = root_and_resolver_for_url(root, fragments, url)
+    assert_reference_valid(resolver, root, ref)
+    {root, resolver}
   end
+
+  defp root_and_resolver_for_url(root, fragments, "") do
+    {root, relative_resolver(fragments)}
+  end
+
+  defp root_and_resolver_for_url(root, fragments, url) do
+    {resolve_and_cache_remote_schema(root, url),
+      url_with_relative_ref_resolver(url, relative_resolver(fragments))}
+  end
+
+  defp relative_resolver([fragment = "/" <> _]), do: relative_ref_resolver(fragment)
+  defp relative_resolver(_), do: &root_schema_resolver/1
 
   defp relative_ref_resolver(ref) do
     ["" | keys] = unescaped_ref_segments(ref)
@@ -143,11 +141,11 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp resolve_and_cache_remote_schema(root, url) do
-    if root.refs[url], do: root,
-    else: fetch_and_resolve_remote_schema(root, url)
+    if root.refs[url], do: root, else: fetch_and_resolve_remote_schema(root, url)
   end
 
-  defp fetch_and_resolve_remote_schema(root, url) when url == @current_draft_schema_url or url == @draft4_schema_url do
+  defp fetch_and_resolve_remote_schema(root, url)
+      when url == @current_draft_schema_url or url == @draft4_schema_url do
     resolve_remote_schema(root, url, Draft4.schema)
   end
 
@@ -177,20 +175,21 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  defp sanitize_properties(schema) do
-    if Enum.any?(~w(patternProperties additionalProperties), &Map.has_key?(schema, &1)) and not Map.has_key?(schema, "properties") do
-      Map.put(schema, "properties", %{})
-    else
-      schema
-    end
+  defp sanitize_properties_attribute(schema) do
+    if needs_properties_attribute?(schema), do: Map.put(schema, "properties", %{}), else: schema
   end
 
-  defp sanitize_items(schema) do
-    if Map.has_key?(schema, "items") and not Map.has_key?(schema, "additionalItems") do
-      Map.put(schema, "additionalItems", true)
-    else
-      schema
-    end
+  defp needs_properties_attribute?(schema) do
+    Enum.any?(~w(patternProperties additionalProperties), &Map.has_key?(schema, &1))
+      and not Map.has_key?(schema, "properties")
+  end
+
+  defp sanitize_additional_items_attribute(schema) do
+    if needs_additional_items_attribute?(schema), do: Map.put(schema, "additionalItems", true), else: schema
+  end
+
+  defp needs_additional_items_attribute?(schema) do
+    Map.has_key?(schema, "items") and not Map.has_key?(schema, "additionalItems")
   end
 
   defp unescaped_ref_segments(ref) do
