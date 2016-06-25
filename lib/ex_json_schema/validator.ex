@@ -43,8 +43,8 @@ defmodule ExJsonSchema.Validator do
     Enum.map errors, fn {msg, path} -> {msg, Enum.join(path, "/")} end
   end
 
-  defp validate_aspect(root, _, {"$ref", ref}, data) do
-    {root, schema} = ref.(root)
+  defp validate_aspect(root, _, {"$ref", path}, data) do
+    schema = Schema.get_ref_schema(root, path)
     validate(root, schema, data)
   end
 

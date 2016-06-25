@@ -1,7 +1,7 @@
 defmodule ExJsonSchema.SchemaTest do
   use ExUnit.Case, async: true
 
-  import ExJsonSchema.Schema, only: [resolve: 1]
+  import ExJsonSchema.Schema, only: [resolve: 1, get_ref_schema: 2]
 
   test "fails when trying to resolve something that is not a schema" do
     assert_raise FunctionClauseError, fn -> resolve("foo") end
@@ -35,14 +35,14 @@ defmodule ExJsonSchema.SchemaTest do
   test "resolves a reference" do
     schema = %{"foo" => %{"$ref" => "#/bar"}, "bar" => "baz"}
     resolved = resolve(schema)
-    ref = get_in(resolved.schema, ["foo", "$ref"])
-    assert ref.(resolved) == {resolved, "baz"}
+    path = get_in(resolved.schema, ["foo", "$ref"])
+    assert get_ref_schema(resolved, path)  == "baz"
   end
 
   test "resolves a root reference" do
     schema = %{"$ref" => "#"}
     resolved = resolve(schema)
-    assert resolved.schema["$ref"].(resolved) == {resolved, resolved.schema}
+    assert get_ref_schema(resolved, resolved.schema["$ref"]) == resolved.schema
   end
 
   test "catches invalid references" do
@@ -53,8 +53,8 @@ defmodule ExJsonSchema.SchemaTest do
   test "changing the resolution scope" do
     schema = %{"id" => "#/foo_scope/", "foo" => %{"$ref" => "bar"}, "foo_scope" => %{"bar" => "baz"}}
     resolved = resolve(schema)
-    ref = get_in(resolved.schema, ["foo", "$ref"])
-    assert ref.(resolved) == {resolved, "baz"}
+    path = get_in(resolved.schema, ["foo", "$ref"])
+    assert get_ref_schema(resolved, path)  == "baz"
   end
 
   test "caching a resolved remote reference" do
@@ -66,8 +66,8 @@ defmodule ExJsonSchema.SchemaTest do
     url = "http://localhost:1234/integer.json"
     schema = %{"$ref" => url}
     resolved = resolve(schema)
-    ref = resolved.schema["$ref"]
-    assert ref.(resolved) == {%ExJsonSchema.Schema.Root{resolved | schema: %{"type" => "integer"}}, %{"type" => "integer"}}
+    path = resolved.schema["$ref"]
+    assert get_ref_schema(resolved, path) == %{"type" => "integer"}
   end
 
   test "using a previously cached remote schema" do
@@ -75,7 +75,7 @@ defmodule ExJsonSchema.SchemaTest do
     refs = Map.put(%{}, url, %{"type" => "boolean"})
     schema = %ExJsonSchema.Schema.Root{refs: refs, schema: %{"$ref" => url}}
     resolved = resolve(schema)
-    ref = resolved.schema["$ref"]
-    assert ref.(resolved) == {%ExJsonSchema.Schema.Root{resolved | schema: %{"type" => "boolean"}}, %{"type" => "boolean"}}
+    path = resolved.schema["$ref"]
+    assert get_ref_schema(resolved, path) == %{"type" => "boolean"}
   end
 end
