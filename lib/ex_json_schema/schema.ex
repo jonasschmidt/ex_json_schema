@@ -163,7 +163,7 @@ defmodule ExJsonSchema.Schema do
     Application.get_env(:ex_json_schema, :remote_schema_resolver)
   end
 
-  defp assert_reference_valid(path, root, ref) do
+  defp assert_reference_valid(path, root, _ref) do
     get_ref_schema(root, path)
   end
 
@@ -212,7 +212,7 @@ defmodule ExJsonSchema.Schema do
     try do
       get_ref_schema_with_schema(:lists.nth(idx, schema), t, ref)
     catch
-      throw, :function_clause ->
+      :throw, :function_clause ->
         raise InvalidSchemaError, message: "reference #{ref_to_string(ref)} could not be resolved"
     end
   end
