@@ -45,9 +45,14 @@ defmodule ExJsonSchema.SchemaTest do
     assert get_ref_schema(resolved, resolved.schema["$ref"]) == resolved.schema
   end
 
-  test "catches invalid references" do
+  test "catches references with an invalid property in the path" do
     schema = %{"$ref" => "#/foo"}
     assert_raise ExJsonSchema.Schema.InvalidSchemaError, "reference #/foo could not be resolved", fn -> resolve(schema) end
+  end
+
+  test "catches references with an invalid index in the path" do
+    schema = %{"$ref" => "http://json-schema.org/schema#/1"}
+    assert_raise ExJsonSchema.Schema.InvalidSchemaError, "reference http://json-schema.org/schema#/1 could not be resolved", fn -> resolve(schema) end
   end
 
   test "changing the resolution scope" do

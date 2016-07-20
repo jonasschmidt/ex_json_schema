@@ -21,12 +21,12 @@ defmodule ExJsonSchema.Schema do
   @spec resolve(ExJsonSchema.json) :: Root.t | no_return
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
-  @spec get_ref_schema(Root.t, List.t) :: ExJsonSchema.json
-  def get_ref_schema(root=%Root{}, [location|t] = ref) do
-    case location do
-      :root -> get_ref_schema_with_schema(root.schema, t, ref)
-      url when is_binary(url) -> get_ref_schema_with_schema(root.refs[url], t, ref)
-    end
+  @spec get_ref_schema(Root.t, [:root | String.t]) :: ExJsonSchema.json
+  def get_ref_schema(root = %Root{}, [:root | path] = ref) do
+    get_ref_schema_with_schema(root.schema, path, ref)
+  end
+  def get_ref_schema(root = %Root{}, [url | path] = ref) when is_binary(url) do
+    get_ref_schema_with_schema(root.refs[url], path, ref)
   end
 
   defp resolve_root(root) do
@@ -122,14 +122,14 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp relative_path([fragment = "/" <> _]), do: relative_ref_path(fragment)
-  defp relative_path(_), do: [] 
+  defp relative_path(_), do: []
 
   defp relative_ref_path(ref) do
     ["" | keys] = unescaped_ref_segments(ref)
     Enum.map keys, fn key ->
       case key =~ ~r/^\d+$/ do
         true ->
-          String.to_integer(key) + 1
+          String.to_integer(key)
         false -> key
       end
     end
@@ -198,29 +198,25 @@ defmodule ExJsonSchema.Schema do
   defp meta?(schema) do
     String.starts_with?(Map.get(schema, "id", ""), @draft4_schema_url)
   end
-  
+
   defp get_ref_schema_with_schema(nil, _, ref) do
     raise InvalidSchemaError, message: "reference #{ref_to_string(ref)} could not be resolved"
   end
   defp get_ref_schema_with_schema(schema, [], _) do
     schema
   end
-  defp get_ref_schema_with_schema(schema, [key|t], ref) when is_binary(key) do
-    get_ref_schema_with_schema(Map.get(schema, key), t, ref)
+  defp get_ref_schema_with_schema(schema, [key | path], ref) when is_binary(key) do
+    get_ref_schema_with_schema(Map.get(schema, key), path, ref)
   end
-  defp get_ref_schema_with_schema(schema, [idx|t], ref) when is_integer(idx) do
+  defp get_ref_schema_with_schema(schema, [idx | path], ref) when is_integer(idx) do
     try do
-      get_ref_schema_with_schema(:lists.nth(idx, schema), t, ref)
+      get_ref_schema_with_schema(:lists.nth(idx + 1, schema), path, ref)
     catch
-      :throw, :function_clause ->
+      :error, :function_clause ->
         raise InvalidSchemaError, message: "reference #{ref_to_string(ref)} could not be resolved"
     end
   end
 
-  defp ref_to_string([:root|t]) do
-    ["#"|t] |> Enum.join("/")
-  end
-  defp ref_to_string([url|t]) do
-    [url <> "#"|t] |> Enum.join("/")
-  end
+  defp ref_to_string([:root | path]), do: ["#" | path] |> Enum.join("/")
+  defp ref_to_string([url | path]), do: [url <> "#" | path] |> Enum.join("/")
 end
