@@ -25,6 +25,7 @@ defmodule ExJsonSchema.Schema do
   def get_ref_schema(root = %Root{}, [:root | path] = ref) do
     get_ref_schema_with_schema(root.schema, path, ref)
   end
+
   def get_ref_schema(root = %Root{}, [url | path] = ref) when is_binary(url) do
     get_ref_schema_with_schema(root.refs[url], path, ref)
   end
@@ -107,22 +108,28 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_ref(root, ref) do
     [url | fragments] = String.split(ref, "#")
-    {root, path} = root_and_path_for_url(root, fragments, url)
+    fragment = get_fragment(fragments, ref)
+    {root, path} = root_and_path_for_url(root, fragment, url)
     assert_reference_valid(path, root, ref)
     {root, path}
   end
 
-  defp root_and_path_for_url(root, fragments, "") do
-    {root, [root.location | relative_path(fragments)]}
+  defp get_fragment([], _), do: nil
+  defp get_fragment([""], _), do: nil
+  defp get_fragment([fragment = "/" <> _], _), do: fragment
+  defp get_fragment(_, ref), do: raise InvalidSchemaError, message: "invalid reference #{ref}"
+
+  defp root_and_path_for_url(root, fragment, "") do
+    {root, [root.location | relative_path(fragment)]}
   end
 
-  defp root_and_path_for_url(root, fragments, url) do
+  defp root_and_path_for_url(root, fragment, url) do
     root = resolve_and_cache_remote_schema(root, url)
-    {root, [url | relative_path(fragments)]}
+    {root, [url | relative_path(fragment)]}
   end
 
-  defp relative_path([fragment = "/" <> _]), do: relative_ref_path(fragment)
-  defp relative_path(_), do: []
+  defp relative_path(nil), do: []
+  defp relative_path(fragment), do: relative_ref_path(fragment)
 
   defp relative_ref_path(ref) do
     ["" | keys] = unescaped_ref_segments(ref)
@@ -202,12 +209,15 @@ defmodule ExJsonSchema.Schema do
   defp get_ref_schema_with_schema(nil, _, ref) do
     raise InvalidSchemaError, message: "reference #{ref_to_string(ref)} could not be resolved"
   end
+
   defp get_ref_schema_with_schema(schema, [], _) do
     schema
   end
+
   defp get_ref_schema_with_schema(schema, [key | path], ref) when is_binary(key) do
     get_ref_schema_with_schema(Map.get(schema, key), path, ref)
   end
+
   defp get_ref_schema_with_schema(schema, [idx | path], ref) when is_integer(idx) do
     try do
       get_ref_schema_with_schema(:lists.nth(idx + 1, schema), path, ref)

@@ -55,6 +55,11 @@ defmodule ExJsonSchema.SchemaTest do
     assert_raise ExJsonSchema.Schema.InvalidSchemaError, "reference http://json-schema.org/schema#/1 could not be resolved", fn -> resolve(schema) end
   end
 
+  test "catches invalid references" do
+    schema = %{"$ref" => "#definitions/foo"}
+    assert_raise ExJsonSchema.Schema.InvalidSchemaError, "invalid reference #definitions/foo", fn -> resolve(schema) end
+  end
+
   test "changing the resolution scope" do
     schema = %{"id" => "#/foo_scope/", "foo" => %{"$ref" => "bar"}, "foo_scope" => %{"bar" => "baz"}}
     resolved = resolve(schema)
