@@ -28,7 +28,7 @@ defmodule ExJsonSchema.SchemaTest do
   test "schema is validated against its meta-schema" do
     schema = %{"properties" => "foo"}
     assert_raise ExJsonSchema.Schema.InvalidSchemaError,
-      ~s(schema did not pass validation against its meta-schema: [{"Type mismatch. Expected Object but got String.", "#/properties"}]),
+      ~s(schema did not pass validation against its meta-schema: [{%{description: \"type mismatch. Expected Object but got String\", params: [\"object\"], rule: :cast}, \"#/properties\"}]),
       fn -> resolve(schema) end
   end
 

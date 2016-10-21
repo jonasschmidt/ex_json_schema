@@ -25,7 +25,11 @@ defmodule ExJsonSchema.Validator.Items do
   def validate(_, _, _), do: []
 
   defp validate_item(_, nil, _, index) do
-    [{"Schema does not allow additional items.", [index]}]
+    [{%{
+      description: "schema does not allow additional items",
+      rule: :schema,
+      params: []
+    }, [index]}]
   end
 
   defp validate_item(root, schema, item, index) do

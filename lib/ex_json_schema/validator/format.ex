@@ -16,23 +16,53 @@ defmodule ExJsonSchema.Validator.Format do
   def validate(_, _), do: []
 
   defp do_validate("date-time", data) do
-    validate_with_regex(data, @date_time_regex, fn data -> "Expected #{inspect(data)} to be a valid ISO 8601 date-time." end)
+    validate_with_regex(data, @date_time_regex, fn data ->
+      %{
+        description: "expected #{inspect(data)} to be a valid ISO 8601 date-time",
+        rule: :datetime,
+        params: [inspect(@date_time_regex)]
+      }
+    end)
   end
 
   defp do_validate("email", data) do
-    validate_with_regex(data, @email_regex, fn data -> "Expected #{inspect(data)} to be an email address." end)
+    validate_with_regex(data, @email_regex, fn data ->
+      %{
+        description: "expected #{inspect(data)} to be an email address",
+        rule: :email,
+        params: [inspect(@email_regex)]
+      }
+    end)
   end
 
   defp do_validate("hostname", data) do
-    validate_with_regex(data, @hostname_regex, fn data -> "Expected #{inspect(data)} to be a host name." end)
+    validate_with_regex(data, @hostname_regex, fn data ->
+      %{
+        description: "expected #{inspect(data)} to be a host name",
+        rule: :format,
+        params: [inspect(@hostname_regex)]
+      }
+    end)
   end
 
   defp do_validate("ipv4", data) do
-    validate_with_regex(data, @ipv4_regex, fn data -> "Expected #{inspect(data)} to be an IPv4 address." end)
+    validate_with_regex(data, @ipv4_regex, fn data ->
+      %{
+        description: "expected #{inspect(data)} to be an IPv4 address",
+        rule: :format,
+        params: [inspect(@ipv4_regex)]
+      }
+    end)
   end
 
   defp do_validate("ipv6", data) do
-    validate_with_regex(data, @ipv6_regex, fn data -> "Expected #{inspect(data)} to be an IPv6 address." end)
+    validate_with_regex(data, @ipv6_regex, fn data ->
+      %{
+        description: "expected #{inspect(data)} to be an IPv6 address",
+        rule: :format,
+        params: [inspect(@ipv6_regex)]
+      }
+    end)
   end
 
   defp do_validate(_, _) do

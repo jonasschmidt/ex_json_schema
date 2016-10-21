@@ -5,7 +5,11 @@ defmodule ExJsonSchema.Validator.Type do
   def validate(type, data) do
     case valid?(type, data) do
       true -> []
-      false -> [{"Type mismatch. Expected #{type |> type_name} but got #{data |> data_type |> type_name}.", []}]
+      false -> [{%{
+        description: "type mismatch. Expected #{type |> type_name} but got #{data |> data_type |> type_name}",
+        rule: :cast,
+        params: [type]
+      }, []}]
     end
   end
 

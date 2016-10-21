@@ -22,7 +22,11 @@ defmodule ExJsonSchema.Validator.Dependencies do
     Enum.flat_map List.wrap(dependencies), fn dependency ->
       case Map.has_key?(data, dependency) do
         true -> []
-        false -> [{"Property #{property} depends on #{dependency} to be present but it was not.", []}]
+        false -> [{%{
+          description: "property #{property} depends on #{dependency} to be present but it was not",
+          rule: :dependency,
+          params: [dependency]
+        }, []}]
       end
     end
   end
