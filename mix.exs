@@ -44,7 +44,7 @@ defmodule NExJsonSchema.Mixfile do
       files: ~w(lib mix.exs README.md LICENSE),
       maintainers: ["Jonas Schmidt", "Nebo #15"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/nebo15/nnex_json_schema"}
+      links: %{"GitHub" => "https://github.com/nebo15/nex_json_schema"}
     ]
   end
 end
