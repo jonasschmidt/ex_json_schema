@@ -34,7 +34,8 @@ defmodule NExJsonSchema.Mixfile do
     [
       {:httpoison, "~> 0.8", only: :test},
       {:poison, "~> 1.5", only: :test},
-      {:excoveralls, "~> 0.4", only: :test}
+      {:excoveralls, "~> 0.4", only: :test},
+      {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end
 
