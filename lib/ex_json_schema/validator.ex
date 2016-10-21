@@ -12,7 +12,7 @@ defmodule NExJsonSchema.Validator do
 
   @spec validate(Root.t, NExJsonSchema.data) :: :ok | {:error, errors}
   def validate(root = %Root{}, data) do
-    errors = validate(root, root.schema, data, ["#"]) |> errors_with_string_paths
+    errors = validate(root, root.schema, data, ["$"]) |> errors_with_string_paths
     case Enum.empty?(errors) do
       true -> :ok
       false -> {:error, errors}
@@ -40,7 +40,7 @@ defmodule NExJsonSchema.Validator do
   def valid?(root, schema, data), do: validate(root, schema, data) |> Enum.empty?
 
   defp errors_with_string_paths(errors) do
-    Enum.map errors, fn {msg, path} -> {msg, Enum.join(path, "/")} end
+    Enum.map errors, fn {msg, path} -> {msg, Enum.join(path, ".")} end
   end
 
   defp validate_aspect(root, _, {"$ref", path}, data) do

@@ -227,6 +227,6 @@ defmodule NExJsonSchema.Schema do
     end
   end
 
-  defp ref_to_string([:root | path]), do: ["#" | path] |> Enum.join("/")
+  defp ref_to_string([:root | path]), do: ["$" | path] |> Enum.join(".")
   defp ref_to_string([url | path]), do: [url <> "#" | path] |> Enum.join("/")
 end

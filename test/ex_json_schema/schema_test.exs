@@ -28,7 +28,7 @@ defmodule NExJsonSchema.SchemaTest do
   test "schema is validated against its meta-schema" do
     schema = %{"properties" => "foo"}
     assert_raise NExJsonSchema.Schema.InvalidSchemaError,
-      ~s(schema did not pass validation against its meta-schema: [{%{description: \"type mismatch. Expected Object but got String\", params: [\"object\"], rule: :cast}, \"#/properties\"}]),
+      ~s(schema did not pass validation against its meta-schema: [{%{description: \"type mismatch. Expected Object but got String\", params: [\"object\"], rule: :cast}, \"$.properties\"}]),
       fn -> resolve(schema) end
   end
 
@@ -47,7 +47,7 @@ defmodule NExJsonSchema.SchemaTest do
 
   test "catches references with an invalid property in the path" do
     schema = %{"$ref" => "#/foo"}
-    assert_raise NExJsonSchema.Schema.InvalidSchemaError, "reference #/foo could not be resolved", fn -> resolve(schema) end
+    assert_raise NExJsonSchema.Schema.InvalidSchemaError, "reference $.foo could not be resolved", fn -> resolve(schema) end
   end
 
   test "catches references with an invalid index in the path" do

@@ -7,7 +7,7 @@ defmodule NExJsonSchema.Validator.Items do
     items
     |> Enum.with_index
     |> Enum.flat_map(fn {item, index} ->
-      Validator.validate(root, schema, item, [index])
+      Validator.validate(root, schema, item, ["[#{index}]"])
     end)
   end
 
@@ -29,11 +29,11 @@ defmodule NExJsonSchema.Validator.Items do
       description: "schema does not allow additional items",
       rule: :schema,
       params: []
-    }, [index]}]
+    }, ["[#{index}]"]}]
   end
 
   defp validate_item(root, schema, item, index) do
-    Validator.validate(root, schema, item, [index])
+    Validator.validate(root, schema, item, ["[#{index}]"])
   end
 
   defp additional_items_schema(schema = %{}), do: schema
