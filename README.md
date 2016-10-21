@@ -1,6 +1,6 @@
 # Elixir JSON Schema validator
 
-[![Build Status](https://travis-ci.org/nebo15/nex_json_schema.svg?branch=master)](https://travis-ci.org/nebo15/nex_json_schema) [![Coverage Status](https://coveralls.io/repos/nebo15/nex_json_schema/badge.svg?branch=travis-elixir-version&service=github)](https://coveralls.io/github/nebo15/nex_json_schema?branch=travis-elixir-version) [![Hex.pm](http://img.shields.io/hexpm/v/nex_json_schema.svg)](https://hex.pm/packages/nex_json_schema) [![Hex.pm](http://img.shields.io/hexpm/l/nex_json_schema.svg)](LICENSE)
+[![Build Status](https://travis-ci.org/nebo15/nex_json_schema.svg?branch=master)](https://travis-ci.org/nebo15/nex_json_schema) [![Coverage Status](https://coveralls.io/repos/nebo15/nex_json_schema/badge.svg?branch=master&service=github)](https://coveralls.io/github/nebo15/nex_json_schema?branch=master) [![Hex.pm](http://img.shields.io/hexpm/v/nex_json_schema.svg)](https://hex.pm/packages/nex_json_schema) [![Hex.pm](http://img.shields.io/hexpm/l/nex_json_schema.svg)](LICENSE)
 
 A JSON Schema validator with full support for the draft 4 specification and zero dependencies. Passes the official [JSON Schema Test Suite](https://github.com/json-schema/JSON-Schema-Test-Suite).
 
