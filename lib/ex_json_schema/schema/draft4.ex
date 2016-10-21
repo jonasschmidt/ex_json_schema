@@ -1,4 +1,4 @@
-defmodule ExJsonSchema.Schema.Draft4 do
+defmodule NExJsonSchema.Schema.Draft4 do
   @schema %{"$schema" => "http://json-schema.org/draft-04/schema#", "default" => %{},
   "definitions" => %{"positiveInteger" => %{"minimum" => 0,
       "type" => "integer"},
@@ -56,6 +56,6 @@ defmodule ExJsonSchema.Schema.Draft4 do
     "uniqueItems" => %{"default" => false, "type" => "boolean"}},
   "type" => "object"}
 
-  @spec schema() :: ExJsonSchema.json
+  @spec schema() :: NExJsonSchema.json
   def schema, do: @schema
 end

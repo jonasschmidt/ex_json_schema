@@ -1,5 +1,5 @@
-defmodule ExJsonSchema.Validator.Format do
-  alias ExJsonSchema.Validator
+defmodule NExJsonSchema.Validator.Format do
+  alias NExJsonSchema.Validator
 
   @date_time_regex ~r/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$/
   @email_regex ~r<^[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*@(?:[A-Z0-9-]+\.)+[A-Z]{2,6}$>i
@@ -12,7 +12,7 @@ defmodule ExJsonSchema.Validator.Format do
     do_validate(format, data)
   end
 
-  @spec validate(String.t, ExJsonSchema.data) :: []
+  @spec validate(String.t, NExJsonSchema.data) :: []
   def validate(_, _), do: []
 
   defp do_validate("date-time", data) do

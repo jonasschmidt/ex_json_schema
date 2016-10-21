@@ -1,16 +1,16 @@
-defmodule ExJsonSchema.Validator do
-  alias ExJsonSchema.Validator.Dependencies
-  alias ExJsonSchema.Validator.Format
-  alias ExJsonSchema.Validator.Items
-  alias ExJsonSchema.Validator.Properties
-  alias ExJsonSchema.Validator.Type
-  alias ExJsonSchema.Schema
-  alias ExJsonSchema.Schema.Root
+defmodule NExJsonSchema.Validator do
+  alias NExJsonSchema.Validator.Dependencies
+  alias NExJsonSchema.Validator.Format
+  alias NExJsonSchema.Validator.Items
+  alias NExJsonSchema.Validator.Properties
+  alias NExJsonSchema.Validator.Type
+  alias NExJsonSchema.Schema
+  alias NExJsonSchema.Schema.Root
 
   @type errors :: [{String.t, String.t}] | []
   @type errors_with_list_paths :: [{String.t, [String.t | integer]}] | []
 
-  @spec validate(Root.t, ExJsonSchema.data) :: :ok | {:error, errors}
+  @spec validate(Root.t, NExJsonSchema.data) :: :ok | {:error, errors}
   def validate(root = %Root{}, data) do
     errors = validate(root, root.schema, data, ["#"]) |> errors_with_string_paths
     case Enum.empty?(errors) do
@@ -19,24 +19,24 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
-  @spec validate(ExJsonSchema.json, ExJsonSchema.data) :: :ok | {:error, errors}
+  @spec validate(NExJsonSchema.json, NExJsonSchema.data) :: :ok | {:error, errors}
   def validate(schema = %{}, data) do
     validate(Schema.resolve(schema), data)
   end
 
-  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data, [String.t | integer]) :: errors_with_list_paths
+  @spec validate(Root.t, Schema.resolved, NExJsonSchema.data, [String.t | integer]) :: errors_with_list_paths
   def validate(root, schema, data, path \\ []) do
     Enum.flat_map(schema, &validate_aspect(root, schema, &1, data))
     |> Enum.map(fn {%{} = rules, p} -> {rules, path ++ p} end)
   end
 
-  @spec valid?(Root.t, ExJsonSchema.data) :: boolean
+  @spec valid?(Root.t, NExJsonSchema.data) :: boolean
   def valid?(root = %Root{}, data), do: valid?(root, root.schema, data)
 
-  @spec valid?(ExJsonSchema.json, ExJsonSchema.data) :: boolean
+  @spec valid?(NExJsonSchema.json, NExJsonSchema.data) :: boolean
   def valid?(schema = %{}, data), do: valid?(Schema.resolve(schema), data)
 
-  @spec valid?(Root.t, Schema.resolved, ExJsonSchema.data) :: boolean
+  @spec valid?(Root.t, Schema.resolved, NExJsonSchema.data) :: boolean
   def valid?(root, schema, data), do: validate(root, schema, data) |> Enum.empty?
 
   defp errors_with_string_paths(errors) do

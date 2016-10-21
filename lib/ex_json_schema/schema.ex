@@ -1,4 +1,4 @@
-defmodule ExJsonSchema.Schema do
+defmodule NExJsonSchema.Schema do
   defmodule UnsupportedSchemaVersionError do
     defexception message: "unsupported schema version, only draft 4 is supported"
   end
@@ -7,10 +7,10 @@ defmodule ExJsonSchema.Schema do
     defexception message: "invalid schema"
   end
 
-  alias ExJsonSchema.Schema.Draft4
-  alias ExJsonSchema.Schema.Root
+  alias NExJsonSchema.Schema.Draft4
+  alias NExJsonSchema.Schema.Root
 
-  @type resolved :: %{String.t => ExJsonSchema.json_value | (Root.t -> {Root.t, resolved})}
+  @type resolved :: %{String.t => NExJsonSchema.json_value | (Root.t -> {Root.t, resolved})}
 
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
@@ -18,10 +18,10 @@ defmodule ExJsonSchema.Schema do
   @spec resolve(Root.t) :: Root.t | no_return
   def resolve(root = %Root{}), do: resolve_root(root)
 
-  @spec resolve(ExJsonSchema.json) :: Root.t | no_return
+  @spec resolve(NExJsonSchema.json) :: Root.t | no_return
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
-  @spec get_ref_schema(Root.t, [:root | String.t]) :: ExJsonSchema.json
+  @spec get_ref_schema(Root.t, [:root | String.t]) :: NExJsonSchema.json
   def get_ref_schema(root = %Root{}, [:root | path] = ref) do
     get_ref_schema_with_schema(root.schema, path, ref)
   end
@@ -43,7 +43,7 @@ defmodule ExJsonSchema.Schema do
 
   defp assert_valid_schema(schema) do
     unless meta?(schema) do
-      case ExJsonSchema.Validator.validate(resolve(Draft4.schema), schema) do
+      case NExJsonSchema.Validator.validate(resolve(Draft4.schema), schema) do
         {:error, errors} ->
           raise InvalidSchemaError, message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
         _ -> nil
@@ -167,7 +167,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp remote_schema_resolver do
-    Application.get_env(:ex_json_schema, :remote_schema_resolver)
+    Application.get_env(:nex_json_schema, :remote_schema_resolver)
   end
 
   defp assert_reference_valid(path, root, _ref) do

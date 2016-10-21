@@ -1,0 +1,17 @@
+Searching 313 files for "Expected schema not to match but it did" (case sensitive)
+
+/Users/andrew/Projects/www/nex_json_schema/lib/ex_json_schema/validator.ex:
+  101    defp validate_aspect(root, _, {"not", not_schema}, data) do
+  102      case valid?(root, not_schema, data) do
+  103:       true -> [{"Expected schema not to match but it did.", []}]
+  104        false -> []
+  105      end
+
+/Users/andrew/Projects/www/nex_json_schema/test/ex_json_schema/validator_test.exs:
+   61    #     %{"not" => %{"type" => "object"}},
+   62    #     %{},
+   63:   #     [{"Expected schema not to match but it did.", "#"}])
+   64    # end
+   65
+
+2 matches across 2 files

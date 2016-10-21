@@ -1,7 +1,7 @@
-defmodule ExJsonSchema.SchemaTest do
+defmodule NExJsonSchema.SchemaTest do
   use ExUnit.Case, async: true
 
-  import ExJsonSchema.Schema, only: [resolve: 1, get_ref_schema: 2]
+  import NExJsonSchema.Schema, only: [resolve: 1, get_ref_schema: 2]
 
   test "fails when trying to resolve something that is not a schema" do
     assert_raise FunctionClauseError, fn -> resolve("foo") end
@@ -16,18 +16,18 @@ defmodule ExJsonSchema.SchemaTest do
     assert is_map(resolve(versionless_schema)) == true
     assert is_map(resolve(current_schema)) == true
     assert is_map(resolve(draft4_schema)) == true
-    assert_raise ExJsonSchema.Schema.UnsupportedSchemaVersionError, fn -> resolve(draft3_schema) end
-    assert_raise ExJsonSchema.Schema.UnsupportedSchemaVersionError, fn -> resolve(unknown_schema) end
+    assert_raise NExJsonSchema.Schema.UnsupportedSchemaVersionError, fn -> resolve(draft3_schema) end
+    assert_raise NExJsonSchema.Schema.UnsupportedSchemaVersionError, fn -> resolve(unknown_schema) end
   end
 
   test "resolves a schema" do
     schema = %{"foo" => 1, "bar" => %{"baz" => 3}}
-    assert resolve(schema) == %ExJsonSchema.Schema.Root{refs: %{}, schema: schema}
+    assert resolve(schema) == %NExJsonSchema.Schema.Root{refs: %{}, schema: schema}
   end
 
   test "schema is validated against its meta-schema" do
     schema = %{"properties" => "foo"}
-    assert_raise ExJsonSchema.Schema.InvalidSchemaError,
+    assert_raise NExJsonSchema.Schema.InvalidSchemaError,
       ~s(schema did not pass validation against its meta-schema: [{%{description: \"type mismatch. Expected Object but got String\", params: [\"object\"], rule: :cast}, \"#/properties\"}]),
       fn -> resolve(schema) end
   end
@@ -47,17 +47,17 @@ defmodule ExJsonSchema.SchemaTest do
 
   test "catches references with an invalid property in the path" do
     schema = %{"$ref" => "#/foo"}
-    assert_raise ExJsonSchema.Schema.InvalidSchemaError, "reference #/foo could not be resolved", fn -> resolve(schema) end
+    assert_raise NExJsonSchema.Schema.InvalidSchemaError, "reference #/foo could not be resolved", fn -> resolve(schema) end
   end
 
   test "catches references with an invalid index in the path" do
     schema = %{"$ref" => "http://json-schema.org/schema#/1"}
-    assert_raise ExJsonSchema.Schema.InvalidSchemaError, "reference http://json-schema.org/schema#/1 could not be resolved", fn -> resolve(schema) end
+    assert_raise NExJsonSchema.Schema.InvalidSchemaError, "reference http://json-schema.org/schema#/1 could not be resolved", fn -> resolve(schema) end
   end
 
   test "catches invalid references" do
     schema = %{"$ref" => "#definitions/foo"}
-    assert_raise ExJsonSchema.Schema.InvalidSchemaError, "invalid reference #definitions/foo", fn -> resolve(schema) end
+    assert_raise NExJsonSchema.Schema.InvalidSchemaError, "invalid reference #definitions/foo", fn -> resolve(schema) end
   end
 
   test "changing the resolution scope" do
@@ -83,7 +83,7 @@ defmodule ExJsonSchema.SchemaTest do
   test "using a previously cached remote schema" do
     url = "http://localhost:1234/integer.json"
     refs = Map.put(%{}, url, %{"type" => "boolean"})
-    schema = %ExJsonSchema.Schema.Root{refs: refs, schema: %{"$ref" => url}}
+    schema = %NExJsonSchema.Schema.Root{refs: refs, schema: %{"$ref" => url}}
     resolved = resolve(schema)
     path = resolved.schema["$ref"]
     assert get_ref_schema(resolved, path) == %{"type" => "boolean"}

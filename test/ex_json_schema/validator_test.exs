@@ -1,7 +1,7 @@
-defmodule ExJsonSchema.ValidatorTest do
+defmodule NExJsonSchema.ValidatorTest do
   use ExUnit.Case#, async: true
 
-  import ExJsonSchema.Validator, only: [validate: 2, valid?: 2]
+  import NExJsonSchema.Validator, only: [validate: 2, valid?: 2]
 
   test "empty schema is valid" do
     assert valid?(%{}, %{"foo" => "bar"}) == true

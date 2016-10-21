@@ -1,9 +1,9 @@
-defmodule ExJsonSchema.Mixfile do
+defmodule NExJsonSchema.Mixfile do
   use Mix.Project
 
   def project do
     [
-      app: :ex_json_schema,
+      app: :nex_json_schema,
       version: "0.5.1",
       elixir: "~> 1.0",
       description: "A JSON Schema validator with full support for the draft 4 specification and zero dependencies.",
@@ -41,9 +41,9 @@ defmodule ExJsonSchema.Mixfile do
   defp package do
     [
       files: ~w(lib mix.exs README.md LICENSE),
-      maintainers: ["Jonas Schmidt"],
+      maintainers: ["Jonas Schmidt", "Nebo #15"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/jonasschmidt/ex_json_schema"}
+      links: %{"GitHub" => "https://github.com/nebo15/nnex_json_schema"}
     ]
   end
 end

@@ -1,4 +1,4 @@
-defmodule ExJsonSchema.JsonSchemaTestSuiteTest.Helpers do
+defmodule NExJsonSchema.JsonSchemaTestSuiteTest.Helpers do
   use ExUnit.Case, async: true
 
   @schema_tests_path "test/JSON-Schema-Test-Suite/tests/draft4/"
@@ -19,11 +19,11 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest.Helpers do
   end
 end
 
-defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
+defmodule NExJsonSchema.JsonSchemaTestSuiteTest do
   use ExUnit.Case, async: true
 
-  import ExJsonSchema.JsonSchemaTestSuiteTest.Helpers
-  import ExJsonSchema.Validator, only: [valid?: 2]
+  import NExJsonSchema.JsonSchemaTestSuiteTest.Helpers
+  import NExJsonSchema.Validator, only: [valid?: 2]
 
   @tests Path.wildcard("#{schema_tests_path}**/*.json")
     |> Enum.map(fn path ->
@@ -51,7 +51,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
               ignored_tests ->
                 unless ignored_tests && Enum.member?(ignored_tests, @test["description"]) do
                   test "[#{feature}] #{description}: #{@test["description"]}" do
-                    assert valid?(ExJsonSchema.Schema.resolve(@schema), @test["data"]) == @test["valid"]
+                    assert valid?(NExJsonSchema.Schema.resolve(@schema), @test["data"]) == @test["valid"]
                   end
                 end
             end
