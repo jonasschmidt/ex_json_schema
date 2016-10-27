@@ -230,15 +230,6 @@ defmodule NExJsonSchema.Validator do
     end
   end
 
-  defp get_number_validation_params(:minimum, value, true),
-    do: [less_than: value]
-  defp get_number_validation_params(:minimum, value, _),
-    do: [less_than_or_equal_to: value]
-  defp get_number_validation_params(:maximum, value, true),
-    do: [greater_than: value]
-  defp get_number_validation_params(:maximum, value, _),
-    do: [greater_than_or_equal_to: value]
-
   defp validate_aspect(_, _, {"multipleOf", multiple_of}, data) when is_number(data) do
     factor = data / multiple_of
     case Float.floor(factor) == factor do
@@ -289,6 +280,15 @@ defmodule NExJsonSchema.Validator do
   end
 
   defp validate_aspect(_, _, _, _), do: []
+
+  defp get_number_validation_params(:minimum, value, true),
+    do: [less_than: value]
+  defp get_number_validation_params(:minimum, value, _),
+    do: [less_than_or_equal_to: value]
+  defp get_number_validation_params(:maximum, value, true),
+    do: [greater_than: value]
+  defp get_number_validation_params(:maximum, value, _),
+    do: [greater_than_or_equal_to: value]
 
   defp validation_result_indexes(root, schemata, data, filter) do
     schemata
