@@ -212,7 +212,7 @@ defmodule NExJsonSchema.Validator do
       false -> [{%{
         description: "expected the value to be #{if exclusive?, do: ">", else: ">="} #{minimum}",
         rule: :number,
-        params: [min: minimum, exclusive: exclusive?]
+        params: get_number_validation_params(:minimum, minimum, exclusive?)
       }, []}]
     end
   end
@@ -225,10 +225,19 @@ defmodule NExJsonSchema.Validator do
       false -> [{%{
         description: "expected the value to be #{if exclusive?, do: "<", else: "<="} #{maximum}",
         rule: :number,
-        params: [max: maximum, exclusive: exclusive?]
+        params: get_number_validation_params(:maximum, maximum, exclusive?)
       }, []}]
     end
   end
+
+  defp get_number_validation_params(:minimum, value, true),
+    do: [less_than: value]
+  defp get_number_validation_params(:minimum, value, _),
+    do: [less_than_or_equal_to: value]
+  defp get_number_validation_params(:maximum, value, true),
+    do: [greater_than: value]
+  defp get_number_validation_params(:maximum, value, _),
+    do: [greater_than_or_equal_to: value]
 
   defp validate_aspect(_, _, {"multipleOf", multiple_of}, data) when is_number(data) do
     factor = data / multiple_of

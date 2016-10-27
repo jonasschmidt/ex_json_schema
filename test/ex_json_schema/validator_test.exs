@@ -16,7 +16,7 @@ defmodule NExJsonSchema.ValidatorTest do
 
   test "validation errors with a reference" do
     assert_validation_errors(
-      %{"foo" => %{"type" => "object"}, "properties" => %{"bar" => %{"$ref" => "$.foo"}}},
+      %{"foo" => %{"type" => "object"}, "properties" => %{"bar" => %{"$ref" => "#/foo"}}},
       %{"bar" => "baz"},
       [{%{description: "type mismatch. Expected Object but got String", params: ["object"], rule: :cast}, "$.bar"}])
   end
@@ -183,16 +183,16 @@ defmodule NExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"properties" => %{"foo" => %{"minimum" => 2}, "bar" => %{"minimum" => 2, "exclusiveMinimum" => true}}},
       %{"foo" => 1, "bar" => 2}, [
-        {%{description: "expected the value to be > 2", params: [min: 2, exclusive: true], rule: :number}, "$.bar"},
-        {%{description: "expected the value to be >= 2", params: [min: 2, exclusive: nil], rule: :number}, "$.foo"}])
+        {%{description: "expected the value to be > 2", params: [less_than: 2], rule: :number}, "$.bar"},
+        {%{description: "expected the value to be >= 2", params: [less_than_or_equal_to: 2], rule: :number}, "$.foo"}])
   end
 
   test "validation errors for maximum values" do
     assert_validation_errors(
       %{"properties" => %{"foo" => %{"maximum" => 2}, "bar" => %{"maximum" => 2, "exclusiveMaximum" => true}}},
       %{"foo" => 3, "bar" => 2}, [
-        {%{description: "expected the value to be < 2", params: [max: 2, exclusive: true], rule: :number}, "$.bar"},
-        {%{description: "expected the value to be <= 2", params: [max: 2, exclusive: nil], rule: :number}, "$.foo"}])
+        {%{description: "expected the value to be < 2", params: [greater_than: 2], rule: :number}, "$.bar"},
+        {%{description: "expected the value to be <= 2", params: [greater_than_or_equal_to: 2], rule: :number}, "$.foo"}])
   end
 
   test "validation errors for multiples of" do
