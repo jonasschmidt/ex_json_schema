@@ -1,7 +1,8 @@
 defmodule ExJsonSchema.Validator.Properties do
   alias ExJsonSchema.Schema
-  alias ExJsonSchema.Validator
   alias ExJsonSchema.Schema.Root
+  alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: Validator.errors
   def validate(root, schema, properties = %{}) do
@@ -46,7 +47,7 @@ defmodule ExJsonSchema.Validator.Properties do
   end
 
   defp validate_additional_properties(_, false, properties) when map_size(properties) > 0 do
-    Enum.map properties, fn {name, _} -> {"Schema does not allow additional properties.", "/#{name}"} end
+    Enum.map properties, fn {name, _} -> %Error{error: %Error.AdditionalProperties{}, path: "/#{name}"} end
   end
 
   defp validate_additional_properties(_, _, _), do: []
