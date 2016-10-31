@@ -1,11 +1,12 @@
 defmodule ExJsonSchema.Validator.Type do
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @spec validate(String.t, ExJsonSchema.data) :: Validator.errors
   def validate(type, data) do
     case valid?(type, data) do
       true -> []
-      false -> [{"Type mismatch. Expected #{type |> type_name} but got #{data |> data_type |> type_name}.", ""}]
+      false -> [%Error{error: %Error.Type{expected: type |> type_names, actual: data |> data_type |> type_name}, path: ""}]
     end
   end
 
@@ -37,10 +38,13 @@ defmodule ExJsonSchema.Validator.Type do
     end
   end
 
-  defp type_name(type) do
-    type
+  defp type_names(type_or_types) do
+    type_or_types
     |> List.wrap
-    |> Enum.map(&String.capitalize/1)
-    |> Enum.join(", ")
+    |> Enum.map(&type_name/1)
+  end
+
+  defp type_name(type) do
+    type |> String.capitalize
   end
 end
