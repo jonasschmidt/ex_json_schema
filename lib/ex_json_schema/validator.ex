@@ -11,11 +11,7 @@ defmodule ExJsonSchema.Validator do
 
   @spec validate(Root.t, ExJsonSchema.data) :: :ok | {:error, errors}
   def validate(root = %Root{}, data) do
-    errors = validation_errors(root, root.schema, data, "#")
-    case Enum.empty?(errors) do
-      true -> :ok
-      false -> {:error, errors}
-    end
+    validate(root, root.schema, data)
   end
 
   @spec validate(ExJsonSchema.json, ExJsonSchema.data) :: :ok | {:error, errors}
@@ -23,8 +19,16 @@ defmodule ExJsonSchema.Validator do
     validate(Schema.resolve(schema), data)
   end
 
+  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: errors
+  def validate(root = %Root{}, schema = %{}, data) do
+    case validation_errors(root, schema, data, "#") do
+      [] -> :ok
+      errors -> {:error, errors}
+    end
+  end
+
   @spec validation_errors(Root.t, Schema.resolved, ExJsonSchema.data, [String.t | integer]) :: errors
-  def validation_errors(root, schema, data, path \\ "") do
+  def validation_errors(root = %Root{}, schema = %{}, data, path \\ "") do
     Enum.flat_map(schema, &validate_aspect(root, schema, &1, data))
     |> Enum.map(fn {msg, p} -> {msg, path <> p} end)
   end
@@ -36,7 +40,7 @@ defmodule ExJsonSchema.Validator do
   def valid?(schema = %{}, data), do: valid?(Schema.resolve(schema), data)
 
   @spec valid?(Root.t, Schema.resolved, ExJsonSchema.data) :: boolean
-  def valid?(root, schema, data), do: validation_errors(root, schema, data) |> Enum.empty?
+  def valid?(root = %Root{}, schema = %{}, data), do: validation_errors(root, schema, data) |> Enum.empty?
 
   defp validate_aspect(root, _, {"$ref", path}, data) do
     schema = Schema.get_ref_schema(root, path)
