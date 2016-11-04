@@ -1,10 +1,27 @@
 defmodule ExJsonSchema.ValidatorTest do
   use ExUnit.Case, async: true
 
-  import ExJsonSchema.Validator, only: [validate: 2, valid?: 2]
+  import ExJsonSchema.Validator
 
   test "empty schema is valid" do
     assert valid?(%{}, %{"foo" => "bar"}) == true
+  end
+
+  test "validating a fragment" do
+    root = ExJsonSchema.Schema.resolve(%{
+      "type" => "object",
+      "properties" => %{
+        "foo" => %{"$ref" => "#/definitions/Foo"}
+      },
+      "definitions" => %{
+        "Foo" => %{
+          "type" => "integer"
+        }
+      }
+    })
+    fragment = root.schema["properties"]["foo"]
+    assert validate(root, fragment, "foo") == {:error, [{"Type mismatch. Expected Integer but got String.", "#"}]}
+    assert valid?(root, fragment, 123)
   end
 
   test "required properties are not validated when the data is not a map" do
