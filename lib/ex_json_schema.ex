@@ -1,4 +1,6 @@
 defmodule ExJsonSchema do
-  @type data :: nil | true | false | list | float | integer | String.t | [data] | object
-  @type object :: %{String.t => data}
+  @type json_path :: String.t
+  @type json_value :: nil | true | false | list | float | integer | String.t | %{}
+  @type json :: %{String.t => json_value}
+  @type data :: json | json_value
 end

@@ -97,4 +97,14 @@ defmodule ExJsonSchema.SchemaTest do
     path = resolved.schema["$ref"]
     assert get_ref_schema(resolved, path) == %{"type" => "boolean"}
   end
+
+  test "fetching a ref schema with a path" do
+    schema = resolve(%{"properties" => %{"foo" => %{"$ref" => "http://localhost:8000/subschema.json#/foo"}}})
+    assert get_ref_schema(schema, "#/properties/foo") == %{"$ref" => ["http://localhost:8000/subschema.json", "foo"]}
+  end
+
+  test "fetching a ref schema with a URL" do
+    schema = resolve(%{"$ref" => "http://localhost:8000/subschema.json#/foo"})
+    assert get_ref_schema(schema, "http://localhost:8000/subschema.json#/foo") == %{"$ref" => ["http://localhost:8000/subsubschema.json", "foo"]}
+  end
 end
