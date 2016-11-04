@@ -20,14 +20,14 @@ defmodule ExJsonSchema.Validator do
 
   @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: errors
   def validate(root = %Root{}, schema = %{}, data) do
-    case validation_errors(root, schema, data, "#") do
+    case validation_errors(root, schema, data) do
       [] -> :ok
       errors -> {:error, errors}
     end
   end
 
   @spec validation_errors(Root.t, Schema.resolved, ExJsonSchema.data, [String.t | integer]) :: errors
-  def validation_errors(root = %Root{}, schema = %{}, data, path \\ "") do
+  def validation_errors(root = %Root{}, schema = %{}, data, path \\ "#") do
     Enum.flat_map(schema, &validate_aspect(root, schema, &1, data))
     |> Enum.map(fn {msg, p} -> {msg, path <> p} end)
   end
@@ -42,7 +42,7 @@ defmodule ExJsonSchema.Validator do
 
   defp validate_aspect(root, _, {"$ref", path}, data) do
     schema = Schema.get_ref_schema(root, path)
-    validation_errors(root, schema, data)
+    validation_errors(root, schema, data, "")
   end
 
   defp validate_aspect(root, _, {"allOf", all_of}, data) do
