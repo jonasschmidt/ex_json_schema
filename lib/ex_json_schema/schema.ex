@@ -9,6 +9,7 @@ defmodule ExJsonSchema.Schema do
 
   alias ExJsonSchema.Schema.Draft4
   alias ExJsonSchema.Schema.Root
+  alias ExJsonSchema.Validator
 
   @type resolved :: %{String.t => ExJsonSchema.json_value | (Root.t -> {Root.t, resolved})}
 
@@ -43,7 +44,7 @@ defmodule ExJsonSchema.Schema do
 
   defp assert_valid_schema(schema) do
     unless meta?(schema) do
-      case ExJsonSchema.Validator.validate(resolve(Draft4.schema), schema) do
+      case Validator.validate(resolve(Draft4.schema), schema) do
         {:error, errors} ->
           raise InvalidSchemaError, message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
         _ -> nil

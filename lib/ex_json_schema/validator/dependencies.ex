@@ -15,7 +15,7 @@ defmodule ExJsonSchema.Validator.Dependencies do
   def validate(_, _, _), do: []
 
   defp validate_dependency(root, _, schema, data) when is_map(schema) do
-    Validator.validate(root, schema, data)
+    Validator.validation_errors(root, schema, data)
   end
 
   defp validate_dependency(_, property, dependencies, data) do

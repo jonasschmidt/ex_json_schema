@@ -7,7 +7,7 @@ defmodule ExJsonSchema.Validator.Items do
     items
     |> Enum.with_index
     |> Enum.flat_map(fn {item, index} ->
-      Validator.validate(root, schema, item, [index])
+      Validator.validation_errors(root, schema, item, [index])
     end)
   end
 
@@ -29,7 +29,7 @@ defmodule ExJsonSchema.Validator.Items do
   end
 
   defp validate_item(root, schema, item, index) do
-    Validator.validate(root, schema, item, [index])
+    Validator.validation_errors(root, schema, item, [index])
   end
 
   defp additional_items_schema(schema = %{}), do: schema
