@@ -1,13 +1,14 @@
 defmodule ExJsonSchema.Validator.Items do
-  alias ExJsonSchema.{Schema, Validator}
+  alias ExJsonSchema.Schema
+  alias ExJsonSchema.Validator
   alias ExJsonSchema.Schema.Root
 
-  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: Validator.errors_with_list_paths
+  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: Validator.errors
   def validate(root, %{"items" => schema = %{}}, items) when is_list(items) do
     items
     |> Enum.with_index
     |> Enum.flat_map(fn {item, index} ->
-      Validator.validation_errors(root, schema, item, [index])
+      Validator.validation_errors(root, schema, item, "/#{index}")
     end)
   end
 
@@ -23,11 +24,11 @@ defmodule ExJsonSchema.Validator.Items do
   def validate(_, _, _), do: []
 
   defp validate_item(_, nil, _, index) do
-    [{"Schema does not allow additional items.", [index]}]
+    [{"Schema does not allow additional items.", "/#{index}"}]
   end
 
   defp validate_item(root, schema, item, index) do
-    Validator.validation_errors(root, schema, item, [index])
+    Validator.validation_errors(root, schema, item, "/#{index}")
   end
 
   defp additional_items_schema(schema = %{}), do: schema
