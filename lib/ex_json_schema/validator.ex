@@ -8,11 +8,10 @@ defmodule ExJsonSchema.Validator do
   alias ExJsonSchema.Schema.Root
 
   @type errors :: [{String.t, String.t}] | []
-  @type errors_with_list_paths :: [{String.t, [String.t | integer]}] | []
 
   @spec validate(Root.t, ExJsonSchema.data) :: :ok | {:error, errors}
   def validate(root = %Root{}, data) do
-    errors = validation_errors(root, root.schema, data, ["#"]) |> errors_with_string_paths
+    errors = validation_errors(root, root.schema, data, "#")
     case Enum.empty?(errors) do
       true -> :ok
       false -> {:error, errors}
@@ -24,10 +23,10 @@ defmodule ExJsonSchema.Validator do
     validate(Schema.resolve(schema), data)
   end
 
-  @spec validation_errors(Root.t, Schema.resolved, ExJsonSchema.data, [String.t | integer]) :: errors_with_list_paths
-  def validation_errors(root, schema, data, path \\ []) do
+  @spec validation_errors(Root.t, Schema.resolved, ExJsonSchema.data, [String.t | integer]) :: errors
+  def validation_errors(root, schema, data, path \\ "") do
     Enum.flat_map(schema, &validate_aspect(root, schema, &1, data))
-    |> Enum.map(fn {msg, p} -> {msg, path ++ p} end)
+    |> Enum.map(fn {msg, p} -> {msg, path <> p} end)
   end
 
   @spec valid?(Root.t, ExJsonSchema.data) :: boolean
@@ -38,10 +37,6 @@ defmodule ExJsonSchema.Validator do
 
   @spec valid?(Root.t, Schema.resolved, ExJsonSchema.data) :: boolean
   def valid?(root, schema, data), do: validation_errors(root, schema, data) |> Enum.empty?
-
-  defp errors_with_string_paths(errors) do
-    Enum.map errors, fn {msg, path} -> {msg, Enum.join(path, "/")} end
-  end
 
   defp validate_aspect(root, _, {"$ref", path}, data) do
     schema = Schema.get_ref_schema(root, path)
@@ -56,14 +51,14 @@ defmodule ExJsonSchema.Validator do
       false ->
         [{"Expected all of the schemata to match, " <>
           "but the schemata at the following indexes did not: " <>
-          "#{Enum.join(invalid_indexes, ", ")}.", []}]
+          "#{Enum.join(invalid_indexes, ", ")}.", ""}]
     end
   end
 
   defp validate_aspect(root, _, {"anyOf", any_of}, data) do
     case Enum.any?(any_of, &valid?(root, &1, data)) do
       true -> []
-      false -> [{"Expected any of the schemata to match but none did.", []}]
+      false -> [{"Expected any of the schemata to match but none did.", ""}]
     end
   end
 
@@ -71,20 +66,20 @@ defmodule ExJsonSchema.Validator do
     valid_indexes = validation_result_indexes(root, one_of, data, &(elem(&1, 0)))
 
     case Enum.empty?(valid_indexes) do
-      true -> [{"Expected exactly one of the schemata to match, but none of them did.", []}]
+      true -> [{"Expected exactly one of the schemata to match, but none of them did.", ""}]
       false -> if Enum.count(valid_indexes) == 1 do
           []
         else
           [{"Expected exactly one of the schemata to match, " <>
             "but the schemata at the following indexes did: " <>
-            "#{Enum.join(valid_indexes, ", ")}.", []}]
+            "#{Enum.join(valid_indexes, ", ")}.", ""}]
         end
     end
   end
 
   defp validate_aspect(root, _, {"not", not_schema}, data) do
     case valid?(root, not_schema, data) do
-      true -> [{"Expected schema not to match but it did.", []}]
+      true -> [{"Expected schema not to match but it did.", ""}]
       false -> []
     end
   end
@@ -100,14 +95,14 @@ defmodule ExJsonSchema.Validator do
   defp validate_aspect(_, _, {"minProperties", min_properties}, data) when is_map(data) do
     case Map.size(data) >= min_properties do
       true -> []
-      false -> [{"Expected a minimum of #{min_properties} properties but got #{Map.size(data)}", []}]
+      false -> [{"Expected a minimum of #{min_properties} properties but got #{Map.size(data)}", ""}]
     end
   end
 
   defp validate_aspect(_, _, {"maxProperties", max_properties}, data) when is_map(data) do
     case Map.size(data) <= max_properties do
       true -> []
-      false -> [{"Expected a maximum of #{max_properties} properties but got #{Map.size(data)}", []}]
+      false -> [{"Expected a maximum of #{max_properties} properties but got #{Map.size(data)}", ""}]
     end
   end
 
@@ -115,7 +110,7 @@ defmodule ExJsonSchema.Validator do
     Enum.flat_map List.wrap(required), fn property ->
       case Map.has_key?(data, property) do
         true -> []
-        false -> [{"Required property #{property} was not present.", []}]
+        false -> [{"Required property #{property} was not present.", ""}]
       end
     end
   end
@@ -131,28 +126,28 @@ defmodule ExJsonSchema.Validator do
   defp validate_aspect(_, _, {"minItems", min_items}, items) when is_list(items) do
     case (count = Enum.count(items)) >= min_items do
       true -> []
-      false -> [{"Expected a minimum of #{min_items} items but got #{count}.", []}]
+      false -> [{"Expected a minimum of #{min_items} items but got #{count}.", ""}]
     end
   end
 
   defp validate_aspect(_, _, {"maxItems", max_items}, items) when is_list(items) do
     case (count = Enum.count(items)) <= max_items do
       true -> []
-      false -> [{"Expected a maximum of #{max_items} items but got #{count}.", []}]
+      false -> [{"Expected a maximum of #{max_items} items but got #{count}.", ""}]
     end
   end
 
   defp validate_aspect(_, _, {"uniqueItems", true}, items) when is_list(items) do
     case Enum.uniq(items) == items do
       true -> []
-      false -> [{"Expected items to be unique but they were not.", []}]
+      false -> [{"Expected items to be unique but they were not.", ""}]
     end
   end
 
   defp validate_aspect(_, _, {"enum", enum}, data) do
     case Enum.any?(enum, &(&1 === data)) do
       true -> []
-      false -> [{"Value #{inspect(data)} is not allowed in enum.", []}]
+      false -> [{"Value #{inspect(data)} is not allowed in enum.", ""}]
     end
   end
 
@@ -161,7 +156,7 @@ defmodule ExJsonSchema.Validator do
     fun = if exclusive?, do: &Kernel.>/2, else: &Kernel.>=/2
     case fun.(data, minimum) do
       true -> []
-      false -> [{"Expected the value to be #{if exclusive?, do: ">", else: ">="} #{minimum}", []}]
+      false -> [{"Expected the value to be #{if exclusive?, do: ">", else: ">="} #{minimum}", ""}]
     end
   end
 
@@ -170,7 +165,7 @@ defmodule ExJsonSchema.Validator do
     fun = if exclusive?, do: &Kernel.</2, else: &Kernel.<=/2
     case fun.(data, maximum) do
       true -> []
-      false -> [{"Expected the value to be #{if exclusive?, do: "<", else: "<="} #{maximum}", []}]
+      false -> [{"Expected the value to be #{if exclusive?, do: "<", else: "<="} #{maximum}", ""}]
     end
   end
 
@@ -178,28 +173,28 @@ defmodule ExJsonSchema.Validator do
     factor = data / multiple_of
     case Float.floor(factor) == factor do
       true -> []
-      false -> [{"Expected value to be a multiple of #{multiple_of} but got #{data}.", []}]
+      false -> [{"Expected value to be a multiple of #{multiple_of} but got #{data}.", ""}]
     end
   end
 
   defp validate_aspect(_, _, {"minLength", min_length}, data) when is_binary(data) do
     case (length = String.length(data)) >= min_length do
       true -> []
-      false -> [{"Expected value to have a minimum length of #{min_length} but was #{length}.", []}]
+      false -> [{"Expected value to have a minimum length of #{min_length} but was #{length}.", ""}]
     end
   end
 
   defp validate_aspect(_, _, {"maxLength", max_length}, data) when is_binary(data) do
     case (length = String.length(data)) <= max_length do
       true -> []
-      false -> [{"Expected value to have a maximum length of #{max_length} but was #{length}.", []}]
+      false -> [{"Expected value to have a maximum length of #{max_length} but was #{length}.", ""}]
     end
   end
 
   defp validate_aspect(_, _, {"pattern", pattern}, data) when is_binary(data) do
     case pattern |> Regex.compile! |> Regex.match?(data) do
       true -> []
-      false -> [{"String #{inspect(data)} does not match pattern #{inspect(pattern)}.", []}]
+      false -> [{"String #{inspect(data)} does not match pattern #{inspect(pattern)}.", ""}]
     end
   end
 
