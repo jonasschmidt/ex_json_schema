@@ -3,25 +3,17 @@ defmodule ExJsonSchema.ValidatorTest do
 
   import ExJsonSchema.Validator
 
+  alias ExJsonSchema.Schema
+
   test "empty schema is valid" do
     assert valid?(%{}, %{"foo" => "bar"}) == true
   end
 
-  test "validating a fragment" do
-    root = ExJsonSchema.Schema.resolve(%{
-      "type" => "object",
-      "properties" => %{
-        "foo" => %{"$ref" => "#/definitions/Foo"}
-      },
-      "definitions" => %{
-        "Foo" => %{
-          "type" => "integer"
-        }
-      }
-    })
-    fragment = root.schema["properties"]["foo"]
-    assert validate(root, fragment, "foo") == {:error, [{"Type mismatch. Expected Integer but got String.", "#"}]}
-    assert valid?(root, fragment, 123)
+  test "validating a fragment with a partial schema" do
+    schema = Schema.resolve(%{"properties" => %{"foo" => %{"$ref" => "http://localhost:8000/subschema.json#/foo"}}})
+    fragment = Schema.get_ref_schema(schema, "#/properties/foo")
+    assert validate(schema, fragment, "foo") == {:error, [{"Type mismatch. Expected Integer but got String.", "#"}]}
+    assert valid?(schema, fragment, 123)
   end
 
   test "required properties are not validated when the data is not a map" do

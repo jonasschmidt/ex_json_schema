@@ -11,7 +11,8 @@ defmodule ExJsonSchema.Schema do
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 
-  @type resolved :: %{String.t => ExJsonSchema.json_value | (Root.t -> {Root.t, resolved})}
+  @type resolved :: %{String.t => ExJsonSchema.json_value | ref_path}
+  @type ref_path :: [:root | String.t]
 
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
@@ -22,14 +23,10 @@ defmodule ExJsonSchema.Schema do
   @spec resolve(ExJsonSchema.json) :: Root.t | no_return
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
-  @spec get_ref_schema(Root.t, [:root | String.t]) :: ExJsonSchema.json
-  def get_ref_schema(root = %Root{}, [:root | path] = ref) do
-    get_ref_schema_with_schema(root.schema, path, ref)
-  end
-
-  def get_ref_schema(root = %Root{}, [url | path] = ref) when is_binary(url) do
-    get_ref_schema_with_schema(root.refs[url], path, ref)
-  end
+  @spec get_ref_schema(Root.t, ref_path | ExJsonSchema.json_path) :: resolved
+  def get_ref_schema(root = %Root{}, path) when is_binary(path), do: get_ref_schema(root, elem(resolve_ref(root, path), 1))
+  def get_ref_schema(root = %Root{}, [:root | path] = ref), do: get_ref_schema(root.schema, path, ref)
+  def get_ref_schema(root = %Root{}, [url | path] = ref) when is_binary(url), do: get_ref_schema(root.refs[url], path, ref)
 
   defp resolve_root(root) do
     assert_supported_schema_version(Map.get(root.schema, "$schema", @current_draft_schema_url <> "#"))
@@ -202,21 +199,12 @@ defmodule ExJsonSchema.Schema do
     String.starts_with?(Map.get(schema, "id", ""), @draft4_schema_url)
   end
 
-  defp get_ref_schema_with_schema(nil, _, ref) do
-    raise InvalidSchemaError, message: "reference #{ref_to_string(ref)} could not be resolved"
-  end
-
-  defp get_ref_schema_with_schema(schema, [], _) do
-    schema
-  end
-
-  defp get_ref_schema_with_schema(schema, [key | path], ref) when is_binary(key) do
-    get_ref_schema_with_schema(Map.get(schema, key), path, ref)
-  end
-
-  defp get_ref_schema_with_schema(schema, [idx | path], ref) when is_integer(idx) do
+  defp get_ref_schema(nil, _, ref), do: raise InvalidSchemaError, message: "reference #{ref_to_string(ref)} could not be resolved"
+  defp get_ref_schema(schema, [], _), do: schema
+  defp get_ref_schema(schema, [key | path], ref) when is_binary(key), do: get_ref_schema(Map.get(schema, key), path, ref)
+  defp get_ref_schema(schema, [idx | path], ref) when is_integer(idx) do
     try do
-      get_ref_schema_with_schema(:lists.nth(idx + 1, schema), path, ref)
+      get_ref_schema(:lists.nth(idx + 1, schema), path, ref)
     catch
       :error, :function_clause ->
         raise InvalidSchemaError, message: "reference #{ref_to_string(ref)} could not be resolved"
