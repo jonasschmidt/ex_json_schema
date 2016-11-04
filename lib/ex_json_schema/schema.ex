@@ -60,18 +60,9 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp resolve_with_root(root, schema, scope \\ "")
-
-  defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_binary(id) do
-    do_resolve(root, schema, scope <> id)
-  end
-
-  defp resolve_with_root(root, schema = %{}, scope) do
-    do_resolve(root, schema, scope)
-  end
-
-  defp resolve_with_root(root, non_schema, _scope) do
-    {root, non_schema}
-  end
+  defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_binary(id), do: do_resolve(root, schema, scope <> id)
+  defp resolve_with_root(root, schema = %{}, scope), do: do_resolve(root, schema, scope)
+  defp resolve_with_root(root, non_schema, _scope), do: {root, non_schema}
 
   defp do_resolve(root, schema, scope) do
     {root, schema} = Enum.reduce schema, {root, %{}}, fn (property, {root, schema}) ->
@@ -95,8 +86,12 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp resolve_property(root, {"$ref", ref}, scope) do
-    ref = String.replace(scope <> ref, "##", "#")
-    {root, path} = resolve_ref(root, ref)
+    scoped_ref = case ref do
+      "http://" <> _ -> ref
+      "https://" <> _ -> ref
+      _else -> scope <> ref |> String.replace("##", "#")
+    end
+    {root, path} = resolve_ref(root, scoped_ref)
     {root, {"$ref", path}}
   end
 
