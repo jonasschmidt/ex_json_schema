@@ -2,7 +2,7 @@ defmodule ExJsonSchema.Validator.Properties do
   alias ExJsonSchema.{Schema, Validator}
   alias ExJsonSchema.Schema.Root
 
-  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: Validator.errors_with_list_paths
+  @spec validate(Root.t, Schema.resolved, ExJsonSchema.json) :: Validator.errors
   def validate(root, schema, properties = %{}) do
     validated_known_properties = validate_known_properties(root, schema, properties)
     validation_errors(validated_known_properties) ++
@@ -23,7 +23,7 @@ defmodule ExJsonSchema.Validator.Properties do
     schema
     |> Enum.filter(&Map.has_key?(properties, elem(&1, 0)))
     |> Enum.map(fn {name, property_schema} ->
-      {name, Validator.validation_errors(root, property_schema, properties[name], [name])}
+      {name, Validator.validation_errors(root, property_schema, properties[name], "/#{name}")}
     end)
   end
 
@@ -36,16 +36,16 @@ defmodule ExJsonSchema.Validator.Properties do
   defp validate_pattern_property(root, {pattern, schema}, properties) do
     properties_matching(properties, pattern)
     |> Enum.map(fn {name, property} ->
-      {name, Validator.validation_errors(root, schema, property, [name])}
+      {name, Validator.validation_errors(root, schema, property, "/#{name}")}
     end)
   end
 
   defp validate_additional_properties(root, schema, properties) when is_map(schema) do
-    Enum.flat_map properties, fn {name, property} -> Validator.validation_errors(root, schema, property, [name]) end
+    Enum.flat_map properties, fn {name, property} -> Validator.validation_errors(root, schema, property, "/#{name}") end
   end
 
   defp validate_additional_properties(_, false, properties) when map_size(properties) > 0 do
-    Enum.map properties, fn {name, _} -> {"Schema does not allow additional properties.", [name]} end
+    Enum.map properties, fn {name, _} -> {"Schema does not allow additional properties.", "/#{name}"} end
   end
 
   defp validate_additional_properties(_, _, _), do: []
