@@ -7,6 +7,10 @@ defmodule ExJsonSchema.Schema do
     defexception message: "invalid schema"
   end
 
+  defmodule UndefinedRemoteSchemaResolverError do
+    defexception message: "trying to resolve a remote schema but no remote schema resolver function is defined"
+  end
+
   alias ExJsonSchema.Schema.Draft4
   alias ExJsonSchema.Schema.Root
 
@@ -162,7 +166,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp remote_schema_resolver do
-    Application.get_env(:ex_json_schema, :remote_schema_resolver)
+    Application.get_env(:ex_json_schema, :remote_schema_resolver) || fn _url -> raise UndefinedRemoteSchemaResolverError end
   end
 
   defp assert_reference_valid(path, root, _ref) do
