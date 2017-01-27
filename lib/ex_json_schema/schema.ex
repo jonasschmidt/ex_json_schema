@@ -147,16 +147,16 @@ defmodule ExJsonSchema.Schema do
 
   defp fetch_and_resolve_remote_schema(root, url)
       when url == @current_draft_schema_url or url == @draft4_schema_url do
-    resolve_remote_schema(root, url, Draft4.schema)
+    resolve_remote_schema(root, url, {url, Draft4.schema})
   end
 
   defp fetch_and_resolve_remote_schema(root, url) do
-    resolve_remote_schema(root, url, remote_schema_resolver.(url))
+    resolve_remote_schema(root, url, remote_schema_resolver.(root, url))
   end
 
-  defp resolve_remote_schema(root, url, remote_schema) do
+  defp resolve_remote_schema(root, url, {remote_url, remote_schema}) do
     root = root_with_ref(root, url, remote_schema)
-    resolved_root = resolve_root(%{root | schema: remote_schema, location: url})
+    resolved_root = resolve_root(%{root | schema: remote_schema, location: remote_url})
     root = %{root | refs: resolved_root.refs}
     root_with_ref(root, url, resolved_root.schema)
   end
@@ -166,7 +166,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp remote_schema_resolver do
-    Application.get_env(:ex_json_schema, :remote_schema_resolver) || fn _url -> raise UndefinedRemoteSchemaResolverError end
+    Application.get_env(:ex_json_schema, :remote_schema_resolver) || fn _root, _url -> raise UndefinedRemoteSchemaResolverError end
   end
 
   defp assert_reference_valid(path, root, _ref) do
