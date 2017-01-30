@@ -147,11 +147,11 @@ defmodule ExJsonSchema.Schema do
 
   defp fetch_and_resolve_remote_schema(root, url)
       when url == @current_draft_schema_url or url == @draft4_schema_url do
-    resolve_remote_schema(root, url, {url, Draft4.schema})
+    resolve_remote_schema(root, url, Draft4.schema)
   end
 
   defp fetch_and_resolve_remote_schema(root, url) do
-    resolve_remote_schema(root, url, remote_schema_resolver.(root, url))
+    resolve_remote_schema(root, url, remote_schema_resolver(root, url))
   end
 
   defp resolve_remote_schema(root, url, {remote_url, remote_schema}) do
@@ -160,13 +160,32 @@ defmodule ExJsonSchema.Schema do
     root = %{root | refs: resolved_root.refs}
     root_with_ref(root, url, resolved_root.schema)
   end
+  defp resolve_remote_schema(root, url, remote_schema) do
+    root = root_with_ref(root, url, remote_schema)
+    resolved_root = resolve_root(%{root | schema: remote_schema, location: url})
+    root = %{root | refs: resolved_root.refs}
+    root_with_ref(root, url, resolved_root.schema)
+  end
 
   defp root_with_ref(root, url, ref) do
     %{root | refs: Map.put(root.refs, url, ref)}
   end
 
-  defp remote_schema_resolver do
-    Application.get_env(:ex_json_schema, :remote_schema_resolver) || fn _root, _url -> raise UndefinedRemoteSchemaResolverError end
+  defp remote_schema_resolver(root, url) do
+    remote_schema_resolver(root, url, Application.get_env(:ex_json_schema, :remote_schema_resolver))
+  end
+  defp remote_schema_resolver(_, _, nil) do
+    raise UndefinedRemoteSchemaResolverError
+  end
+  defp remote_schema_resolver(root, url, fun) do
+    {_, arity} = :erlang.fun_info(fun, :arity)
+    remote_schema_resolver(root, url, fun, arity)
+  end
+  defp remote_schema_resolver(_root, url, fun, 1) do
+    fun.(url)
+  end
+  defp remote_schema_resolver(root, url, fun, 2) do
+    fun.(root, url)
   end
 
   defp assert_reference_valid(path, root, _ref) do
