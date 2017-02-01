@@ -5,7 +5,7 @@ defmodule ExJsonSchema.ConfigTest do
 
   @schema %{"$ref" => "http://somewhere/schema.json"}
 
-  def test_resolver(url), do: %{"foo" => "bar"}
+  def test_resolver(url), do: %{"foo" => url}
 
   setup context do
     resolver = Application.get_env(:ex_json_schema, :remote_schema_resolver)
@@ -20,6 +20,6 @@ defmodule ExJsonSchema.ConfigTest do
 
   test "defining a remote schema resolver with module and function name" do
     Application.put_env(:ex_json_schema, :remote_schema_resolver, {ExJsonSchema.ConfigTest, :test_resolver})
-    assert resolve(@schema).refs == %{"http://somewhere/schema.json" => %{"foo" => "bar"}}
+    assert resolve(@schema).refs == %{"http://somewhere/schema.json" => %{"foo" => "http://somewhere/schema.json"}}
   end
 end
