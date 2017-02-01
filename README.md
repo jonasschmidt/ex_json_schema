@@ -20,6 +20,8 @@ Update your dependencies with:
 $ mix deps.get
 ```
 
+### Loading remote schemata
+
 If you have remote schemata that need to be fetched at runtime, you have to register a function that takes a URL and returns a `Map` of the parsed JSON. So in your Mix configuration in `config/config.exs` you should have something like this:
 
 ```elixir
