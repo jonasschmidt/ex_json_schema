@@ -7,10 +7,10 @@ defmodule ExJsonSchema.ConfigTest do
 
   def test_resolver(url), do: %{"foo" => url}
 
-  setup context do
+  setup do
     resolver = Application.get_env(:ex_json_schema, :remote_schema_resolver)
     on_exit fn -> Application.put_env(:ex_json_schema, :remote_schema_resolver, resolver) end
-    Map.put(context, :resolver, resolver)
+    :ok
   end
 
   test "raising an exception when trying to resolve a remote schema and no remote schema resolver is defined" do
