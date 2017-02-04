@@ -152,7 +152,7 @@ defmodule NExJsonSchema.Schema do
   end
 
   defp fetch_and_resolve_remote_schema(root, url) do
-    resolve_remote_schema(root, url, remote_schema_resolver.(url))
+    resolve_remote_schema(root, url, remote_schema_resolver().(url))
   end
 
   defp resolve_remote_schema(root, url, remote_schema) do
