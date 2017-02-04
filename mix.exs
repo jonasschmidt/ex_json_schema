@@ -4,7 +4,7 @@ defmodule NExJsonSchema.Mixfile do
   def project do
     [
       app: :nex_json_schema,
-      version: "0.5.2",
+      version: "0.5.4",
       elixir: "~> 1.0",
       description: "A JSON Schema validator with full support for the draft 4 specification and zero dependencies.",
       deps: deps(),
@@ -35,6 +35,7 @@ defmodule NExJsonSchema.Mixfile do
       {:httpoison, "~> 0.8", only: :test},
       {:poison, "~> 1.5", only: :test},
       {:excoveralls, "~> 0.4", only: :test},
+      {:mix_test_watch, "~> 0.2.6", only: [:dev, :test]},
       {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end

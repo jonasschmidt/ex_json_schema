@@ -32,6 +32,15 @@ defmodule NExJsonSchema.SchemaTest do
       fn -> resolve(schema) end
   end
 
+  test "resolving an absolute reference in a scoped schema" do
+    schema = %{
+      "id" => "http://foo.bar/schema.json#",
+      "$ref" => "http://localhost:1234/subSchemas.json#/integer"
+    }
+    resolved = resolve(schema)
+    assert get_ref_schema(resolved, resolved.schema["$ref"]) == %{"type" => "integer"}
+  end
+
   test "resolves a reference" do
     schema = %{"foo" => %{"$ref" => "#/bar"}, "bar" => "baz"}
     resolved = resolve(schema)

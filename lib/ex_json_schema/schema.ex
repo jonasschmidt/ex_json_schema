@@ -7,6 +7,10 @@ defmodule NExJsonSchema.Schema do
     defexception message: "invalid schema"
   end
 
+  defmodule UndefinedRemoteSchemaResolverError do
+    defexception message: "trying to resolve a remote schema but no remote schema resolver function is defined"
+  end
+
   alias NExJsonSchema.Schema.Draft4
   alias NExJsonSchema.Schema.Root
 
@@ -60,18 +64,9 @@ defmodule NExJsonSchema.Schema do
   end
 
   defp resolve_with_root(root, schema, scope \\ "")
-
-  defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_binary(id) do
-    do_resolve(root, schema, scope <> id)
-  end
-
-  defp resolve_with_root(root, schema = %{}, scope) do
-    do_resolve(root, schema, scope)
-  end
-
-  defp resolve_with_root(root, non_schema, _scope) do
-    {root, non_schema}
-  end
+  defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_binary(id), do: do_resolve(root, schema, scope <> id)
+  defp resolve_with_root(root, schema = %{}, scope), do: do_resolve(root, schema, scope)
+  defp resolve_with_root(root, non_schema, _scope), do: {root, non_schema}
 
   defp do_resolve(root, schema, scope) do
     {root, schema} = Enum.reduce schema, {root, %{}}, fn (property, {root, schema}) ->
@@ -95,8 +90,12 @@ defmodule NExJsonSchema.Schema do
   end
 
   defp resolve_property(root, {"$ref", ref}, scope) do
-    ref = String.replace(scope <> ref, "##", "#")
-    {root, path} = resolve_ref(root, ref)
+    scoped_ref = case ref do
+      "http://" <> _ -> ref
+      "https://" <> _ -> ref
+      _else -> scope <> ref |> String.replace("##", "#")
+    end
+    {root, path} = resolve_ref(root, scoped_ref)
     {root, {"$ref", path}}
   end
 
@@ -152,7 +151,7 @@ defmodule NExJsonSchema.Schema do
   end
 
   defp fetch_and_resolve_remote_schema(root, url) do
-    resolve_remote_schema(root, url, remote_schema_resolver().(url))
+    resolve_remote_schema(root, url, fetch_remote_schema(url))
   end
 
   defp resolve_remote_schema(root, url, remote_schema) do
@@ -166,8 +165,15 @@ defmodule NExJsonSchema.Schema do
     %{root | refs: Map.put(root.refs, url, ref)}
   end
 
+  defp fetch_remote_schema(url) do
+    case remote_schema_resolver do
+      fun when is_function(fun) -> fun.(url)
+      {mod, fun_name} -> apply(mod, fun_name, [url])
+    end
+  end
+
   defp remote_schema_resolver do
-    Application.get_env(:nex_json_schema, :remote_schema_resolver)
+    Application.get_env(:nex_json_schema, :remote_schema_resolver) || fn _url -> raise UndefinedRemoteSchemaResolverError end
   end
 
   defp assert_reference_valid(path, root, _ref) do

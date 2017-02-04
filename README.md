@@ -10,7 +10,7 @@ Add the project to your Mix dependencies in `mix.exs`:
 
 ```elixir
 defp deps do
-  [{:nex_json_schema, "~> 0.5.1"}]
+  [{:nex_json_schema, "~> 0.5.4"}]
 end
 ```
 
@@ -20,12 +20,22 @@ Update your dependencies with:
 $ mix deps.get
 ```
 
+### Loading remote schemata
+
 If you have remote schemata that need to be fetched at runtime, you have to register a function that takes a URL and returns a `Map` of the parsed JSON. So in your Mix configuration in `config/config.exs` you should have something like this:
 
 ```elixir
 config :nex_json_schema,
   :remote_schema_resolver,
   fn url -> HTTPoison.get!(url).body |> Poison.decode! end
+```
+
+Alternatively, you can specify a module and function name for situations where using anonymous functions is not possible (i.e. working with Erlang releases):
+
+```elixir
+config :ex_json_schema,
+  :remote_schema_resolver,
+  {MyModule, :my_resolver}
 ```
 
 You do not have to do that for the official draft 4 meta-schema found at http://json-schema.org/draft-04/schema# though. That schema is bundled with the project and will work out of the box without any network calls.
