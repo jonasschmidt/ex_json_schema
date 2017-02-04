@@ -93,14 +93,14 @@ defmodule NExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"minProperties" => 2},
       %{"foo" => 1},
-      [{%{description: "expected a minimum of 2 properties but got 1", params: [min: 2], rule: :length}, "$"}])
+      [{%{description: "expected a minimum of 2 properties but got 1", params: %{min: 2}, rule: :length}, "$"}])
   end
 
   test "validation errors for maximum properties" do
     assert_validation_errors(
       %{"maxProperties" => 1},
       %{"foo" => 1, "bar" => 2},
-      [{%{description: "expected a maximum of 1 properties but got 2", params: [max: 1], rule: :length}, "$"}])
+      [{%{description: "expected a maximum of 1 properties but got 2", params: %{max: 1}, rule: :length}, "$"}])
   end
 
   test "validation errors for missing required properties" do
@@ -155,14 +155,14 @@ defmodule NExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"minItems" => 2},
       ["foo"],
-      [{%{description: "expected a minimum of 2 items but got 1", params: [min: 2], rule: :length}, "$"}])
+      [{%{description: "expected a minimum of 2 items but got 1", params: %{min: 2}, rule: :length}, "$"}])
   end
 
   test "validation errors for maximum items" do
     assert_validation_errors(
       %{"maxItems" => 2},
       ["foo", "bar", "baz"],
-      [{%{description: "expected a maximum of 2 items but got 3", params: [max: 2], rule: :length}, "$"}])
+      [{%{description: "expected a maximum of 2 items but got 3", params: %{max: 2}, rule: :length}, "$"}])
   end
 
   test "validation errors for non-unique items" do
@@ -183,37 +183,37 @@ defmodule NExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"properties" => %{"foo" => %{"minimum" => 2}, "bar" => %{"minimum" => 2, "exclusiveMinimum" => true}}},
       %{"foo" => 1, "bar" => 2}, [
-        {%{description: "expected the value to be > 2", params: [less_than: 2], rule: :number}, "$.bar"},
-        {%{description: "expected the value to be >= 2", params: [less_than_or_equal_to: 2], rule: :number}, "$.foo"}])
+        {%{description: "expected the value to be > 2", params: %{less_than: 2}, rule: :number}, "$.bar"},
+        {%{description: "expected the value to be >= 2", params: %{less_than_or_equal_to: 2}, rule: :number}, "$.foo"}])
   end
 
   test "validation errors for maximum values" do
     assert_validation_errors(
       %{"properties" => %{"foo" => %{"maximum" => 2}, "bar" => %{"maximum" => 2, "exclusiveMaximum" => true}}},
       %{"foo" => 3, "bar" => 2}, [
-        {%{description: "expected the value to be < 2", params: [greater_than: 2], rule: :number}, "$.bar"},
-        {%{description: "expected the value to be <= 2", params: [greater_than_or_equal_to: 2], rule: :number}, "$.foo"}])
+        {%{description: "expected the value to be < 2", params: %{greater_than: 2}, rule: :number}, "$.bar"},
+        {%{description: "expected the value to be <= 2", params: %{greater_than_or_equal_to: 2}, rule: :number}, "$.foo"}])
   end
 
   test "validation errors for multiples of" do
     assert_validation_errors(
       %{"multipleOf" => 2},
       5,
-      [{%{description: "expected value to be a multiple of 2 but got 5", params: [multiple_of: 2], rule: :number}, "$"}])
+      [{%{description: "expected value to be a multiple of 2 but got 5", params: %{multiple_of: 2}, rule: :number}, "$"}])
   end
 
   test "validation errors for minimum length" do
     assert_validation_errors(
       %{"minLength" => 4},
       "foo",
-      [{%{description: "expected value to have a minimum length of 4 but was 3", params: [min: 4], rule: :length}, "$"}])
+      [{%{description: "expected value to have a minimum length of 4 but was 3", params: %{min: 4}, rule: :length}, "$"}])
   end
 
   test "validation errors for maximum length" do
     assert_validation_errors(
       %{"maxLength" => 2},
       "foo",
-      [{%{description: "expected value to have a maximum length of 2 but was 3", params: [max: 2], rule: :length}, "$"}])
+      [{%{description: "expected value to have a maximum length of 2 but was 3", params: %{max: 2}, rule: :length}, "$"}])
   end
 
   test "validation errors for pattern mismatch" do

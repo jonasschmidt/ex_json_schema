@@ -123,7 +123,7 @@ defmodule NExJsonSchema.Validator do
       false -> [{%{
         description: "expected a minimum of #{min_properties} properties but got #{Map.size(data)}",
         rule: :length,
-        params: [min: min_properties]
+        params: %{min: min_properties}
       }, []}]
     end
   end
@@ -134,7 +134,7 @@ defmodule NExJsonSchema.Validator do
       false -> [{%{
         description: "expected a maximum of #{max_properties} properties but got #{Map.size(data)}",
         rule: :length,
-        params: [max: max_properties]
+        params: %{max: max_properties}
       }, []}]
     end
   end
@@ -166,7 +166,7 @@ defmodule NExJsonSchema.Validator do
       false -> [{%{
         description: "expected a minimum of #{min_items} items but got #{count}",
         rule: :length,
-        params: [min: min_items]
+        params: %{min: min_items}
       }, []}]
     end
   end
@@ -177,7 +177,7 @@ defmodule NExJsonSchema.Validator do
       false -> [{%{
         description: "expected a maximum of #{max_items} items but got #{count}",
         rule: :length,
-        params: [max: max_items]
+        params: %{max: max_items}
       }, []}]
     end
   end
@@ -237,7 +237,7 @@ defmodule NExJsonSchema.Validator do
       false -> [{%{
         description: "expected value to be a multiple of #{multiple_of} but got #{data}",
         rule: :number,
-        params: [multiple_of: multiple_of]
+        params: %{multiple_of: multiple_of}
       }, []}]
     end
   end
@@ -248,7 +248,7 @@ defmodule NExJsonSchema.Validator do
       false -> [{%{
         description: "expected value to have a minimum length of #{min_length} but was #{length}",
         rule: :length,
-        params: [min: min_length]
+        params: %{min: min_length}
       }, []}]
     end
   end
@@ -259,7 +259,7 @@ defmodule NExJsonSchema.Validator do
       false -> [{%{
         description: "expected value to have a maximum length of #{max_length} but was #{length}",
         rule: :length,
-        params: [max: max_length]
+        params: %{max: max_length}
       }, []}]
     end
   end
@@ -282,13 +282,13 @@ defmodule NExJsonSchema.Validator do
   defp validate_aspect(_, _, _, _), do: []
 
   defp get_number_validation_params(:minimum, value, true),
-    do: [less_than: value]
+    do: %{less_than: value}
   defp get_number_validation_params(:minimum, value, _),
-    do: [less_than_or_equal_to: value]
+    do: %{less_than_or_equal_to: value}
   defp get_number_validation_params(:maximum, value, true),
-    do: [greater_than: value]
+    do: %{greater_than: value}
   defp get_number_validation_params(:maximum, value, _),
-    do: [greater_than_or_equal_to: value]
+    do: %{greater_than_or_equal_to: value}
 
   defp validation_result_indexes(root, schemata, data, filter) do
     schemata
