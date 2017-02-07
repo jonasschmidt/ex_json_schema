@@ -214,6 +214,6 @@ defmodule ExJsonSchema.Validator do
     |> Enum.map(&valid?(root, &1, data))
     |> Enum.with_index
     |> Enum.filter(filter)
-    |> Dict.values
+    |> Enum.map(fn {_k, v} -> v end)
   end
 end

@@ -52,7 +52,7 @@ defmodule ExJsonSchema.Validator.Properties do
   defp validate_additional_properties(_, _, _), do: []
 
   defp validation_errors(validated_properties) do
-    validated_properties |> Dict.values |> List.flatten
+    validated_properties |> Enum.map(fn {_k, v} -> v end) |> List.flatten
   end
 
   defp properties_matching(properties, pattern) do
@@ -61,11 +61,11 @@ defmodule ExJsonSchema.Validator.Properties do
   end
 
   defp unvalidated_properties(properties, validated_properties) do
-    unvalidated = Set.difference(keys_as_set(properties), keys_as_set(validated_properties))
+    unvalidated = MapSet.difference(keys_as_set(properties), keys_as_set(validated_properties))
     Map.take(properties, unvalidated)
   end
 
   defp keys_as_set(properties) do
-    properties |> Dict.keys |> Enum.into(HashSet.new)
+    properties |> Enum.map(fn {k, _v} -> k end) |> Enum.into(MapSet.new)
   end
 end

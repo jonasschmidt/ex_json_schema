@@ -8,7 +8,7 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest.Helpers do
   end
 
   def schema_test_path(filename) do
-    Path.join(schema_tests_path, filename)
+    Path.join(schema_tests_path(), filename)
   end
 
   def load_schema_test(name) do
@@ -25,9 +25,9 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
   import ExJsonSchema.JsonSchemaTestSuiteTest.Helpers
   import ExJsonSchema.Validator, only: [valid?: 2]
 
-  @tests Path.wildcard("#{schema_tests_path}**/*.json")
+  @tests Path.wildcard("#{schema_tests_path()}**/*.json")
     |> Enum.map(fn path ->
-      path |> String.replace(schema_tests_path, "") |> String.replace(".json", "")
+      path |> String.replace(schema_tests_path(), "") |> String.replace(".json", "")
     end)
 
   @ignored_tests %{
