@@ -183,16 +183,16 @@ defmodule NExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"properties" => %{"foo" => %{"minimum" => 2}, "bar" => %{"minimum" => 2, "exclusiveMinimum" => true}}},
       %{"foo" => 1, "bar" => 2}, [
-        {%{description: "expected the value to be > 2", params: %{less_than: 2}, rule: :number}, "$.bar"},
-        {%{description: "expected the value to be >= 2", params: %{less_than_or_equal_to: 2}, rule: :number}, "$.foo"}])
+        {%{description: "expected the value to be > 2", params: %{greater_than: 2}, rule: :number}, "$.bar"},
+        {%{description: "expected the value to be >= 2", params: %{greater_than_or_equal_to: 2}, rule: :number}, "$.foo"}])
   end
 
   test "validation errors for maximum values" do
     assert_validation_errors(
       %{"properties" => %{"foo" => %{"maximum" => 2}, "bar" => %{"maximum" => 2, "exclusiveMaximum" => true}}},
       %{"foo" => 3, "bar" => 2}, [
-        {%{description: "expected the value to be < 2", params: %{greater_than: 2}, rule: :number}, "$.bar"},
-        {%{description: "expected the value to be <= 2", params: %{greater_than_or_equal_to: 2}, rule: :number}, "$.foo"}])
+        {%{description: "expected the value to be < 2", params: %{less_than: 2}, rule: :number}, "$.bar"},
+        {%{description: "expected the value to be <= 2", params: %{less_than_or_equal_to: 2}, rule: :number}, "$.foo"}])
   end
 
   test "validation errors for multiples of" do
