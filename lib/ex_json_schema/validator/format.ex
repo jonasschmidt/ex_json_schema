@@ -1,6 +1,7 @@
 defmodule NExJsonSchema.Validator.Format do
   alias NExJsonSchema.Validator
 
+  @date_regex ~r/^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$/
   @date_time_regex ~r/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$/
   @email_regex ~r<^[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*@(?:[A-Z0-9-]+\.)+[A-Z]{2,6}$>i
   @hostname_regex ~r/^((?=[a-z0-9-]{1,63}\.)(xn--)?[a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,63}$/i
@@ -21,6 +22,16 @@ defmodule NExJsonSchema.Validator.Format do
         description: "expected #{inspect(data)} to be a valid ISO 8601 date-time",
         rule: :datetime,
         params: [inspect(@date_time_regex)]
+      }
+    end)
+  end
+
+  defp do_validate("date", data) do
+    validate_with_regex(data, @date_regex, fn data ->
+      %{
+        description: "expected #{inspect(data)} to be a valid ISO 8601 date",
+        rule: :date,
+        params: [inspect(@date_regex)]
       }
     end)
   end

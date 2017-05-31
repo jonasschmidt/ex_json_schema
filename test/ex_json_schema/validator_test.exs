@@ -241,6 +241,13 @@ defmodule NExJsonSchema.ValidatorTest do
       [{%{description: "expected \"2012-12-12 12:12:12\" to be a valid ISO 8601 date-time", params: ["~r/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$/"], rule: :datetime}, "$"}])
   end
 
+  test "validation errors for date format" do
+    assert_validation_errors(
+      %{"format" => "date"},
+      "1988.12.12",
+      [{%{description: "expected \"1988.12.12\" to be a valid ISO 8601 date", params: ["~r/^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))([T\\s]((([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)([\\.,]\\d+(?!:))?)?(\\17[0-5]\\d([\\.,]\\d+)?)?([zZ]|([\\+-])([01]\\d|2[0-3]):?([0-5]\\d)?)?)?)?$/"], rule: :date}, "$"}])
+  end
+
   test "validation errors for email format" do
     assert_validation_errors(
       %{"format" => "email"},
