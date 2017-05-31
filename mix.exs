@@ -1,10 +1,12 @@
 defmodule NExJsonSchema.Mixfile do
   use Mix.Project
 
+  @version "0.6.1"
+
   def project do
     [
       app: :nex_json_schema,
-      version: "0.6.0",
+      version: @version,
       elixir: "~> 1.0",
       description: "A JSON Schema validator with full support for the draft 4 specification and zero dependencies.",
       deps: deps(),
