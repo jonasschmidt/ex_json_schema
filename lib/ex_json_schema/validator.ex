@@ -265,7 +265,7 @@ defmodule NExJsonSchema.Validator do
   end
 
   defp validate_aspect(_, _, {"pattern", pattern}, data) when is_binary(data) do
-    case pattern |> Regex.compile! |> Regex.match?(data) do
+    case pattern |> Regex.compile!("u") |> Regex.match?(data) do
       true -> []
       false -> [{%{
         description: "string does not match pattern #{inspect(pattern)}",
