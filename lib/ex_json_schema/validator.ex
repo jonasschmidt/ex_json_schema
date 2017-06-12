@@ -43,27 +43,35 @@ defmodule ExJsonSchema.Validator do
     Enum.map errors, fn {msg, path} -> {msg, Enum.join(path, "/")} end
   end
 
+  defp validate_anyof(_root, [], _data, errors) do {:error, errors} end
+  defp validate_anyof(root, [schema | schemas], data, errors) do
+    case validate(root, schema, data) do
+      [] -> :ok
+      errors_ -> validate_anyof(root, schemas, data, errors ++ errors_)
+    end
+  end
+
+  defp validate_allof(_root, [], _data) do [] end
+  defp validate_allof(root, [schema | schemas], data) do
+    case validate(root, schema, data) do
+      [] -> validate_allof(root, schemas, data)
+      errors -> errors
+    end
+  end
+
   defp validate_aspect(root, _, {"$ref", path}, data) do
     schema = Schema.get_ref_schema(root, path)
     validate(root, schema, data)
   end
 
   defp validate_aspect(root, _, {"allOf", all_of}, data) do
-    invalid_indexes = validation_result_indexes(root, all_of, data, &(!elem(&1, 0)))
-
-    case Enum.empty?(invalid_indexes) do
-      true -> []
-      false ->
-        [{"Expected all of the schemata to match, " <>
-          "but the schemata at the following indexes did not: " <>
-          "#{Enum.join(invalid_indexes, ", ")}.", []}]
-    end
+    validate_allof(root, all_of, data)
   end
 
   defp validate_aspect(root, _, {"anyOf", any_of}, data) do
-    case Enum.any?(any_of, &valid?(root, &1, data)) do
-      true -> []
-      false -> [{"Expected any of the schemata to match but none did.", []}]
+    case validate_anyof(root, any_of, data, []) do
+      :ok -> []
+      {:error, errors} -> errors
     end
   end
 
@@ -115,7 +123,7 @@ defmodule ExJsonSchema.Validator do
     Enum.flat_map List.wrap(required), fn property ->
       case Map.has_key?(data, property) do
         true -> []
-        false -> [{"Required property #{property} was not present.", []}]
+        false -> [{"Required property was not present.", [property]}]
       end
     end
   end

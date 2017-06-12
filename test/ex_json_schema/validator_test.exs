@@ -32,14 +32,14 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"allOf" => [%{"type" => "number"}, %{"type" => "integer"}]},
       "foo",
-      [{"Expected all of the schemata to match, but the schemata at the following indexes did not: 0, 1.", "#"}])
+      [{"Type mismatch. Expected Number but got String.", "#"}])
   end
 
   test "validation errors for not matching any of the schemata" do
     assert_validation_errors(
       %{"anyOf" => [%{"type" => "number"}, %{"type" => "integer"}]},
       "foo",
-      [{"Expected any of the schemata to match but none did.", "#"}])
+      [{"Type mismatch. Expected Number but got String.", "#"}, {"Type mismatch. Expected Integer but got String.", "#"}])
   end
 
   test "validation errors for matching more than one of the schemata when exactly one should be matched" do
@@ -107,8 +107,8 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"required" => ["foo", "bar", "baz"]},
       %{"foo" => 1}, [
-        {"Required property bar was not present.", "#"},
-        {"Required property baz was not present.", "#"}])
+        {"Required property was not present.", "#/bar"},
+        {"Required property was not present.", "#/baz"}])
   end
 
   test "validation errors for dependent properties" do
