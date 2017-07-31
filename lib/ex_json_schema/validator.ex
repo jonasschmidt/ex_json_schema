@@ -26,7 +26,8 @@ defmodule NExJsonSchema.Validator do
 
   @spec validate(Root.t, Schema.resolved, NExJsonSchema.data, [String.t | integer]) :: errors_with_list_paths
   def validate(root, schema, data, path \\ []) do
-    Enum.flat_map(schema, &validate_aspect(root, schema, &1, data))
+    schema
+    |> Enum.flat_map(&validate_aspect(root, schema, &1, data))
     |> Enum.map(fn {%{} = rules, p} -> {rules, path ++ p} end)
   end
 
@@ -147,7 +148,7 @@ defmodule NExJsonSchema.Validator do
           description: "required property #{property} was not present",
           rule: :required,
           params: []
-        }, []}]
+        }, [property]}]
       end
     end
   end

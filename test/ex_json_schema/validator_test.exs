@@ -21,6 +21,46 @@ defmodule NExJsonSchema.ValidatorTest do
       [{%{description: "type mismatch. Expected Object but got String", params: ["object"], rule: :cast}, "$.bar"}])
   end
 
+  test "validation path errors in nested map" do
+    schema = %{
+      "type" => "object",
+      "required" => ["foo", "bar"],
+      "properties" => %{
+        "foo" => %{"type" => "integer"},
+        "bar" => %{
+          "type" => "object",
+          "additionalProperties" => false,
+          "properties" => %{
+            "max" => %{"maximum" => 2},
+            "array" => %{"type" => "array"},
+            "pattern" => %{"pattern" => "^b..$"},
+            "minLength" => %{"minLength" => 10},
+          }
+        }
+      }
+    }
+    data = %{"bar" => %{
+        "int" => "string",
+        "max" => 3,
+        "array" => "not an array",
+        "pattern" => "",
+        "minLength" => "short",
+      }}
+    {:error, errors} = validate(schema, data)
+    Enum.each(errors, fn {%{rule: rule}, path} ->
+      expected_path = 
+        case rule do
+          :cast -> "$.bar.array"
+          :number -> "$.bar.max"
+          :length -> "$.bar.minLength"
+          :format -> "$.bar.pattern"
+          :schema -> "$.bar.int"
+          :required -> "$.foo"
+        end
+      assert expected_path == path
+    end)
+  end
+
   test "validation errors with a remote reference within a remote reference" do
     assert_validation_errors(
       %{"$ref" => "http://localhost:8000/subschema.json#/foo"},
@@ -107,15 +147,15 @@ defmodule NExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"required" => ["foo", "bar", "baz"]},
       %{"foo" => 1}, [
-        {%{description: "required property bar was not present", params: [], rule: :required}, "$"},
-        {%{description: "required property baz was not present", params: [], rule: :required}, "$"}])
+        {%{description: "required property bar was not present", params: [], rule: :required}, "$.bar"},
+        {%{description: "required property baz was not present", params: [], rule: :required}, "$.baz"}])
   end
 
   test "validation errors for dependent properties" do
     assert_validation_errors(
       %{"dependencies" => %{"foo" => ["bar", "baz"]}},
       %{"foo" => 1, "bar" => 2},
-      [{%{description: "property foo depends on baz to be present but it was not", params: ["baz"], rule: :dependency}, "$"}])
+      [{%{description: "property foo depends on baz to be present but it was not", params: ["baz"], rule: :dependency}, "$.foo"}])
   end
 
   test "validation errors for schema dependencies" do

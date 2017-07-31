@@ -1,16 +1,23 @@
 language: elixir
 elixir:
-  - 1.2.6
   - 1.3.4
   - 1.4.1
+  - 1.5.0
 otp_release:
   - 18.3
   - 19.2
+  - 20.0
 matrix:
   exclude:
-    - elixir: 1.2.6
+    - elixir: 1.3.4
       otp_release: 19.2
+    - elixir: 1.3.4
+      otp_release: 20.0
     - elixir: 1.4.1
+      otp_release: 20.0
+    - elixir: 1.4.1
+      otp_release: 18.3
+    - elixir: 1.5.0
       otp_release: 18.3
 env:
   global:
@@ -18,4 +25,4 @@ env:
 before_install:
   - git submodule update --init --recursive
 script:
-  - "yes | mix do deps.get, deps.compile, compile --warnings-as-errors, coveralls.travis"
+  - "yes | mix do deps.get, deps.compile, compile, coveralls.travis"

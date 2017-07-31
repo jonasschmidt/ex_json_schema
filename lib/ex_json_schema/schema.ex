@@ -166,7 +166,7 @@ defmodule NExJsonSchema.Schema do
   end
 
   defp fetch_remote_schema(url) do
-    case remote_schema_resolver do
+    case remote_schema_resolver() do
       fun when is_function(fun) -> fun.(url)
       {mod, fun_name} -> apply(mod, fun_name, [url])
     end

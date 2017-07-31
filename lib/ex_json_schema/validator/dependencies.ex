@@ -26,7 +26,7 @@ defmodule NExJsonSchema.Validator.Dependencies do
           description: "property #{property} depends on #{dependency} to be present but it was not",
           rule: :dependency,
           params: [dependency]
-        }, []}]
+        }, [property]}]
       end
     end
   end
