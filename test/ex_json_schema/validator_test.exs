@@ -23,16 +23,30 @@ defmodule NExJsonSchema.ValidatorTest do
 
   test "validation path errors in nested map" do
     schema = %{
+      "$schema" => "http://json-schema.org/draft-04/schema#",
       "type" => "object",
-      "required" => ["foo", "bar"],
+      "definitions" => %{
+        "item" => %{
+          "type" => "object",
+          "required" => ["required"],
+          "properties" => %{
+            "string" => %{"type" => "string"},
+            "required" => %{"type" => "string"},
+          }
+        }
+      },
       "properties" => %{
-        "foo" => %{"type" => "integer"},
         "bar" => %{
           "type" => "object",
           "additionalProperties" => false,
           "properties" => %{
             "max" => %{"maximum" => 2},
-            "array" => %{"type" => "array"},
+            "array" => %{
+              "type" => "array",
+              "items" => %{
+                "$ref" => "#/definitions/item",
+              }
+            },
             "pattern" => %{"pattern" => "^b..$"},
             "minLength" => %{"minLength" => 10},
           }
@@ -40,22 +54,22 @@ defmodule NExJsonSchema.ValidatorTest do
       }
     }
     data = %{"bar" => %{
-        "int" => "string",
-        "max" => 3,
-        "array" => "not an array",
-        "pattern" => "",
-        "minLength" => "short",
-      }}
+      "int" => "string",
+      "max" => 3,
+      "array" => [%{"string" => "string", "required" => "yes"}, %{"string" => "string"}],
+      "pattern" => "",
+      "minLength" => "short",
+    }}
     {:error, errors} = validate(schema, data)
     Enum.each(errors, fn {%{rule: rule}, path} ->
       expected_path = 
         case rule do
-          :cast -> "$.bar.array"
+          :cast -> "$.bar.array.[0].string"
           :number -> "$.bar.max"
           :length -> "$.bar.minLength"
           :format -> "$.bar.pattern"
           :schema -> "$.bar.int"
-          :required -> "$.foo"
+          :required -> "$.bar.array.[1].required"
         end
       assert expected_path == path
     end)
