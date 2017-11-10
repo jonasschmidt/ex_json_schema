@@ -44,7 +44,7 @@ defmodule ExJsonSchema.Validator do
   def valid?(root = %Root{}, schema = %{}, data), do: validation_errors(root, schema, data) |> Enum.empty?
 
   defp validate_aspect(root, _, {"$ref", path}, data) do
-    schema = Schema.get_ref_schema(root, path)
+    schema = Schema.get_ref_schema!(root, path)
     validation_errors(root, schema, data, "")
   end
 
@@ -203,6 +203,6 @@ defmodule ExJsonSchema.Validator do
     |> Enum.map(&valid?(root, &1, data))
     |> Enum.with_index
     |> Enum.filter(filter)
-    |> Dict.values
+    |> Keyword.values
   end
 end
