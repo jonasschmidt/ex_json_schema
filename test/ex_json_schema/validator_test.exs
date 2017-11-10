@@ -18,13 +18,13 @@ defmodule ExJsonSchema.ValidatorTest do
   end
 
   test "validating a fragment with a path" do
-    assert validate(@schema_with_ref, "#/properties/foo", "foo") == {:error, [%Error{error: %Error.Type{actual: "String", expected: ["Integer"]}, path: "#"}]}
+    assert validate(@schema_with_ref, "#/properties/foo", "foo") == {:error, [%Error{error: %Error.Type{actual: "string", expected: ["integer"]}, path: "#"}]}
     assert valid?(@schema_with_ref, "#/properties/foo", 123)
   end
 
   test "validating a fragment with a partial schema" do
     fragment = Schema.get_fragment!(@schema_with_ref, "#/properties/foo")
-    assert validate(@schema_with_ref, fragment, "foo") == {:error, [%Error{error: %Error.Type{actual: "String", expected: ["Integer"]}, path: "#"}]}
+    assert validate(@schema_with_ref, fragment, "foo") == {:error, [%Error{error: %Error.Type{actual: "string", expected: ["integer"]}, path: "#"}]}
     assert valid?(@schema_with_ref, fragment, 123)
   end
 
@@ -32,21 +32,21 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"required" => ["foo"], "type" => "object"},
       "foo",
-      [%Error{error: %Error.Type{expected: ["Object"], actual: "String"}, path: "#"}])
+      [%Error{error: %Error.Type{expected: ["object"], actual: "string"}, path: "#"}])
   end
 
   test "validation errors with a reference" do
     assert_validation_errors(
       %{"foo" => %{"type" => "object"}, "properties" => %{"bar" => %{"$ref" => "#/foo"}}},
       %{"bar" => "baz"},
-      [%Error{error: %Error.Type{expected: ["Object"], actual: "String"}, path: "#/bar"}])
+      [%Error{error: %Error.Type{expected: ["object"], actual: "string"}, path: "#/bar"}])
   end
 
   test "validation errors with a remote reference within a remote reference" do
     assert_validation_errors(
       %{"$ref" => "http://localhost:8000/subschema.json#/foo"},
       "foo",
-      [%Error{error: %Error.Type{expected: ["Integer"], actual: "String"}, path: "#"}])
+      [%Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#"}])
   end
 
   test "validation errors for not matching all of the schemata" do
@@ -54,8 +54,8 @@ defmodule ExJsonSchema.ValidatorTest do
       %{"allOf" => [%{"type" => "number"}, %{"type" => "string"}, %{"type" => "integer"}]},
       "foo",
       [%Error{error: %Error.AllOf{invalid: [
-        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["Number"], actual: "String"}, path: "#"}], index: 0},
-        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["Integer"], actual: "String"}, path: "#"}], index: 2}
+        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["number"], actual: "string"}, path: "#"}], index: 0},
+        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#"}], index: 2}
       ]}, path: "#"}])
   end
 
@@ -64,8 +64,8 @@ defmodule ExJsonSchema.ValidatorTest do
       %{"anyOf" => [%{"type" => "number"}, %{"type" => "integer"}]},
       "foo",
       [%Error{error: %Error.AnyOf{invalid: [
-        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["Number"], actual: "String"}, path: "#"}], index: 0},
-        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["Integer"], actual: "String"}, path: "#"}], index: 1}
+        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["number"], actual: "string"}, path: "#"}], index: 0},
+        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#"}], index: 1}
       ]}, path: "#"}])
   end
 
@@ -81,8 +81,8 @@ defmodule ExJsonSchema.ValidatorTest do
       %{"oneOf" => [%{"type" => "number"}, %{"type" => "integer"}]},
       "foo",
       [%Error{error: %Error.OneOf{valid_indices: [], invalid: [
-        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["Number"], actual: "String"}, path: "#"}], index: 0},
-        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["Integer"], actual: "String"}, path: "#"}], index: 1}
+        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["number"], actual: "string"}, path: "#"}], index: 0},
+        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#"}], index: 1}
       ]}, path: "#"}])
   end
 
@@ -97,7 +97,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"type" => ["integer", "number"]},
       "foo",
-      [%Error{error: %Error.Type{expected: ["Integer", "Number"], actual: "String"}, path: "#"}])
+      [%Error{error: %Error.Type{expected: ["integer", "number"], actual: "string"}, path: "#"}])
   end
 
   test "validation errors for invalid properties" do
@@ -106,8 +106,8 @@ defmodule ExJsonSchema.ValidatorTest do
         "patternProperties" => %{"^b.*$" => %{"type" => "boolean"}},
         "additionalProperties" => false},
       %{"foo" => true, "bar" => true, "baz" => 1, "xyz" => false}, [
-        %Error{error: %Error.Type{expected: ["String"], actual: "Boolean"}, path: "#/foo"},
-        %Error{error: %Error.Type{expected: ["Boolean"], actual: "Integer"}, path: "#/baz"},
+        %Error{error: %Error.Type{expected: ["string"], actual: "boolean"}, path: "#/foo"},
+        %Error{error: %Error.Type{expected: ["boolean"], actual: "integer"}, path: "#/baz"},
         %Error{error: %Error.AdditionalProperties{}, path: "#/xyz"}])
   end
 
@@ -116,7 +116,7 @@ defmodule ExJsonSchema.ValidatorTest do
         "properties" => %{"foo" => %{"type" => "string"}},
         "additionalProperties" => %{"type" => "boolean"}},
       %{"foo" => "bar", "bar" => "baz"},
-      [%Error{error: %Error.Type{expected: ["Boolean"], actual: "String"}, path: "#/bar"}])
+      [%Error{error: %Error.Type{expected: ["boolean"], actual: "string"}, path: "#/bar"}])
   end
 
   test "validation errors for minimum properties" do
@@ -151,15 +151,15 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"dependencies" => %{"foo" => %{"properties" => %{"bar" => %{"type" => "boolean"}}}}},
       %{"foo" => 1, "bar" => 2},
-      [%Error{error: %Error.Type{expected: ["Boolean"], actual: "Integer"}, path: "#/bar"}])
+      [%Error{error: %Error.Type{expected: ["boolean"], actual: "integer"}, path: "#/bar"}])
   end
 
   test "validation errors for invalid items" do
     assert_validation_errors(
       %{"items" => %{"type" => "string"}},
       ["foo", "bar", 1, %{}], [
-        %Error{error: %Error.Type{expected: ["String"], actual: "Integer"}, path: "#/2"},
-        %Error{error: %Error.Type{expected: ["String"], actual: "Object"}, path: "#/3"}])
+        %Error{error: %Error.Type{expected: ["string"], actual: "integer"}, path: "#/2"},
+        %Error{error: %Error.Type{expected: ["string"], actual: "object"}, path: "#/3"}])
   end
 
   test "validation errors for an invalid item with a list of item schemata and an invalid additional item" do
@@ -167,9 +167,9 @@ defmodule ExJsonSchema.ValidatorTest do
         "items" => [%{"type" => "string"}, %{"type" => "integer"}, %{"type" => "integer"}],
         "additionalItems" => %{"type" => "boolean"}},
       [%{}, 1, "foo", true, 2.2], [
-        %Error{error: %Error.Type{expected: ["String"], actual: "Object"}, path: "#/0"},
-        %Error{error: %Error.Type{expected: ["Integer"], actual: "String"}, path: "#/2"},
-        %Error{error: %Error.Type{expected: ["Boolean"], actual: "Number"}, path: "#/4"}])
+        %Error{error: %Error.Type{expected: ["string"], actual: "object"}, path: "#/0"},
+        %Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#/2"},
+        %Error{error: %Error.Type{expected: ["boolean"], actual: "number"}, path: "#/4"}])
   end
 
   test "validation errors for disallowed additional items" do
@@ -255,7 +255,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"properties" => %{"foo" => %{"items" => %{"properties" => %{"bar" => %{"type" => "integer"}}}}}},
       %{"foo" => [%{"bar" => 1}, %{"bar" => "baz"}]},
-      [%Error{error: %Error.Type{expected: ["Integer"], actual: "String"}, path: "#/foo/1/bar"}])
+      [%Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#/foo/1/bar"}])
   end
 
   test "format validation always succeeds for non-string values" do
