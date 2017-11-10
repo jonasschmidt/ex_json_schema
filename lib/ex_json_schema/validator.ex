@@ -63,27 +63,52 @@ defmodule ExJsonSchema.Validator do
   end
 
   defp validate_aspect(root, _, {"allOf", all_of}, data) do
-    invalid_indices = validation_result_indices(root, all_of, data, &(!elem(&1, 0)))
+    invalid = all_of
+    |> Enum.map(&validation_errors(root, &1, data))
+    |> Enum.with_index
+    |> Enum.filter(fn {errors, _index} -> !Enum.empty?(errors) end)
+    |> map_to_invalid_errors
 
-    case Enum.empty?(invalid_indices) do
+    case Enum.empty?(invalid) do
       true -> []
-      false -> [%Error{error: %Error.AllOf{invalid_indices: invalid_indices}, path: ""}]
+      false -> [%Error{error: %Error.AllOf{invalid: invalid}, path: ""}]
     end
   end
 
   defp validate_aspect(root, _, {"anyOf", any_of}, data) do
-    case Enum.any?(any_of, &valid?(root, &1, data)) do
+    invalid = any_of
+    |> Enum.reduce_while([], fn schema, acc ->
+      case validation_errors(root, schema, data) do
+        [] -> {:halt, []}
+        errors -> {:cont, [errors | acc]}
+      end
+    end)
+    |> Enum.reverse
+    |> Enum.with_index
+    |> map_to_invalid_errors
+
+    case Enum.empty?(invalid) do
       true -> []
-      false -> [%Error{error: %Error.AnyOf{}, path: ""}]
+      false -> [%Error{error: %Error.AnyOf{invalid: invalid}, path: ""}]
     end
   end
 
   defp validate_aspect(root, _, {"oneOf", one_of}, data) do
-    valid_indices = validation_result_indices(root, one_of, data, &(elem(&1, 0)))
+    {valid_count, valid_indices, errors} = one_of
+    |> Enum.with_index
+    |> Enum.reduce({0, [], []}, fn {schema, index}, {valid_count, valid_indices, errors} ->
+      case validation_errors(root, schema, data) do
+        [] -> {valid_count + 1, [index | valid_indices], errors}
+        e -> {valid_count, valid_indices, [{e, index} | errors]}
+      end
+    end)
 
-    case Enum.count(valid_indices) do
+    case valid_count do
       1 -> []
-      _ -> [%Error{error: %Error.OneOf{valid_indices: valid_indices}, path: ""}]
+      0 ->
+        [%Error{error: %Error.OneOf{valid_indices: [], invalid: errors |> Enum.reverse |> map_to_invalid_errors}, path: ""}]
+      _ ->
+        [%Error{error: %Error.OneOf{valid_indices: Enum.reverse(valid_indices), invalid: []}, path: ""}]
     end
   end
 
@@ -212,11 +237,10 @@ defmodule ExJsonSchema.Validator do
 
   defp validate_aspect(_, _, _, _), do: []
 
-  defp validation_result_indices(root, schemata, data, filter) do
-    schemata
-    |> Enum.map(&valid?(root, &1, data))
-    |> Enum.with_index
-    |> Enum.filter(filter)
-    |> Keyword.values
+  defp map_to_invalid_errors(errors_with_index) do
+    errors_with_index
+    |> Enum.map(fn {errors, index} ->
+      %Error.InvalidAtIndex{errors: errors, index: index}
+    end)
   end
 end

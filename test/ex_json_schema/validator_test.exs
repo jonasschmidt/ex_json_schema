@@ -51,30 +51,39 @@ defmodule ExJsonSchema.ValidatorTest do
 
   test "validation errors for not matching all of the schemata" do
     assert_validation_errors(
-      %{"allOf" => [%{"type" => "number"}, %{"type" => "integer"}]},
+      %{"allOf" => [%{"type" => "number"}, %{"type" => "string"}, %{"type" => "integer"}]},
       "foo",
-      [%Error{error: %Error.AllOf{invalid_indices: [0, 1]}, path: "#"}])
+      [%Error{error: %Error.AllOf{invalid: [
+        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["Number"], actual: "String"}, path: "#"}], index: 0},
+        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["Integer"], actual: "String"}, path: "#"}], index: 2}
+      ]}, path: "#"}])
   end
 
   test "validation errors for not matching any of the schemata" do
     assert_validation_errors(
       %{"anyOf" => [%{"type" => "number"}, %{"type" => "integer"}]},
       "foo",
-      [%Error{error: %Error.AnyOf{}, path: "#"}])
+      [%Error{error: %Error.AnyOf{invalid: [
+        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["Number"], actual: "String"}, path: "#"}], index: 0},
+        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["Integer"], actual: "String"}, path: "#"}], index: 1}
+      ]}, path: "#"}])
   end
 
   test "validation errors for matching more than one of the schemata when exactly one should be matched" do
     assert_validation_errors(
-      %{"oneOf" => [%{"type" => "number"}, %{"type" => "integer"}]},
+      %{"oneOf" => [%{"type" => "number"}, %{"type" => "string"}, %{"type" => "integer"}]},
       5,
-      [%Error{error: %Error.OneOf{valid_indices: [0, 1]}, path: "#"}])
+      [%Error{error: %Error.OneOf{valid_indices: [0, 2], invalid: []}, path: "#"}])
   end
 
   test "validation errors for matching none of the schemata when exactly one should be matched" do
     assert_validation_errors(
       %{"oneOf" => [%{"type" => "number"}, %{"type" => "integer"}]},
       "foo",
-      [%Error{error: %Error.OneOf{valid_indices: []}, path: "#"}])
+      [%Error{error: %Error.OneOf{valid_indices: [], invalid: [
+        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["Number"], actual: "String"}, path: "#"}], index: 0},
+        %Error.InvalidAtIndex{errors: [%Error{error: %Error.Type{expected: ["Integer"], actual: "String"}, path: "#"}], index: 1}
+      ]}, path: "#"}])
   end
 
   test "validation errors for matching a schema when it should not be matched" do
