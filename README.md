@@ -67,8 +67,8 @@ iex> ExJsonSchema.Validator.validate(schema, %{"foo" => "bar"})
 
 iex> ExJsonSchema.Validator.validate(schema, %{"foo" => 1})
 {:error,
- [%ExJsonSchema.Validator.Error{error: %ExJsonSchema.Validator.Error.Type{actual: "Integer",
-    expected: ["String"]}, path: "#/foo"}]}
+ [%ExJsonSchema.Validator.Error{error: %ExJsonSchema.Validator.Error.Type{actual: "integer",
+    expected: ["string"]}, path: "#/foo"}]}
 ```
 
 #### Validating against a fragment

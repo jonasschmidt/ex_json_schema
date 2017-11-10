@@ -28,7 +28,7 @@ defmodule ExJsonSchema.SchemaTest do
   test "schema is validated against its meta-schema" do
     schema = %{"properties" => "foo"}
     assert_raise ExJsonSchema.Schema.InvalidSchemaError,
-      ~s(schema did not pass validation against its meta-schema: [%ExJsonSchema.Validator.Error{error: %ExJsonSchema.Validator.Error.Type{actual: "String", expected: ["Object"]}, path: "#/properties"}]),
+      ~s(schema did not pass validation against its meta-schema: [%ExJsonSchema.Validator.Error{error: %ExJsonSchema.Validator.Error.Type{actual: "string", expected: ["object"]}, path: "#/properties"}]),
       fn -> resolve(schema) end
   end
 
