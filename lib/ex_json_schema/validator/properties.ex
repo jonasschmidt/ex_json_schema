@@ -53,7 +53,7 @@ defmodule ExJsonSchema.Validator.Properties do
   defp validate_additional_properties(_, _, _), do: []
 
   defp validation_errors(validated_properties) do
-    validated_properties |> Enum.map(fn {_k, v} -> v end) |> List.flatten
+    validated_properties |> Keyword.values |> List.flatten
   end
 
   defp properties_matching(properties, pattern) do
@@ -67,6 +67,6 @@ defmodule ExJsonSchema.Validator.Properties do
   end
 
   defp keys_as_set(properties) do
-    properties |> Enum.map(fn {k, _v} -> k end) |> Enum.into(MapSet.new)
+    properties |> Enum.map(&elem(&1, 0)) |> Enum.into(MapSet.new)
   end
 end

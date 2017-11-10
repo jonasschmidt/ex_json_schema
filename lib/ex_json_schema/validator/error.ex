@@ -2,9 +2,10 @@ defmodule ExJsonSchema.Validator.Error do
   defstruct [:error, :path]
 
   defmodule Type, do: defstruct [:expected, :actual]
-  defmodule AllOf, do: defstruct [:invalid_indices]
-  defmodule AnyOf, do: defstruct []
-  defmodule OneOf, do: defstruct [:valid_indices]
+  defmodule AllOf, do: defstruct [:invalid]
+  defmodule AnyOf, do: defstruct [:invalid]
+  defmodule OneOf, do: defstruct [:valid_indices, :invalid]
+  defmodule InvalidAtIndex, do: defstruct [:index, :errors]
   defmodule Not, do: defstruct []
   defmodule AdditionalProperties, do: defstruct []
   defmodule MinProperties, do: defstruct [:expected, :actual]
