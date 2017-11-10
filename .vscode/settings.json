@@ -1,0 +1,7 @@
+{
+    "editor.formatOnSave": false,
+    "[elixir]": {
+        "editor.formatOnType": false,
+        "editor.formatOnSave": false
+    },
+}

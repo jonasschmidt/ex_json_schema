@@ -11,6 +11,10 @@ defmodule ExJsonSchema.Schema do
     defexception message: "trying to resolve a remote schema but no remote schema resolver function is defined"
   end
 
+  defmodule InvalidReferenceError do
+    defexception message: "invalid reference"
+  end
+
   alias ExJsonSchema.Schema.Draft4
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
@@ -26,10 +30,27 @@ defmodule ExJsonSchema.Schema do
 
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
-  @spec get_ref_schema(Root.t, ref_path | ExJsonSchema.json_path) :: resolved
-  def get_ref_schema(root = %Root{}, path) when is_binary(path), do: get_ref_schema(root, elem(resolve_ref(root, path), 1))
-  def get_ref_schema(root = %Root{}, [:root | path] = ref), do: get_ref_schema(root.schema, path, ref)
-  def get_ref_schema(root = %Root{}, [url | path] = ref) when is_binary(url), do: get_ref_schema(root.refs[url], path, ref)
+  @spec get_ref_schema(Root.t, ref_path | ExJsonSchema.json_path) :: {:ok, resolved} | {:error, :invalid_reference}
+  def get_ref_schema(root = %Root{}, path) when is_binary(path) do
+    case resolve_ref(root, path) do
+      {:ok, {_root, ref}} -> get_ref_schema(root, ref)
+      {:error, error} -> {:error, error}
+    end
+  end
+  def get_ref_schema(root = %Root{}, [:root | path] = ref) do
+    do_get_ref_schema(root.schema, path, ref)
+  end
+  def get_ref_schema(root = %Root{}, [url | path] = ref) when is_binary(url) do
+    do_get_ref_schema(root.refs[url], path, ref)
+  end
+
+  @spec get_ref_schema!(Root.t, ref_path | ExJsonSchema.json_path) :: resolved
+  def get_ref_schema!(schema, ref) do
+    case get_ref_schema(schema, ref) do
+      {:ok, schema} -> schema
+      {:error, :invalid_reference} -> raise_invalid_reference_error(ref)
+    end
+  end
 
   defp resolve_root(root) do
     assert_supported_schema_version(Map.get(root.schema, "$schema", @current_draft_schema_url <> "#"))
@@ -77,7 +98,6 @@ defmodule ExJsonSchema.Schema do
     {root, resolved} = resolve_with_root(root, value, scope)
     {root, {key, resolved}}
   end
-
   defp resolve_property(root, {key, values}, scope) when is_list(values) do
     {root, values} = Enum.reduce values, {root, []}, fn (value, {root, values}) ->
       {root, resolved} = resolve_with_root(root, value, scope)
@@ -85,35 +105,41 @@ defmodule ExJsonSchema.Schema do
     end
     {root, {key, Enum.reverse(values)}}
   end
-
   defp resolve_property(root, {"$ref", ref}, scope) do
     scoped_ref = case ref do
       "http://" <> _ -> ref
       "https://" <> _ -> ref
       _else -> scope <> ref |> String.replace("##", "#")
     end
-    {root, path} = resolve_ref(root, scoped_ref)
+    {root, path} = resolve_ref!(root, scoped_ref)
     {root, {"$ref", path}}
   end
-
   defp resolve_property(root, tuple, _), do: {root, tuple}
 
   defp resolve_ref(root, "#") do
-    {root, [root.location]}
+    {:ok, {root, [root.location]}}
   end
-
   defp resolve_ref(root, ref) do
     [url | fragments] = String.split(ref, "#")
     fragment = get_fragment(fragments, ref)
     {root, path} = root_and_path_for_url(root, fragment, url)
-    assert_reference_valid(path, root, ref)
-    {root, path}
+    case get_ref_schema(root, path) do
+      {:ok, _schema} -> {:ok, {root, path}}
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  defp resolve_ref!(root, ref) do
+    case resolve_ref(root, ref) do
+      {:ok, result} -> result
+      {:error, :invalid_reference} -> raise_invalid_reference_error(ref)
+    end
   end
 
   defp get_fragment([], _), do: nil
   defp get_fragment([""], _), do: nil
   defp get_fragment([fragment = "/" <> _], _), do: fragment
-  defp get_fragment(_, ref), do: raise InvalidSchemaError, message: "invalid reference #{ref}"
+  defp get_fragment(_, ref), do: raise_invalid_reference_error(ref)
 
   defp root_and_path_for_url(root, fragment, "") do
     {root, [root.location | relative_path(fragment)]}
@@ -141,14 +167,12 @@ defmodule ExJsonSchema.Schema do
   defp resolve_and_cache_remote_schema(root, url) do
     if root.refs[url], do: root, else: fetch_and_resolve_remote_schema(root, url)
   end
-
   defp fetch_and_resolve_remote_schema(root, url)
       when url == @current_draft_schema_url or url == @draft4_schema_url do
     resolve_remote_schema(root, url, Draft4.schema)
   end
-
   defp fetch_and_resolve_remote_schema(root, url) do
-    resolve_remote_schema(root, url, fetch_remote_schema(url))
+    resolve_remote_schema(root, url, remote_schema_resolver().(url))
   end
 
   defp resolve_remote_schema(root, url, remote_schema) do
@@ -171,10 +195,6 @@ defmodule ExJsonSchema.Schema do
 
   defp remote_schema_resolver do
     Application.get_env(:ex_json_schema, :remote_schema_resolver) || fn _url -> raise UndefinedRemoteSchemaResolverError end
-  end
-
-  defp assert_reference_valid(path, root, _ref) do
-    get_ref_schema(root, path)
   end
 
   defp sanitize_properties_attribute(schema) do
@@ -209,18 +229,20 @@ defmodule ExJsonSchema.Schema do
     String.starts_with?(Map.get(schema, "id", ""), @draft4_schema_url)
   end
 
-  defp get_ref_schema(nil, _, ref), do: raise InvalidSchemaError, message: "reference #{ref_to_string(ref)} could not be resolved"
-  defp get_ref_schema(schema, [], _), do: schema
-  defp get_ref_schema(schema, [key | path], ref) when is_binary(key), do: get_ref_schema(Map.get(schema, key), path, ref)
-  defp get_ref_schema(schema, [idx | path], ref) when is_integer(idx) do
+  defp do_get_ref_schema(nil, _, _ref), do: {:error, :invalid_reference}
+  defp do_get_ref_schema(schema, [], _), do: {:ok, schema}
+  defp do_get_ref_schema(schema, [key | path], ref) when is_binary(key), do: do_get_ref_schema(Map.get(schema, key), path, ref)
+  defp do_get_ref_schema(schema, [idx | path], ref) when is_integer(idx) do
     try do
-      get_ref_schema(:lists.nth(idx + 1, schema), path, ref)
+      do_get_ref_schema(:lists.nth(idx + 1, schema), path, ref)
     catch
-      :error, :function_clause ->
-        raise InvalidSchemaError, message: "reference #{ref_to_string(ref)} could not be resolved"
+      :error, :function_clause -> {:error, :invalid_reference}
     end
   end
 
   defp ref_to_string([:root | path]), do: ["#" | path] |> Enum.join("/")
   defp ref_to_string([url | path]), do: [url <> "#" | path] |> Enum.join("/")
+
+  def raise_invalid_reference_error(ref) when is_binary(ref), do: raise InvalidReferenceError, message: "invalid reference #{ref}"
+  def raise_invalid_reference_error(ref), do: ref |> ref_to_string |> raise_invalid_reference_error
 end
