@@ -6,7 +6,7 @@ defmodule ExJsonSchema.Validator.Type do
   def validate(type, data) do
     case valid?(type, data) do
       true -> []
-      false -> [%Error{error: %Error.Type{expected: type |> type_names, actual: data |> data_type |> type_name}, path: ""}]
+      false -> [%Error{error: %Error.Type{expected: List.wrap(type), actual: data |> data_type}, path: ""}]
     end
   end
 
@@ -36,15 +36,5 @@ defmodule ExJsonSchema.Validator.Type do
       is_list(data) -> "array"
       is_map(data) -> "object"
     end
-  end
-
-  defp type_names(type_or_types) do
-    type_or_types
-    |> List.wrap
-    |> Enum.map(&type_name/1)
-  end
-
-  defp type_name(type) do
-    type |> String.capitalize
   end
 end
