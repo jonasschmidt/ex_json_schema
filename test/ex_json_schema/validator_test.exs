@@ -12,7 +12,7 @@ defmodule ExJsonSchema.ValidatorTest do
 
   test "validating a fragment with a partial schema" do
     schema = Schema.resolve(%{"properties" => %{"foo" => %{"$ref" => "http://localhost:8000/subschema.json#/foo"}}})
-    fragment = Schema.get_ref_schema(schema, "#/properties/foo")
+    fragment = Schema.get_ref_schema!(schema, "#/properties/foo")
     assert validate(schema, fragment, "foo") == {:error, [%Error{error: %Error.Type{actual: "String", expected: ["Integer"]}, path: "#"}]}
     assert valid?(schema, fragment, 123)
   end
