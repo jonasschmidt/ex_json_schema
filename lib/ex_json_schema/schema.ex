@@ -17,6 +17,7 @@ defmodule ExJsonSchema.Schema do
 
   @type resolved :: %{String.t => ExJsonSchema.json_value | ref_path}
   @type ref_path :: [:root | String.t]
+  @type invalid_reference_error :: {:error, :invalid_reference}
 
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
@@ -27,23 +28,23 @@ defmodule ExJsonSchema.Schema do
   @spec resolve(ExJsonSchema.json) :: Root.t | no_return
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
-  @spec get_ref_schema(Root.t, ref_path | ExJsonSchema.json_path) :: {:ok, resolved} | {:error, :invalid_reference}
-  def get_ref_schema(root = %Root{}, path) when is_binary(path) do
+  @spec get_fragment(Root.t, ref_path | ExJsonSchema.json_path) :: {:ok, resolved} | invalid_reference_error
+  def get_fragment(root = %Root{}, path) when is_binary(path) do
     case resolve_ref(root, path) do
-      {:ok, {_root, ref}} -> get_ref_schema(root, ref)
-      {:error, error} -> {:error, error}
+      {:ok, {_root, ref}} -> get_fragment(root, ref)
+      error -> error
     end
   end
-  def get_ref_schema(root = %Root{}, [:root | path] = ref) do
-    do_get_ref_schema(root.schema, path, ref)
+  def get_fragment(root = %Root{}, [:root | path] = ref) do
+    do_get_fragment(root.schema, path, ref)
   end
-  def get_ref_schema(root = %Root{}, [url | path] = ref) when is_binary(url) do
-    do_get_ref_schema(root.refs[url], path, ref)
+  def get_fragment(root = %Root{}, [url | path] = ref) when is_binary(url) do
+    do_get_fragment(root.refs[url], path, ref)
   end
 
-  @spec get_ref_schema!(Root.t, ref_path | ExJsonSchema.json_path) :: resolved
-  def get_ref_schema!(schema, ref) do
-    case get_ref_schema(schema, ref) do
+  @spec get_fragment!(Root.t, ref_path | ExJsonSchema.json_path) :: resolved
+  def get_fragment!(schema, ref) do
+    case get_fragment(schema, ref) do
       {:ok, schema} -> schema
       {:error, :invalid_reference} -> raise_invalid_reference_error(ref)
     end
@@ -117,12 +118,12 @@ defmodule ExJsonSchema.Schema do
     {:ok, {root, [root.location]}}
   end
   defp resolve_ref(root, ref) do
-    [url | fragments] = String.split(ref, "#")
-    fragment = get_fragment(fragments, ref)
-    {root, path} = root_and_path_for_url(root, fragment, url)
-    case get_ref_schema(root, path) do
+    [url | anchor] = String.split(ref, "#")
+    ref_path = validate_ref_path(anchor, ref)
+    {root, path} = root_and_path_for_url(root, ref_path, url)
+    case get_fragment(root, path) do
       {:ok, _schema} -> {:ok, {root, path}}
-      {:error, error} -> {:error, error}
+      error -> error
     end
   end
 
@@ -133,10 +134,10 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  defp get_fragment([], _), do: nil
-  defp get_fragment([""], _), do: nil
-  defp get_fragment([fragment = "/" <> _], _), do: fragment
-  defp get_fragment(_, ref), do: raise_invalid_reference_error(ref)
+  defp validate_ref_path([], _), do: nil
+  defp validate_ref_path([""], _), do: nil
+  defp validate_ref_path([fragment = "/" <> _], _), do: fragment
+  defp validate_ref_path(_, ref), do: raise_invalid_reference_error(ref)
 
   defp root_and_path_for_url(root, fragment, "") do
     {root, [root.location | relative_path(fragment)]}
@@ -219,12 +220,12 @@ defmodule ExJsonSchema.Schema do
     String.starts_with?(Map.get(schema, "id", ""), @draft4_schema_url)
   end
 
-  defp do_get_ref_schema(nil, _, _ref), do: {:error, :invalid_reference}
-  defp do_get_ref_schema(schema, [], _), do: {:ok, schema}
-  defp do_get_ref_schema(schema, [key | path], ref) when is_binary(key), do: do_get_ref_schema(Map.get(schema, key), path, ref)
-  defp do_get_ref_schema(schema, [idx | path], ref) when is_integer(idx) do
+  defp do_get_fragment(nil, _, _ref), do: {:error, :invalid_reference}
+  defp do_get_fragment(schema, [], _), do: {:ok, schema}
+  defp do_get_fragment(schema, [key | path], ref) when is_binary(key), do: do_get_fragment(Map.get(schema, key), path, ref)
+  defp do_get_fragment(schema, [idx | path], ref) when is_integer(idx) do
     try do
-      do_get_ref_schema(:lists.nth(idx + 1, schema), path, ref)
+      do_get_fragment(:lists.nth(idx + 1, schema), path, ref)
     catch
       :error, :function_clause -> {:error, :invalid_reference}
     end

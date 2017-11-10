@@ -66,7 +66,28 @@ iex> ExJsonSchema.Validator.validate(schema, %{"foo" => "bar"})
 :ok
 
 iex> ExJsonSchema.Validator.validate(schema, %{"foo" => 1})
-{:error, [{"Type mismatch. Expected String but got Integer.", "#/foo"}]}
+{:error,
+ [%ExJsonSchema.Validator.Error{error: %ExJsonSchema.Validator.Error.Type{actual: "Integer",
+    expected: ["String"]}, path: "#/foo"}]}
+```
+
+#### Validating against a fragment
+
+It is also possible to validate against a subset of the schema by providing either a fragment:
+
+```elixir
+iex> fragment = ExJsonSchema.Schema.get_fragment!(schema, "#/properties/foo")
+{:ok, %{"type" => "string"}}
+
+iex> ExJsonSchema.Validator.valid?(schema, fragment, "bar")
+true
+```
+
+or a path:
+
+```elixir
+iex> ExJsonSchema.Validator.valid?(schema, "#/foo", "bar")
+true
 ```
 
 Errors are tuples of a message and the path to the element not matching the schema. The path is following the same conventions used in JSON Schema for referencing JSON elements.

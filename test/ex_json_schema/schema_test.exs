@@ -1,7 +1,7 @@
 defmodule ExJsonSchema.SchemaTest do
   use ExUnit.Case, async: true
 
-  import ExJsonSchema.Schema, only: [resolve: 1, get_ref_schema: 2, get_ref_schema!: 2]
+  import ExJsonSchema.Schema, only: [resolve: 1, get_fragment: 2, get_fragment!: 2]
 
   test "fails when trying to resolve something that is not a schema" do
     assert_raise FunctionClauseError, fn -> resolve("foo") end
@@ -38,20 +38,20 @@ defmodule ExJsonSchema.SchemaTest do
       "$ref" => "http://localhost:1234/subSchemas.json#/integer"
     }
     resolved = resolve(schema)
-    assert get_ref_schema!(resolved, resolved.schema["$ref"]) == %{"type" => "integer"}
+    assert get_fragment!(resolved, resolved.schema["$ref"]) == %{"type" => "integer"}
   end
 
   test "resolves a reference" do
     schema = %{"foo" => %{"$ref" => "#/bar"}, "bar" => "baz"}
     resolved = resolve(schema)
     path = get_in(resolved.schema, ["foo", "$ref"])
-    assert get_ref_schema!(resolved, path)  == "baz"
+    assert get_fragment!(resolved, path)  == "baz"
   end
 
   test "resolves a root reference" do
     schema = %{"$ref" => "#"}
     resolved = resolve(schema)
-    assert get_ref_schema!(resolved, resolved.schema["$ref"]) == resolved.schema
+    assert get_fragment!(resolved, resolved.schema["$ref"]) == resolved.schema
   end
 
   test "catches references with an invalid property in the path" do
@@ -73,7 +73,7 @@ defmodule ExJsonSchema.SchemaTest do
     schema = %{"id" => "#/foo_scope/", "foo" => %{"$ref" => "bar"}, "foo_scope" => %{"bar" => "baz"}}
     resolved = resolve(schema)
     path = get_in(resolved.schema, ["foo", "$ref"])
-    assert get_ref_schema!(resolved, path)  == "baz"
+    assert get_fragment!(resolved, path)  == "baz"
   end
 
   test "caching a resolved remote reference" do
@@ -86,7 +86,7 @@ defmodule ExJsonSchema.SchemaTest do
     schema = %{"$ref" => url}
     resolved = resolve(schema)
     path = resolved.schema["$ref"]
-    assert get_ref_schema!(resolved, path) == %{"type" => "integer"}
+    assert get_fragment!(resolved, path) == %{"type" => "integer"}
   end
 
   test "using a previously cached remote schema" do
@@ -95,22 +95,22 @@ defmodule ExJsonSchema.SchemaTest do
     schema = %ExJsonSchema.Schema.Root{refs: refs, schema: %{"$ref" => url}}
     resolved = resolve(schema)
     path = resolved.schema["$ref"]
-    assert get_ref_schema!(resolved, path) == %{"type" => "boolean"}
+    assert get_fragment!(resolved, path) == %{"type" => "boolean"}
   end
 
   test "fetching a ref schema with an invalid reference" do
     schema = resolve(%{"foo" => 1, "bar" => %{"baz" => 3}})
-    assert {:error, :invalid_reference} == get_ref_schema(schema, "#/baz")
-    assert_raise ExJsonSchema.Schema.InvalidReferenceError, "invalid reference #/baz", fn -> get_ref_schema!(schema, "#/baz") end
+    assert {:error, :invalid_reference} == get_fragment(schema, "#/baz")
+    assert_raise ExJsonSchema.Schema.InvalidReferenceError, "invalid reference #/baz", fn -> get_fragment!(schema, "#/baz") end
   end
 
   test "fetching a ref schema with a path" do
     schema = resolve(%{"properties" => %{"foo" => %{"$ref" => "http://localhost:8000/subschema.json#/foo"}}})
-    assert get_ref_schema!(schema, "#/properties/foo") == %{"$ref" => ["http://localhost:8000/subschema.json", "foo"]}
+    assert get_fragment!(schema, "#/properties/foo") == %{"$ref" => ["http://localhost:8000/subschema.json", "foo"]}
   end
 
   test "fetching a ref schema with a URL" do
     schema = resolve(%{"$ref" => "http://localhost:8000/subschema.json#/foo"})
-    assert get_ref_schema!(schema, "http://localhost:8000/subschema.json#/foo") == %{"$ref" => ["http://localhost:8000/subsubschema.json", "foo"]}
+    assert get_fragment!(schema, "http://localhost:8000/subschema.json#/foo") == %{"$ref" => ["http://localhost:8000/subsubschema.json", "foo"]}
   end
 end
