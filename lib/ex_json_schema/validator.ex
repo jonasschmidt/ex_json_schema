@@ -19,16 +19,24 @@ defmodule ExJsonSchema.Validator do
     validate(Schema.resolve(schema), data)
   end
 
-  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: errors
-  def validate(root = %Root{}, schema = %{}, data) do
-    case validation_errors(root, schema, data) do
+  @spec validate(Root.t, ExJsonSchema.json_path | Schema.resolved, ExJsonSchema.data) :: errors | Schema.invalid_reference_error
+  def validate(root, schema_or_ref, data) do
+    case validation_errors(root, schema_or_ref, data) do
+      {:error, _error} = error -> error
       [] -> :ok
       errors -> {:error, errors}
     end
   end
 
-  @spec validation_errors(Root.t, Schema.resolved, ExJsonSchema.data, [String.t | integer]) :: errors
-  def validation_errors(root = %Root{}, schema = %{}, data, path \\ "#") do
+  @spec validation_errors(Root.t, ExJsonSchema.json_path | Schema.resolved, ExJsonSchema.data, [String.t | integer]) :: errors | Schema.invalid_reference_error
+  def validation_errors(root, schema_or_ref, data, path \\ "#")
+  def validation_errors(root, ref, data, path) when is_binary(ref) do
+    case Schema.get_fragment(root, ref) do
+      {:ok, schema} -> validation_errors(root, schema, data, path)
+      error -> error
+    end
+  end
+  def validation_errors(root = %Root{}, schema = %{}, data, path) do
     Enum.flat_map(schema, &validate_aspect(root, schema, &1, data))
     |> Enum.map(fn %Error{path: p} = error -> %{error | path: path <> p} end)
   end
@@ -38,11 +46,17 @@ defmodule ExJsonSchema.Validator do
 
   def valid?(schema = %{}, data), do: valid?(Schema.resolve(schema), data)
 
-  @spec valid?(Root.t, Schema.resolved, ExJsonSchema.data) :: boolean
-  def valid?(root = %Root{}, schema = %{}, data), do: validation_errors(root, schema, data) |> Enum.empty?
+  @spec valid?(Root.t, ExJsonSchema.json_path | Schema.resolved, ExJsonSchema.data) :: boolean | Schema.invalid_reference_error
+  def valid?(root, schema_or_ref, data) do
+    case validation_errors(root, schema_or_ref, data) do
+      {:error, _error} = error -> error
+      [] -> true
+      _errors -> false
+    end
+  end
 
   defp validate_aspect(root, _, {"$ref", path}, data) do
-    schema = Schema.get_ref_schema!(root, path)
+    schema = Schema.get_fragment!(root, path)
     validation_errors(root, schema, data, "")
   end
 

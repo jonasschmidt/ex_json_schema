@@ -6,15 +6,26 @@ defmodule ExJsonSchema.ValidatorTest do
   alias ExJsonSchema.Validator.Error
   alias ExJsonSchema.Schema
 
+  @schema_with_ref Schema.resolve(%{"properties" => %{"foo" => %{"$ref" => "http://localhost:8000/subschema.json#/foo"}}})
+
   test "empty schema is valid" do
     assert valid?(%{}, %{"foo" => "bar"}) == true
   end
 
+  test "trying to validate a fragment with an invalid path" do
+    assert validate(@schema_with_ref, "#/properties/bar", "foo") == {:error, :invalid_reference}
+    assert valid?(@schema_with_ref, "#/properties/bar", 123) == {:error, :invalid_reference}
+  end
+
+  test "validating a fragment with a path" do
+    assert validate(@schema_with_ref, "#/properties/foo", "foo") == {:error, [%Error{error: %Error.Type{actual: "String", expected: ["Integer"]}, path: "#"}]}
+    assert valid?(@schema_with_ref, "#/properties/foo", 123)
+  end
+
   test "validating a fragment with a partial schema" do
-    schema = Schema.resolve(%{"properties" => %{"foo" => %{"$ref" => "http://localhost:8000/subschema.json#/foo"}}})
-    fragment = Schema.get_ref_schema!(schema, "#/properties/foo")
-    assert validate(schema, fragment, "foo") == {:error, [%Error{error: %Error.Type{actual: "String", expected: ["Integer"]}, path: "#"}]}
-    assert valid?(schema, fragment, 123)
+    fragment = Schema.get_fragment!(@schema_with_ref, "#/properties/foo")
+    assert validate(@schema_with_ref, fragment, "foo") == {:error, [%Error{error: %Error.Type{actual: "String", expected: ["Integer"]}, path: "#"}]}
+    assert valid?(@schema_with_ref, fragment, 123)
   end
 
   test "required properties are not validated when the data is not a map" do
