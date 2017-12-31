@@ -31,7 +31,7 @@ defmodule ExJsonSchema.Schema do
 
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
-  @spec get_fragment(Root.t, ref_path | ExJsonSchema.json_path) :: {:ok, resolved} | invalid_reference_error
+  @spec get_fragment(Root.t, ref_path | ExJsonSchema.json_path) :: {:ok, resolved} | invalid_reference_error | no_return
   def get_fragment(root = %Root{}, path) when is_binary(path) do
     case resolve_ref(root, path) do
       {:ok, {_root, ref}} -> get_fragment(root, ref)
@@ -45,7 +45,7 @@ defmodule ExJsonSchema.Schema do
     do_get_fragment(root.refs[url], path, ref)
   end
 
-  @spec get_fragment!(Root.t, ref_path | ExJsonSchema.json_path) :: resolved
+  @spec get_fragment!(Root.t, ref_path | ExJsonSchema.json_path) :: resolved | no_return
   def get_fragment!(schema, ref) do
     case get_fragment(schema, ref) do
       {:ok, schema} -> schema
@@ -244,6 +244,7 @@ defmodule ExJsonSchema.Schema do
   defp ref_to_string([:root | path]), do: ["#" | path] |> Enum.join("/")
   defp ref_to_string([url | path]), do: [url <> "#" | path] |> Enum.join("/")
 
+  @spec raise_invalid_reference_error(any) :: no_return
   def raise_invalid_reference_error(ref) when is_binary(ref), do: raise InvalidReferenceError, message: "invalid reference #{ref}"
   def raise_invalid_reference_error(ref), do: ref |> ref_to_string |> raise_invalid_reference_error
 end

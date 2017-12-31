@@ -4,7 +4,7 @@ defmodule ExJsonSchema.Validator.Properties do
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Validator.Error
 
-  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: Validator.errors
+  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: Validator.errors | no_return
   def validate(root, schema, properties = %{}) do
     validated_known_properties = validate_known_properties(root, schema, properties)
     validation_errors(validated_known_properties) ++

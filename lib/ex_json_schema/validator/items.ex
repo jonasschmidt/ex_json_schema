@@ -4,7 +4,7 @@ defmodule ExJsonSchema.Validator.Items do
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Validator.Error
 
-  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: Validator.errors
+  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: Validator.errors | no_return
   def validate(root, %{"items" => schema = %{}}, items) when is_list(items) do
     items
     |> Enum.with_index
