@@ -15,7 +15,6 @@ defmodule ExJsonSchema.Validator.Format do
     do_validate(format, data)
   end
 
-  @spec validate(String.t, ExJsonSchema.data) :: []
   def validate(_, _), do: []
 
   defp do_validate(format, data) when format in ["date-time", "email", "hostname", "ipv4", "ipv6"] do
