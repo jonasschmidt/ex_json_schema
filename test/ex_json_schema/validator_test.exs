@@ -495,6 +495,14 @@ defmodule ExJsonSchema.ValidatorTest do
     )
   end
 
+  test "chain validator and formatter" do
+    assert :ok = validate(%{"format" => "ipv4"}, "12.12.12.12")
+    |> Error.format
+
+    assert [{"Expected to be a valid ipv4.", "#"}] = validate(%{"format" => "ipv4"}, "12.12.12")
+    |> Error.format
+  end
+
   defp assert_validation_errors(schema, data, expected_errors, expected_error_structs) do
     {:error, errors} = validate(schema, data)
     assert errors == expected_error_structs
