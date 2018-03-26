@@ -1,8 +1,8 @@
 defmodule ExJsonSchema.Validator.Properties do
-  alias ExJsonSchema.Schema
-  alias ExJsonSchema.Validator
+  alias ExJsonSchema.{Schema, Validator}
+  alias ExJsonSchema.Schema.Root
 
-  @spec validate(Root.t, Schema.resolved, ExJsonSchema.json) :: Validator.errors_with_list_paths
+  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: Validator.errors_with_list_paths
   def validate(root, schema, properties = %{}) do
     validated_known_properties = validate_known_properties(root, schema, properties)
     validation_errors(validated_known_properties) ++
@@ -12,7 +12,6 @@ defmodule ExJsonSchema.Validator.Properties do
         unvalidated_properties(properties, validated_known_properties))
   end
 
-  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: []
   def validate(_, _, _), do: []
 
   defp validate_known_properties(root, schema, properties) do
