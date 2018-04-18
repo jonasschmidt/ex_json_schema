@@ -17,23 +17,53 @@ defmodule NExJsonSchema.Validator.Format do
   def validate(_, _), do: []
 
   defp do_validate("date-time", data) do
-    validate_with_regex(data, @date_time_regex, fn data ->
-      %{
-        description: "expected #{inspect(data)} to be a valid ISO 8601 date-time",
-        rule: :datetime,
-        params: [inspect(@date_time_regex)]
-      }
-    end)
+    validate_with_regex_result =
+      validate_with_regex(data, @date_time_regex, fn data ->
+        %{
+          description: "expected #{inspect(data)} to be a valid ISO 8601 date-time",
+          rule: :datetime,
+          params: [inspect(@date_time_regex)]
+        }
+      end)
+
+    case validate_with_regex_result do
+      [] ->
+        validate_date_existence("date-time", data, fn data ->
+          %{
+            description: "expected #{inspect(data)} to be an existing date-time",
+            rule: :datetime,
+            params: []
+          }
+        end)
+
+      error ->
+        error
+    end
   end
 
   defp do_validate("date", data) do
-    validate_with_regex(data, @date_regex, fn data ->
-      %{
-        description: "expected #{inspect(data)} to be a valid ISO 8601 date",
-        rule: :date,
-        params: [inspect(@date_regex)]
-      }
-    end)
+    validate_with_regex_result =
+      validate_with_regex(data, @date_regex, fn data ->
+        %{
+          description: "expected #{inspect(data)} to be a valid ISO 8601 date",
+          rule: :date,
+          params: [inspect(@date_regex)]
+        }
+      end)
+
+    case validate_with_regex_result do
+      [] ->
+        validate_date_existence("date", data, fn data ->
+          %{
+            description: "expected #{inspect(data)} to be an existing date",
+            rule: :date,
+            params: []
+          }
+        end)
+
+      error ->
+        error
+    end
   end
 
   defp do_validate("email", data) do
@@ -84,6 +114,20 @@ defmodule NExJsonSchema.Validator.Format do
     case Regex.match?(regex, data) do
       true -> []
       false -> [{failure_message_fun.(data), []}]
+    end
+  end
+
+  defp validate_date_existence("date-time", data, failure_message_fun) do
+    case DateTime.from_iso8601(data) do
+      {:ok, _, _} -> []
+      {:error, _} -> [{failure_message_fun.(data), []}]
+    end
+  end
+
+  defp validate_date_existence("date", data, failure_message_fun) do
+    case Date.from_iso8601(data) do
+      {:ok, _} -> []
+      {:error, _} -> [{failure_message_fun.(data), []}]
     end
   end
 end
