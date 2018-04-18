@@ -1,20 +1,25 @@
 defmodule NExJsonSchema.Validator.Type do
   alias NExJsonSchema.Validator
 
-  @spec validate(String.t, NExJsonSchema.data) :: Validator.errors_with_list_paths
+  @spec validate(String.t(), NExJsonSchema.data()) :: Validator.errors_with_list_paths()
   def validate(type, data) do
     case valid?(type, data) do
-      true -> []
-      false -> [{%{
-        description: "type mismatch. Expected #{type |> type_name} but got #{data |> data_type |> type_name}",
-        rule: :cast,
-        params: [type]
-      }, []}]
+      true ->
+        []
+
+      false ->
+        [
+          {%{
+             description: "type mismatch. Expected #{type |> type_name} but got #{data |> data_type |> type_name}",
+             rule: :cast,
+             params: [type]
+           }, []}
+        ]
     end
   end
 
   defp valid?(type, data) when is_list(type) do
-    Enum.any? type, &valid?(&1, data)
+    Enum.any?(type, &valid?(&1, data))
   end
 
   defp valid?(type, data) do
@@ -43,7 +48,7 @@ defmodule NExJsonSchema.Validator.Type do
 
   defp type_name(type) do
     type
-    |> List.wrap
+    |> List.wrap()
     |> Enum.map(&String.capitalize/1)
     |> Enum.join(", ")
   end

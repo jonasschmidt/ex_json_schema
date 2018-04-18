@@ -8,12 +8,12 @@ defmodule NExJsonSchema.Validator.Format do
   @ipv4_regex ~r/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
   @ipv6_regex ~r/^(?:(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}|(?=(?:[A-F0-9]{0,4}:){0,7}[A-F0-9]{0,4}$)(([0-9A-F]{1,4}:){1,7}|:)((:[0-9A-F]{1,4}){1,7}|:)|(?:[A-F0-9]{1,4}:){7}:|:(:[A-F0-9]{1,4}){7})$/i
 
-  @spec validate(String.t, String.t) :: Validator.errors_with_list_paths
+  @spec validate(String.t(), String.t()) :: Validator.errors_with_list_paths()
   def validate(format, data) when is_binary(data) do
     do_validate(format, data)
   end
 
-  @spec validate(String.t, NExJsonSchema.data) :: []
+  @spec validate(String.t(), NExJsonSchema.data()) :: []
   def validate(_, _), do: []
 
   defp do_validate("date-time", data) do

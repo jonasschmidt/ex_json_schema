@@ -12,10 +12,10 @@ defmodule NExJsonSchema.JsonSchemaTestSuiteTest.Helpers do
   end
 
   def load_schema_test(name) do
-    name <> ".json"
+    (name <> ".json")
     |> schema_test_path
-    |> File.read!
-    |> Poison.Parser.parse!
+    |> File.read!()
+    |> Poison.Parser.parse!()
   end
 end
 
@@ -26,9 +26,9 @@ defmodule NExJsonSchema.JsonSchemaTestSuiteTest do
   import NExJsonSchema.Validator, only: [valid?: 2]
 
   @tests Path.wildcard("#{schema_tests_path()}**/*.json")
-    |> Enum.map(fn path ->
-      path |> String.replace(schema_tests_path(), "") |> String.replace(".json", "")
-    end)
+         |> Enum.map(fn path ->
+           path |> String.replace(schema_tests_path(), "") |> String.replace(".json", "")
+         end)
 
   @ignored_tests %{
     "optional/format" => %{
@@ -36,18 +36,23 @@ defmodule NExJsonSchema.JsonSchemaTestSuiteTest do
     }
   }
 
-  Enum.each @tests, fn feature ->
+  Enum.each(@tests, fn feature ->
     fixture = load_schema_test(feature)
-    Enum.each fixture, fn fixture ->
+
+    Enum.each(fixture, fn fixture ->
       %{"description" => description, "schema" => schema, "tests" => tests} = fixture
       @schema schema
-      Enum.each tests, fn t ->
+      Enum.each(tests, fn t ->
         @test t
         case @ignored_tests[feature] do
-          true -> nil
+          true ->
+            nil
+
           ignored_group ->
             case ignored_group[description] do
-              true -> nil
+              true ->
+                nil
+
               ignored_tests ->
                 unless ignored_tests && Enum.member?(ignored_tests, @test["description"]) do
                   test "[#{feature}] #{description}: #{@test["description"]}" do
@@ -56,7 +61,7 @@ defmodule NExJsonSchema.JsonSchemaTestSuiteTest do
                 end
             end
         end
-      end
-    end
-  end
+      end)
+    end)
+  end)
 end

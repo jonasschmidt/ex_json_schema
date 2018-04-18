@@ -9,7 +9,7 @@ defmodule NExJsonSchema.ConfigTest do
 
   setup do
     resolver = Application.get_env(:nex_json_schema, :remote_schema_resolver)
-    on_exit fn -> Application.put_env(:nex_json_schema, :remote_schema_resolver, resolver) end
+    on_exit(fn -> Application.put_env(:nex_json_schema, :remote_schema_resolver, resolver) end)
     :ok
   end
 

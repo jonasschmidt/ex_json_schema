@@ -2,17 +2,19 @@ defmodule NExJsonSchema.Validator.Properties do
   alias NExJsonSchema.Schema
   alias NExJsonSchema.Validator
 
-  @spec validate(Root.t, Schema.resolved, NExJsonSchema.json) :: Validator.errors_with_list_paths
+  @spec validate(Root.t(), Schema.resolved(), NExJsonSchema.json()) :: Validator.errors_with_list_paths()
   def validate(root, schema, properties = %{}) do
     validated_known_properties = validate_known_properties(root, schema, properties)
+
     validation_errors(validated_known_properties) ++
       validate_additional_properties(
         root,
         schema["additionalProperties"],
-        unvalidated_properties(properties, validated_known_properties))
+        unvalidated_properties(properties, validated_known_properties)
+      )
   end
 
-  @spec validate(Root.t, Schema.resolved, NExJsonSchema.data) :: []
+  @spec validate(Root.t(), Schema.resolved(), NExJsonSchema.data()) :: []
   def validate(_, _, _), do: []
 
   defp validate_known_properties(root, schema, properties) do
@@ -42,28 +44,28 @@ defmodule NExJsonSchema.Validator.Properties do
   end
 
   defp validate_additional_properties(root, schema, properties) when is_map(schema) do
-    Enum.flat_map properties, fn {name, property} -> Validator.validate(root, schema, property, [name]) end
+    Enum.flat_map(properties, fn {name, property} -> Validator.validate(root, schema, property, [name]) end)
   end
 
   defp validate_additional_properties(_, false, properties) when map_size(properties) > 0 do
-    Enum.map properties,
-      fn {name, _} -> {%{
-        description: "schema does not allow additional properties",
-        rule: :schema,
-        params: properties
-      }, [name]}
-    end
+    Enum.map(properties, fn {name, _} ->
+      {%{
+         description: "schema does not allow additional properties",
+         rule: :schema,
+         params: properties
+       }, [name]}
+    end)
   end
 
   defp validate_additional_properties(_, _, _), do: []
 
   defp validation_errors(validated_properties) do
-    validated_properties |> Dict.values |> List.flatten
+    validated_properties |> Dict.values() |> List.flatten()
   end
 
   defp properties_matching(properties, pattern) do
     regex = Regex.compile!(pattern)
-    Enum.filter properties, &Regex.match?(regex, elem(&1, 0))
+    Enum.filter(properties, &Regex.match?(regex, elem(&1, 0)))
   end
 
   defp unvalidated_properties(properties, validated_properties) do
@@ -72,6 +74,6 @@ defmodule NExJsonSchema.Validator.Properties do
   end
 
   defp keys_as_set(properties) do
-    properties |> Dict.keys |> Enum.into(HashSet.new)
+    properties |> Dict.keys() |> Enum.into(HashSet.new())
   end
 end

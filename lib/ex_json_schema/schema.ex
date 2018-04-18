@@ -14,18 +14,18 @@ defmodule NExJsonSchema.Schema do
   alias NExJsonSchema.Schema.Draft4
   alias NExJsonSchema.Schema.Root
 
-  @type resolved :: %{String.t => NExJsonSchema.json_value | (Root.t -> {Root.t, resolved})}
+  @type resolved :: %{String.t() => NExJsonSchema.json_value() | (Root.t() -> {Root.t(), resolved})}
 
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
 
-  @spec resolve(Root.t) :: Root.t | no_return
+  @spec resolve(Root.t()) :: Root.t() | no_return
   def resolve(root = %Root{}), do: resolve_root(root)
 
-  @spec resolve(NExJsonSchema.json) :: Root.t | no_return
+  @spec resolve(NExJsonSchema.json()) :: Root.t() | no_return
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
-  @spec get_ref_schema(Root.t, [:root | String.t]) :: NExJsonSchema.json
+  @spec get_ref_schema(Root.t(), [:root | String.t()]) :: NExJsonSchema.json()
   def get_ref_schema(root = %Root{}, [:root | path] = ref) do
     get_ref_schema_with_schema(root.schema, path, ref)
   end
@@ -42,15 +42,18 @@ defmodule NExJsonSchema.Schema do
   end
 
   defp assert_supported_schema_version(version) do
-    unless supported_schema_version?(version), do: raise UnsupportedSchemaVersionError
+    unless supported_schema_version?(version), do: raise(UnsupportedSchemaVersionError)
   end
 
   defp assert_valid_schema(schema) do
     unless meta?(schema) do
-      case NExJsonSchema.Validator.validate(resolve(Draft4.schema), schema) do
+      case NExJsonSchema.Validator.validate(resolve(Draft4.schema()), schema) do
         {:error, errors} ->
-          raise InvalidSchemaError, message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
-        _ -> nil
+          raise InvalidSchemaError,
+            message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
+
+        _ ->
+          nil
       end
     end
   end
@@ -64,15 +67,20 @@ defmodule NExJsonSchema.Schema do
   end
 
   defp resolve_with_root(root, schema, scope \\ "")
-  defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_binary(id), do: do_resolve(root, schema, scope <> id)
+
+  defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_binary(id),
+    do: do_resolve(root, schema, scope <> id)
+
   defp resolve_with_root(root, schema = %{}, scope), do: do_resolve(root, schema, scope)
   defp resolve_with_root(root, non_schema, _scope), do: {root, non_schema}
 
   defp do_resolve(root, schema, scope) do
-    {root, schema} = Enum.reduce schema, {root, %{}}, fn (property, {root, schema}) ->
-      {root, {k, v}} = resolve_property(root, property, scope)
-      {root, Map.put(schema, k, v)}
-    end
+    {root, schema} =
+      Enum.reduce(schema, {root, %{}}, fn property, {root, schema} ->
+        {root, {k, v}} = resolve_property(root, property, scope)
+        {root, Map.put(schema, k, v)}
+      end)
+
     {root, schema |> sanitize_properties_attribute |> sanitize_additional_items_attribute}
   end
 
@@ -82,19 +90,23 @@ defmodule NExJsonSchema.Schema do
   end
 
   defp resolve_property(root, {key, values}, scope) when is_list(values) do
-    {root, values} = Enum.reduce values, {root, []}, fn (value, {root, values}) ->
-      {root, resolved} = resolve_with_root(root, value, scope)
-      {root, [resolved | values]}
-    end
+    {root, values} =
+      Enum.reduce(values, {root, []}, fn value, {root, values} ->
+        {root, resolved} = resolve_with_root(root, value, scope)
+        {root, [resolved | values]}
+      end)
+
     {root, {key, Enum.reverse(values)}}
   end
 
   defp resolve_property(root, {"$ref", ref}, scope) do
-    scoped_ref = case ref do
-      "http://" <> _ -> ref
-      "https://" <> _ -> ref
-      _else -> scope <> ref |> String.replace("##", "#")
-    end
+    scoped_ref =
+      case ref do
+        "http://" <> _ -> ref
+        "https://" <> _ -> ref
+        _else -> (scope <> ref) |> String.replace("##", "#")
+      end
+
     {root, path} = resolve_ref(root, scoped_ref)
     {root, {"$ref", path}}
   end
@@ -116,7 +128,7 @@ defmodule NExJsonSchema.Schema do
   defp get_fragment([], _), do: nil
   defp get_fragment([""], _), do: nil
   defp get_fragment([fragment = "/" <> _], _), do: fragment
-  defp get_fragment(_, ref), do: raise InvalidSchemaError, message: "invalid reference #{ref}"
+  defp get_fragment(_, ref), do: raise(InvalidSchemaError, message: "invalid reference #{ref}")
 
   defp root_and_path_for_url(root, fragment, "") do
     {root, [root.location | relative_path(fragment)]}
@@ -132,13 +144,16 @@ defmodule NExJsonSchema.Schema do
 
   defp relative_ref_path(ref) do
     ["" | keys] = unescaped_ref_segments(ref)
-    Enum.map keys, fn key ->
+
+    Enum.map(keys, fn key ->
       case key =~ ~r/^\d+$/ do
         true ->
           String.to_integer(key)
-        false -> key
+
+        false ->
+          key
       end
-    end
+    end)
   end
 
   defp resolve_and_cache_remote_schema(root, url) do
@@ -146,8 +161,8 @@ defmodule NExJsonSchema.Schema do
   end
 
   defp fetch_and_resolve_remote_schema(root, url)
-      when url == @current_draft_schema_url or url == @draft4_schema_url do
-    resolve_remote_schema(root, url, Draft4.schema)
+       when url == @current_draft_schema_url or url == @draft4_schema_url do
+    resolve_remote_schema(root, url, Draft4.schema())
   end
 
   defp fetch_and_resolve_remote_schema(root, url) do
@@ -173,7 +188,8 @@ defmodule NExJsonSchema.Schema do
   end
 
   defp remote_schema_resolver do
-    Application.get_env(:nex_json_schema, :remote_schema_resolver) || fn _url -> raise UndefinedRemoteSchemaResolverError end
+    Application.get_env(:nex_json_schema, :remote_schema_resolver) ||
+      fn _url -> raise UndefinedRemoteSchemaResolverError end
   end
 
   defp assert_reference_valid(path, root, _ref) do
@@ -185,8 +201,8 @@ defmodule NExJsonSchema.Schema do
   end
 
   defp needs_properties_attribute?(schema) do
-    Enum.any?(~w(patternProperties additionalProperties), &Map.has_key?(schema, &1))
-      and not Map.has_key?(schema, "properties")
+    Enum.any?(~w(patternProperties additionalProperties), &Map.has_key?(schema, &1)) and
+      not Map.has_key?(schema, "properties")
   end
 
   defp sanitize_additional_items_attribute(schema) do
@@ -204,7 +220,7 @@ defmodule NExJsonSchema.Schema do
       segment
       |> String.replace("~0", "~")
       |> String.replace("~1", "/")
-      |> URI.decode
+      |> URI.decode()
     end)
   end
 

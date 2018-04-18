@@ -27,9 +27,10 @@ defmodule NExJsonSchema.SchemaTest do
 
   test "schema is validated against its meta-schema" do
     schema = %{"properties" => "foo"}
+
     assert_raise NExJsonSchema.Schema.InvalidSchemaError,
-      ~s(schema did not pass validation against its meta-schema: [{%{description: \"type mismatch. Expected Object but got String\", params: [\"object\"], rule: :cast}, \"$.properties\"}]),
-      fn -> resolve(schema) end
+                 ~s(schema did not pass validation against its meta-schema: [{%{description: \"type mismatch. Expected Object but got String\", params: [\"object\"], rule: :cast}, \"$.properties\"}]),
+                 fn -> resolve(schema) end
   end
 
   test "resolving an absolute reference in a scoped schema" do
@@ -37,6 +38,7 @@ defmodule NExJsonSchema.SchemaTest do
       "id" => "http://foo.bar/schema.json#",
       "$ref" => "http://localhost:1234/subSchemas.json#/integer"
     }
+
     resolved = resolve(schema)
     assert get_ref_schema(resolved, resolved.schema["$ref"]) == %{"type" => "integer"}
   end
@@ -45,7 +47,7 @@ defmodule NExJsonSchema.SchemaTest do
     schema = %{"foo" => %{"$ref" => "#/bar"}, "bar" => "baz"}
     resolved = resolve(schema)
     path = get_in(resolved.schema, ["foo", "$ref"])
-    assert get_ref_schema(resolved, path)  == "baz"
+    assert get_ref_schema(resolved, path) == "baz"
   end
 
   test "resolves a root reference" do
@@ -56,24 +58,33 @@ defmodule NExJsonSchema.SchemaTest do
 
   test "catches references with an invalid property in the path" do
     schema = %{"$ref" => "#/foo"}
-    assert_raise NExJsonSchema.Schema.InvalidSchemaError, "reference $.foo could not be resolved", fn -> resolve(schema) end
+
+    assert_raise NExJsonSchema.Schema.InvalidSchemaError, "reference $.foo could not be resolved", fn ->
+      resolve(schema)
+    end
   end
 
   test "catches references with an invalid index in the path" do
     schema = %{"$ref" => "http://json-schema.org/schema#/1"}
-    assert_raise NExJsonSchema.Schema.InvalidSchemaError, "reference http://json-schema.org/schema#/1 could not be resolved", fn -> resolve(schema) end
+
+    assert_raise NExJsonSchema.Schema.InvalidSchemaError,
+                 "reference http://json-schema.org/schema#/1 could not be resolved",
+                 fn -> resolve(schema) end
   end
 
   test "catches invalid references" do
     schema = %{"$ref" => "#definitions/foo"}
-    assert_raise NExJsonSchema.Schema.InvalidSchemaError, "invalid reference #definitions/foo", fn -> resolve(schema) end
+
+    assert_raise NExJsonSchema.Schema.InvalidSchemaError, "invalid reference #definitions/foo", fn ->
+      resolve(schema)
+    end
   end
 
   test "changing the resolution scope" do
     schema = %{"id" => "#/foo_scope/", "foo" => %{"$ref" => "bar"}, "foo_scope" => %{"bar" => "baz"}}
     resolved = resolve(schema)
     path = get_in(resolved.schema, ["foo", "$ref"])
-    assert get_ref_schema(resolved, path)  == "baz"
+    assert get_ref_schema(resolved, path) == "baz"
   end
 
   test "caching a resolved remote reference" do

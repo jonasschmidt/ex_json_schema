@@ -2,7 +2,7 @@ defmodule NExJsonSchema.Validator.Dependencies do
   alias NExJsonSchema.Schema
   alias NExJsonSchema.Validator
 
-  @spec validate(Root.t, Schema.resolved, NExJsonSchema.json) :: Validator.errors_with_list_paths
+  @spec validate(Root.t(), Schema.resolved(), NExJsonSchema.json()) :: Validator.errors_with_list_paths()
   def validate(root, dependencies, data) when is_map(data) do
     dependencies
     |> Enum.filter(&Map.has_key?(data, elem(&1, 0)))
@@ -11,7 +11,7 @@ defmodule NExJsonSchema.Validator.Dependencies do
     end)
   end
 
-  @spec validate(Root.t, Schema.resolved, NExJsonSchema.data) :: []
+  @spec validate(Root.t(), Schema.resolved(), NExJsonSchema.data()) :: []
   def validate(_, _, _), do: []
 
   defp validate_dependency(root, _, schema, data) when is_map(schema) do
@@ -19,15 +19,20 @@ defmodule NExJsonSchema.Validator.Dependencies do
   end
 
   defp validate_dependency(_, property, dependencies, data) do
-    Enum.flat_map List.wrap(dependencies), fn dependency ->
+    Enum.flat_map(List.wrap(dependencies), fn dependency ->
       case Map.has_key?(data, dependency) do
-        true -> []
-        false -> [{%{
-          description: "property #{property} depends on #{dependency} to be present but it was not",
-          rule: :dependency,
-          params: [dependency]
-        }, [property]}]
+        true ->
+          []
+
+        false ->
+          [
+            {%{
+               description: "property #{property} depends on #{dependency} to be present but it was not",
+               rule: :dependency,
+               params: [dependency]
+             }, [property]}
+          ]
       end
-    end
+    end)
   end
 end
