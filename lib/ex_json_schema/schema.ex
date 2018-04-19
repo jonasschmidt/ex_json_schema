@@ -194,7 +194,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp needs_additional_items_attribute?(schema) do
-    Map.has_key?(schema, "items") and not Map.has_key?(schema, "additionalItems")
+    Map.has_key?(schema, "items") and is_list(schema["items"]) and not Map.has_key?(schema, "additionalItems")
   end
 
   defp unescaped_ref_segments(ref) do
