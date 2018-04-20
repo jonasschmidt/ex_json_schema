@@ -5,7 +5,7 @@ defmodule ExJsonSchema.Mixfile do
     [
       app: :ex_json_schema,
       version: "0.5.6",
-      elixir: "~> 1.0",
+      elixir: "~> 1.3",
       description: "A JSON Schema validator with full support for the draft 4 specification and zero dependencies.",
       deps: deps(),
       package: package(),
@@ -36,7 +36,8 @@ defmodule ExJsonSchema.Mixfile do
       {:poison, "~> 1.5", only: :test},
       {:excoveralls, "~> 0.4", only: :test},
       {:mix_test_watch, "~> 0.2.6", only: [:dev, :test]},
-      {:ex_doc, ">= 0.0.0", only: :dev}
+      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false}
     ]
   end
 

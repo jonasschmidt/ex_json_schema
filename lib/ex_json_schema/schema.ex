@@ -14,18 +14,17 @@ defmodule ExJsonSchema.Schema do
   alias ExJsonSchema.Schema.Draft4
   alias ExJsonSchema.Schema.Root
 
-  @type resolved :: %{String.t => ExJsonSchema.json_value | (Root.t -> {Root.t, resolved})}
+  @type resolved :: %{String.t => ExJsonSchema.data | (Root.t -> {Root.t, resolved})}
 
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
 
-  @spec resolve(Root.t) :: Root.t | no_return
+  @spec resolve(Root.t | ExJsonSchema.object) :: Root.t | no_return
   def resolve(root = %Root{}), do: resolve_root(root)
 
-  @spec resolve(ExJsonSchema.json) :: Root.t | no_return
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
-  @spec get_ref_schema(Root.t, [:root | String.t]) :: ExJsonSchema.json
+  @spec get_ref_schema(Root.t, [:root | String.t]) :: ExJsonSchema.object
   def get_ref_schema(root = %Root{}, [:root | path] = ref) do
     get_ref_schema_with_schema(root.schema, path, ref)
   end
