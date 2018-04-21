@@ -73,21 +73,24 @@ defmodule ExJsonSchema.Validator.Properties do
           {name , {"Cannot have a value for property #{name}", []}}
         end)
     end
-   # |>  IO.inspect
   end
-
-  # defp validate_named_properties(root, schema, properties) do
-  #   schema
-  #   |> Enum.filter(&Map.has_key?(properties, elem(&1, 0)))
-  #   |> Enum.map(fn {name, property_schema} ->
-  #     {name, Validator.validate(root, property_schema, properties[name], [name])}
-  #   end)
-  # end
 
   defp validate_pattern_properties(_, nil, _), do: []
 
   defp validate_pattern_properties(root, schema, properties) do
     Enum.flat_map(schema, &validate_pattern_property(root, &1, properties))
+  end
+
+  defp validate_pattern_property(_, {pattern, false}, properties) do
+    properties
+    |> properties_matching(pattern)
+    |> Enum.map(fn {name, _} ->
+      {name, [{"Schema does not allow matching properties for #{pattern}.", [name]}]}
+    end)
+  end
+
+  defp validate_pattern_property(_, {_, true}, _) do
+    []
   end
 
   defp validate_pattern_property(root, {pattern, schema}, properties) do
