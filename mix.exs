@@ -16,18 +16,24 @@ defmodule ExJsonSchema.Mixfile do
       deps: deps(),
       docs: docs(),
       package: package(),
+      elixirc_paths: elixirc_paths(Mix.env()),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [coveralls: :test]
+      preferred_cli_env: [coveralls: :test, dialyzer: :test],
+      dialyzer: [
+        plt_add_apps: [:ex_unit],
+        plt_core_path: ".",
+        plt_add_deps: :transitive
+      ]
     ]
   end
 
   def application do
-    [applications: []]
+    [extra_applications: []]
   end
 
   defp deps do
     [
-      {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 0.5", only: [:test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
       {:httpoison, "~> 0.8", only: :test},
@@ -53,4 +59,7 @@ defmodule ExJsonSchema.Mixfile do
       links: %{"GitHub" => @source_url}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 end
