@@ -174,12 +174,11 @@ defmodule ExJsonSchema.Schema do
     {root, {"anyOf", Enum.reverse(values)}}
   end
 
-  defp resolve_property(root, {"$ref", ref}, scope) do
+  defp resolve_property(root, {"$ref", ref}, scope) when is_bitstring(ref) do
     scoped_ref =
       case ref do
         "http://" <> _ -> ref
         "https://" <> _ -> ref
-        scope = %{} -> ref
         _else ->  scope <> ref |> String.replace("##", "#")
       end
 
@@ -274,7 +273,7 @@ defmodule ExJsonSchema.Schema do
     resolve_remote_schema(root, url, Draft7.schema)
   end
 
-  defp fetch_and_resolve_remote_schema(root, url) do
+  defp fetch_and_resolve_remote_schema(root, url) when is_bitstring(url) do
     resolve_remote_schema(root, url, fetch_remote_schema(url))
   end
 
@@ -372,7 +371,9 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp get_ref_schema_with_schema(schema, [key | path], ref) when is_binary(key) do
-    get_ref_schema_with_schema(Map.get(schema, key), path, ref)
+    schema
+    |> Map.get(key)
+    |> get_ref_schema_with_schema(path, ref)
   end
 
   defp get_ref_schema_with_schema(schema, [idx | path], ref) when is_integer(idx) do

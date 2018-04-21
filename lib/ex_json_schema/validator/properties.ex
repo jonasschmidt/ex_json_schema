@@ -108,12 +108,6 @@ defmodule ExJsonSchema.Validator.Properties do
     end)
   end
 
-  defp validate_additional_properties(_, false, properties) when map_size(properties) > 0 do
-    Enum.map(properties, fn {name, _} ->
-      {"Schema does not allow additional properties.", [name]}
-    end)
-  end
-
   defp validate_additional_properties(_, _, _), do: []
 
   defp validation_errors(validated_properties) do

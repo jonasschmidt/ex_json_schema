@@ -41,11 +41,6 @@ defmodule ExJsonSchema.Validator.Dependencies do
     []
   end
 
-  # defp validate_dependency(root, _, schema, data) when is_map(schema) do
-  #   IO.inspect schema
-  #   Validator.validate(root, schema, data)
-  # end
-
   defp validate_dependency(_, property, dependencies, data) do
     dependencies
     |> List.wrap()
@@ -53,7 +48,7 @@ defmodule ExJsonSchema.Validator.Dependencies do
       if Map.has_key?(data, dependency) do
         []
       else
-        [{"Property #{property} depends on #{dependency} to be present but it was not.", []}]
+        [{"Property #{inspect(property)} depends on #{inspect(dependency)} to be present but it was not.", []}]
       end
     end)
   end
