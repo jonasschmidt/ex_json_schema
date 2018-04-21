@@ -11,6 +11,46 @@ defmodule ExJsonSchema.Validator do
   @type errors :: [%Error{}] | list
   @type options :: [error_formatter: module() | false]
 
+  @callback validate(
+              Root.t(),
+              ExJsonSchema.data(),
+              {String.t(), ExJsonSchema.data()},
+              ExJsonSchema.data()
+            ) :: errors_with_list_paths
+
+  @validators [
+    ExJsonSchema.Validator.AllOf,
+    ExJsonSchema.Validator.AnyOf,
+    ExJsonSchema.Validator.Const,
+    ExJsonSchema.Validator.Contains,
+    ExJsonSchema.Validator.ContentEncoding,
+    ExJsonSchema.Validator.ContentMediaType,
+    ExJsonSchema.Validator.Dependencies,
+    ExJsonSchema.Validator.Enum,
+    ExJsonSchema.Validator.ExclusiveMaximum,
+    ExJsonSchema.Validator.ExclusiveMinimum,
+    ExJsonSchema.Validator.Format,
+    ExJsonSchema.Validator.Items,
+    ExJsonSchema.Validator.MaxItems,
+    ExJsonSchema.Validator.MaxLength,
+    ExJsonSchema.Validator.MaxProperties,
+    ExJsonSchema.Validator.Maximum,
+    ExJsonSchema.Validator.MinItems,
+    ExJsonSchema.Validator.MinLength,
+    ExJsonSchema.Validator.MinProperties,
+    ExJsonSchema.Validator.Minimum,
+    ExJsonSchema.Validator.MultipleOf,
+    ExJsonSchema.Validator.Not,
+    ExJsonSchema.Validator.OneOf,
+    ExJsonSchema.Validator.Pattern,
+    ExJsonSchema.Validator.Properties,
+    ExJsonSchema.Validator.PropertyNames,
+    ExJsonSchema.Validator.Ref,
+    ExJsonSchema.Validator.Required,
+    ExJsonSchema.Validator.Type,
+    ExJsonSchema.Validator.UniqueItems
+  ]
+
   @spec validate(Root.t() | ExJsonSchema.object(), ExJsonSchema.data()) ::
           :ok | {:error, errors} | no_return
   def validate(root, data, options \\ [])
@@ -59,7 +99,12 @@ defmodule ExJsonSchema.Validator do
   end
 
   def validation_errors(root = %Root{}, schema = %{}, data, path) do
-    Enum.flat_map(schema, &validate_aspect(root, schema, &1, data))
+    schema
+    |> Enum.flat_map(fn property ->
+      Enum.flat_map(@validators, fn validator ->
+        validator.validate(root, schema, property, data)
+      end)
+    end)
     |> Enum.map(fn %Error{path: p} = error -> %{error | path: path <> p} end)
   end
 
@@ -85,238 +130,5 @@ defmodule ExJsonSchema.Validator do
 
   defp format_errors({:error, errors}, error_formatter) when is_list(errors) do
     {:error, error_formatter.format(errors)}
-  end
-
-  defp format_errors({:error, _} = error, _error_formatter), do: error
-
-  defp validate_aspect(root, _, {"$ref", path}, data) do
-    schema = Schema.get_fragment!(root, path)
-    validation_errors(root, schema, data, "")
-  end
-
-  defp validate_aspect(root, _, {"allOf", all_of}, data) do
-    invalid =
-      all_of
-      |> Enum.map(&validation_errors(root, &1, data))
-      |> Enum.with_index()
-      |> Enum.filter(fn {errors, _index} -> !Enum.empty?(errors) end)
-      |> map_to_invalid_errors
-
-    case Enum.empty?(invalid) do
-      true -> []
-      false -> [%Error{error: %Error.AllOf{invalid: invalid}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(root, _, {"anyOf", any_of}, data) do
-    invalid =
-      any_of
-      |> Enum.reduce_while([], fn schema, acc ->
-        case validation_errors(root, schema, data) do
-          [] -> {:halt, []}
-          errors -> {:cont, [errors | acc]}
-        end
-      end)
-      |> Enum.reverse()
-      |> Enum.with_index()
-      |> map_to_invalid_errors
-
-    case Enum.empty?(invalid) do
-      true -> []
-      false -> [%Error{error: %Error.AnyOf{invalid: invalid}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(root, _, {"oneOf", one_of}, data) do
-    {valid_count, valid_indices, errors} =
-      one_of
-      |> Enum.with_index()
-      |> Enum.reduce({0, [], []}, fn {schema, index}, {valid_count, valid_indices, errors} ->
-        case validation_errors(root, schema, data) do
-          [] -> {valid_count + 1, [index | valid_indices], errors}
-          e -> {valid_count, valid_indices, [{e, index} | errors]}
-        end
-      end)
-
-    case valid_count do
-      1 ->
-        []
-
-      0 ->
-        [
-          %Error{
-            error: %Error.OneOf{
-              valid_indices: [],
-              invalid: errors |> Enum.reverse() |> map_to_invalid_errors
-            },
-            path: ""
-          }
-        ]
-
-      _ ->
-        [
-          %Error{
-            error: %Error.OneOf{valid_indices: Enum.reverse(valid_indices), invalid: []},
-            path: ""
-          }
-        ]
-    end
-  end
-
-  defp validate_aspect(root, _, {"not", not_schema}, data) do
-    case valid_fragment?(root, not_schema, data) do
-      true -> [%Error{error: %Error.Not{}, path: ""}]
-      false -> []
-    end
-  end
-
-  defp validate_aspect(_, _, {"type", type}, data) do
-    Type.validate(type, data)
-  end
-
-  defp validate_aspect(root, schema, {"properties", _}, data = %{}) do
-    Properties.validate(root, schema, data)
-  end
-
-  defp validate_aspect(_, _, {"minProperties", min_properties}, data) when is_map(data) do
-    case map_size(data) >= min_properties do
-      true ->
-        []
-
-      false ->
-        [
-          %Error{
-            error: %Error.MinProperties{expected: min_properties, actual: map_size(data)},
-            path: ""
-          }
-        ]
-    end
-  end
-
-  defp validate_aspect(_, _, {"maxProperties", max_properties}, data) when is_map(data) do
-    case map_size(data) <= max_properties do
-      true ->
-        []
-
-      false ->
-        [
-          %Error{
-            error: %Error.MaxProperties{expected: max_properties, actual: map_size(data)},
-            path: ""
-          }
-        ]
-    end
-  end
-
-  defp validate_aspect(_, _, {"required", required}, data = %{}) do
-    case Enum.filter(required, &(!Map.has_key?(data, &1))) do
-      [] -> []
-      missing -> [%Error{error: %Error.Required{missing: missing}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(root, _, {"dependencies", dependencies}, data) do
-    Dependencies.validate(root, dependencies, data)
-  end
-
-  defp validate_aspect(root, schema, {"items", _}, items) do
-    Items.validate(root, schema, items)
-  end
-
-  defp validate_aspect(_, _, {"minItems", min_items}, items) when is_list(items) do
-    case (count = Enum.count(items)) >= min_items do
-      true -> []
-      false -> [%Error{error: %Error.MinItems{expected: min_items, actual: count}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(_, _, {"maxItems", max_items}, items) when is_list(items) do
-    case (count = Enum.count(items)) <= max_items do
-      true -> []
-      false -> [%Error{error: %Error.MaxItems{expected: max_items, actual: count}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(_, _, {"uniqueItems", true}, items) when is_list(items) do
-    case Enum.uniq(items) == items do
-      true -> []
-      false -> [%Error{error: %Error.UniqueItems{}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(_, _, {"enum", enum}, data) do
-    case Enum.any?(enum, &(&1 == data)) do
-      true -> []
-      false -> [%Error{error: %Error.Enum{}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(_, schema, {"minimum", minimum}, data) when is_number(data) do
-    exclusive? = schema["exclusiveMinimum"] || false
-    fun = if exclusive?, do: &Kernel.>/2, else: &Kernel.>=/2
-
-    case fun.(data, minimum) do
-      true ->
-        []
-
-      false ->
-        [%Error{error: %Error.Minimum{expected: minimum, exclusive?: exclusive?}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(_, schema, {"maximum", maximum}, data) when is_number(data) do
-    exclusive? = schema["exclusiveMaximum"] || false
-    fun = if exclusive?, do: &Kernel.</2, else: &Kernel.<=/2
-
-    case fun.(data, maximum) do
-      true ->
-        []
-
-      false ->
-        [%Error{error: %Error.Maximum{expected: maximum, exclusive?: exclusive?}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(_, _, {"multipleOf", multiple_of}, data) when is_number(data) do
-    factor = data / multiple_of
-
-    case Float.floor(factor) == factor do
-      true -> []
-      false -> [%Error{error: %Error.MultipleOf{expected: multiple_of}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(_, _, {"minLength", min_length}, data) when is_binary(data) do
-    case (length = String.length(data)) >= min_length do
-      true -> []
-      false -> [%Error{error: %Error.MinLength{expected: min_length, actual: length}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(_, _, {"maxLength", max_length}, data) when is_binary(data) do
-    case (length = String.length(data)) <= max_length do
-      true -> []
-      false -> [%Error{error: %Error.MaxLength{expected: max_length, actual: length}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(_, _, {"pattern", pattern}, data) when is_binary(data) do
-    case pattern |> Regex.compile!() |> Regex.match?(data) do
-      true -> []
-      false -> [%Error{error: %Error.Pattern{expected: pattern}, path: ""}]
-    end
-  end
-
-  defp validate_aspect(root, _, {"format", format}, data) do
-    Format.validate(root, format, data)
-  end
-
-  defp validate_aspect(_, _, _, _), do: []
-
-  defp map_to_invalid_errors(errors_with_index) do
-    errors_with_index
-    |> Enum.map(fn {errors, index} ->
-      %Error.InvalidAtIndex{errors: errors, index: index}
-    end)
   end
 end

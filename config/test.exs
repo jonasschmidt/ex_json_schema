@@ -5,5 +5,6 @@ defmodule CustomFormatValidator do
 end
 
 config :ex_json_schema,
+  decode_json: fn json -> Poison.decode(json) end,
   remote_schema_resolver: fn url -> HTTPoison.get!(url).body |> Poison.decode!() end,
   custom_format_validator: {CustomFormatValidator, :validate}
