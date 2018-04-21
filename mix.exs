@@ -6,10 +6,12 @@ defmodule ExJsonSchema.Mixfile do
       app: :ex_json_schema,
       version: "0.5.6",
       elixir: "~> 1.3",
+      elixirc_paths: elixirc_paths(Mix.env()),
       description: "A JSON Schema validator with full support for the draft 4 specification and zero dependencies.",
       deps: deps(),
       package: package(),
       test_coverage: [tool: ExCoveralls],
+
       preferred_cli_env: [coveralls: :test]
     ]
   end
@@ -40,6 +42,9 @@ defmodule ExJsonSchema.Mixfile do
       {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp package do
     [

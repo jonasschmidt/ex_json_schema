@@ -11,6 +11,7 @@ defmodule ExJsonSchema.Validator do
   @type errors_with_list_paths :: [{String.t, [String.t | integer]}] | []
 
   @spec validate(Root.t | ExJsonSchema.object, ExJsonSchema.data) :: :ok | {:error, errors}
+  @callback validate(Root.t, ExJsonSchema.data, {String.t(), ExJsonSchema.data}, ExJsonSchema.data) :: errors_with_list_paths
   def validate(root = %Root{}, data) do
     errors = validate(root, root.schema, data, ["#"]) |> errors_with_string_paths
     case Enum.empty?(errors) do

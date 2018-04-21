@@ -12,19 +12,57 @@ defmodule ExJsonSchema.Schema do
   end
 
   alias ExJsonSchema.Schema.Draft4
+  alias ExJsonSchema.Schema.Draft6
+  alias ExJsonSchema.Schema.Draft7
   alias ExJsonSchema.Schema.Root
 
-  @type resolved :: %{String.t => ExJsonSchema.data | (Root.t -> {Root.t, resolved})}
+  @type resolved :: %{String.t => ExJsonSchema.json_value | (Root.t -> {Root.t, resolved})}
 
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
+  @draft6_schema_url "http://json-schema.org/draft-06/schema"
+  @draft7_schema_url "http://json-schema.org/draft-07/schema"
 
-  @spec resolve(Root.t | ExJsonSchema.object) :: Root.t | no_return
+  @false_value_schema %{
+    "not" => %{
+      "anyOf" => [
+        %{"type" => "object"},
+        %{"type" => "array"},
+        %{"type" => "boolean"},
+        %{"type" => "string"},
+        %{"type" => "number"},
+        %{"type" => "null"}
+      ]
+    }
+  }
+
+  @true_value_schema %{
+    "anyOf" => [
+        %{"type" => "object"},
+        %{"type" => "array"},
+        %{"type" => "boolean"},
+        %{"type" => "string"},
+        %{"type" => "number"},
+        %{"type" => "null"}
+    ]
+  }
+
+  @spec resolve(boolean) :: Root.t | no_return
+  def resolve(false) do
+    %Root{schema: @false_value_schema}
+  end
+
+  def resolve(true) do
+    %Root{schema: @true_value_schema}
+  end
+
+  @spec resolve(Root.t) :: Root.t | no_return
   def resolve(root = %Root{}), do: resolve_root(root)
 
+  @spec resolve(ExJsonSchema.json) :: Root.t | no_return
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
-  @spec get_ref_schema(Root.t, [:root | String.t]) :: ExJsonSchema.object
+  @spec get_ref_schema(Root.t, [:root | String.t]) :: ExJsonSchema.json
   def get_ref_schema(root = %Root{}, [:root | path] = ref) do
     get_ref_schema_with_schema(root.schema, path, ref)
   end
@@ -33,46 +71,120 @@ defmodule ExJsonSchema.Schema do
     get_ref_schema_with_schema(root.refs[url], path, ref)
   end
 
+  @spec resolve_root(Root.t() | boolean) :: Root.t()
+  defp resolve_root(false) do
+    %Root{schema: @false_value_schema}
+  end
+
+  defp resolve_root(true) do
+    %Root{schema: @true_value_schema}
+  end
+
   defp resolve_root(root) do
-    assert_supported_schema_version(Map.get(root.schema, "$schema", @current_draft_schema_url <> "#"))
-    assert_valid_schema(root.schema)
+    schema_version =
+      root.schema
+      |> Map.get("$schema", @current_draft_schema_url <> "#")
+      |> schema_version!()
+
+    assert_valid_schema!(root.schema)
+
     {root, schema} = resolve_with_root(root, root.schema)
-    %{root | schema: schema}
+
+    root
+    |> Map.put(:version, schema_version)
+    |> Map.put(:schema, schema)
   end
 
-  defp assert_supported_schema_version(version) do
-    unless supported_schema_version?(version), do: raise UnsupportedSchemaVersionError
-  end
+  @spec schema_version!(String.t()) :: non_neg_integer | :current | no_return
+  defp schema_version!(@draft4_schema_url <> _), do: 4
+  defp schema_version!(@draft6_schema_url <> _), do: 6
+  defp schema_version!(@draft7_schema_url <> _), do: 7
+  defp schema_version!(@current_draft_schema_url <> _), do: :current
+  defp schema_version!(_), do: raise UnsupportedSchemaVersionError
 
-  defp assert_valid_schema(schema) do
-    unless meta?(schema) do
-      case ExJsonSchema.Validator.validate(resolve(Draft4.schema), schema) do
-        {:error, errors} ->
-          raise InvalidSchemaError, message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
-        _ -> nil
-      end
-    end
-  end
-
-  defp supported_schema_version?(version) do
-    case version do
-      @current_draft_schema_url <> _ -> true
-      @draft4_schema_url <> _ -> true
-      _ -> false
+  @spec assert_valid_schema!(map) :: :ok | no_return
+  defp assert_valid_schema!(schema) do
+    case {meta04?(schema), meta06?(schema), meta07?(schema)} do
+      {false, false, false} ->
+        schema_module = choose_meta_schema_validation_module(schema)
+        case ExJsonSchema.Validator.validate(resolve(schema_module.schema()), schema) do
+          {:error, errors} ->
+            raise InvalidSchemaError, message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
+          _ -> :ok
+        end
+        _ -> :ok
     end
   end
 
   defp resolve_with_root(root, schema, scope \\ "")
-  defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_binary(id), do: do_resolve(root, schema, scope <> id)
+  defp resolve_with_root(root, schema = %{"$id" => id}, scope) when is_bitstring(id), do: do_resolve(root, schema, scope <> id)
+  defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_bitstring(id), do: do_resolve(root, schema, scope <> id)
   defp resolve_with_root(root, schema = %{}, scope), do: do_resolve(root, schema, scope)
   defp resolve_with_root(root, non_schema, _scope), do: {root, non_schema}
 
   defp do_resolve(root, schema, scope) do
-    {root, schema} = Enum.reduce schema, {root, %{}}, fn (property, {root, schema}) ->
+    {root, schema} = Enum.reduce(schema, {root, %{}}, fn (property, {root, schema}) ->
       {root, {k, v}} = resolve_property(root, property, scope)
       {root, Map.put(schema, k, v)}
-    end
+    end)
     {root, schema |> sanitize_properties_attribute |> sanitize_additional_items_attribute}
+  end
+
+  defp resolve_property(root, {"not", true}, _scope) do
+    {root, {"not", @true_value_schema}}
+  end
+
+  defp resolve_property(root, {"not", false}, _scope) do
+    {root, {"not", @false_value_schema}}
+  end
+
+  defp resolve_property(root, {"oneOf", values}, scope) when is_list(values) do
+    {root, values} = Enum.reduce(values, {root, []}, fn (value, {root, values}) ->
+      case value do
+        true -> {root, [@true_value_schema|values]}
+        false -> {root, [@false_value_schema|values]}
+        _ -> {root, resolved} = resolve_with_root(root, value, scope)
+             {root, [resolved | values]}
+      end
+    end)
+    {root, {"oneOf", Enum.reverse(values)}}
+  end
+
+  defp resolve_property(root, {"allOf", values}, scope) when is_list(values) do
+    {root, values} = Enum.reduce values, {root, []}, fn (value, {root, values}) ->
+      case value do
+        true -> {root, [@true_value_schema|values]}
+        false -> {root, [@false_value_schema|values]}
+        _ -> {root, resolved} = resolve_with_root(root, value, scope)
+             {root, [resolved | values]}
+      end
+    end
+    {root, {"allOf", Enum.reverse(values)}}
+  end
+
+  defp resolve_property(root, {"anyOf", values}, scope) when is_list(values) do
+    {root, values} = Enum.reduce values, {root, []}, fn (value, {root, values}) ->
+      case value do
+        true -> {root, [@true_value_schema|values]}
+        false -> {root, [@false_value_schema|values]}
+        _ -> {root, resolved} = resolve_with_root(root, value, scope)
+             {root, [resolved | values]}
+      end
+    end
+    {root, {"anyOf", Enum.reverse(values)}}
+  end
+
+  defp resolve_property(root, {"$ref", ref}, scope) do
+    scoped_ref =
+      case ref do
+        "http://" <> _ -> ref
+        "https://" <> _ -> ref
+        scope = %{} -> ref
+        _else ->  scope <> ref |> String.replace("##", "#")
+      end
+
+    {root, path} = resolve_ref(root, scoped_ref)
+    {root, {"$ref", path}}
   end
 
   defp resolve_property(root, {key, value}, scope) when is_map(value) do
@@ -88,34 +200,36 @@ defmodule ExJsonSchema.Schema do
     {root, {key, Enum.reverse(values)}}
   end
 
-  defp resolve_property(root, {"$ref", ref}, scope) do
-    scoped_ref = case ref do
-      "http://" <> _ -> ref
-      "https://" <> _ -> ref
-      _else -> scope <> ref |> String.replace("##", "#")
+  defp resolve_property(root, {key, values}, scope) when is_list(values) do
+    {root, values} = Enum.reduce values, {root, []}, fn (value, {root, values}) ->
+      {root, resolved} = resolve_with_root(root, value, scope)
+      {root, [resolved | values]}
     end
-    {root, path} = resolve_ref(root, scoped_ref)
-    {root, {"$ref", path}}
+    {root, {key, Enum.reverse(values)}}
   end
 
-  defp resolve_property(root, tuple, _), do: {root, tuple}
+  defp resolve_property(root, tuple, _) when is_tuple(tuple), do: {root, tuple}
 
   defp resolve_ref(root, "#") do
     {root, [root.location]}
   end
 
+  defp resolve_ref(root, ref = %{}) do
+    {root, ref}
+  end
+
   defp resolve_ref(root, ref) do
     [url | fragments] = String.split(ref, "#")
-    fragment = get_fragment(fragments, ref)
+    fragment = fragment!(fragments, ref)
     {root, path} = root_and_path_for_url(root, fragment, url)
     assert_reference_valid(path, root, ref)
     {root, path}
   end
 
-  defp get_fragment([], _), do: nil
-  defp get_fragment([""], _), do: nil
-  defp get_fragment([fragment = "/" <> _], _), do: fragment
-  defp get_fragment(_, ref), do: raise InvalidSchemaError, message: "invalid reference #{ref}"
+  defp fragment!([], _), do: nil
+  defp fragment!([""], _), do: nil
+  defp fragment!([fragment = "/" <> _], _), do: fragment
+  defp fragment!(_, ref), do: raise InvalidSchemaError, message: "invalid reference #{ref}"
 
   defp root_and_path_for_url(root, fragment, "") do
     {root, [root.location | relative_path(fragment)]}
@@ -131,22 +245,33 @@ defmodule ExJsonSchema.Schema do
 
   defp relative_ref_path(ref) do
     ["" | keys] = unescaped_ref_segments(ref)
-    Enum.map keys, fn key ->
-      case key =~ ~r/^\d+$/ do
-        true ->
-          String.to_integer(key)
-        false -> key
+    Enum.map(keys, fn key ->
+      if key =~ ~r/^\d+$/ do
+        String.to_integer(key)
+      else
+        key
       end
-    end
+    end)
   end
 
   defp resolve_and_cache_remote_schema(root, url) do
-    if root.refs[url], do: root, else: fetch_and_resolve_remote_schema(root, url)
+    if root.refs[url] do
+      root
+    else
+      fetch_and_resolve_remote_schema(root, url)
+    end
   end
 
-  defp fetch_and_resolve_remote_schema(root, url)
-      when url == @current_draft_schema_url or url == @draft4_schema_url do
+  defp fetch_and_resolve_remote_schema(root, url) when url == @current_draft_schema_url or url == @draft4_schema_url do
     resolve_remote_schema(root, url, Draft4.schema)
+  end
+
+  defp fetch_and_resolve_remote_schema(root, url) when url == @draft6_schema_url do
+    resolve_remote_schema(root, url, Draft6.schema)
+  end
+
+  defp fetch_and_resolve_remote_schema(root, url) when url == @draft7_schema_url do
+    resolve_remote_schema(root, url, Draft7.schema)
   end
 
   defp fetch_and_resolve_remote_schema(root, url) do
@@ -184,12 +309,16 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp needs_properties_attribute?(schema) do
-    Enum.any?(~w(patternProperties additionalProperties), &Map.has_key?(schema, &1))
-      and not Map.has_key?(schema, "properties")
+    (Map.has_key?(schema, "patternProperties") or Map.has_key?(schema, "additionalProperties"))
+    and not Map.has_key?(schema, "properties")
   end
 
   defp sanitize_additional_items_attribute(schema) do
-    if needs_additional_items_attribute?(schema), do: Map.put(schema, "additionalItems", true), else: schema
+    if needs_additional_items_attribute?(schema) do
+      Map.put(schema, "additionalItems", true)
+    else
+      schema
+    end
   end
 
   defp needs_additional_items_attribute?(schema) do
@@ -203,12 +332,35 @@ defmodule ExJsonSchema.Schema do
       segment
       |> String.replace("~0", "~")
       |> String.replace("~1", "/")
-      |> URI.decode
+      |> URI.decode()
     end)
   end
 
-  defp meta?(schema) do
-    String.starts_with?(Map.get(schema, "id", ""), @draft4_schema_url)
+  defp choose_meta_schema_validation_module(schema) do
+    case Map.get(schema, "$schema", @current_draft_schema_url <> "#") do
+      @draft4_schema_url <> _ -> Draft4
+      @draft6_schema_url <> _ -> Draft6
+      @draft7_schema_url <> _ -> Draft7
+      _ -> Draft6
+    end
+  end
+
+  defp meta04?(schema) do
+    schema
+    |> Map.get("id", "")
+    |> String.starts_with?(@draft4_schema_url)
+  end
+
+  defp meta06?(schema) do
+    schema
+    |> Map.get("$schema", "")
+    |> String.starts_with?( @draft6_schema_url)
+  end
+
+  defp meta07?(schema) do
+    schema
+    |> Map.get("id", "")
+    |> String.starts_with?(@draft7_schema_url)
   end
 
   defp get_ref_schema_with_schema(nil, _, ref) do
