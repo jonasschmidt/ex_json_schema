@@ -1,385 +1,173 @@
 defmodule ExJsonSchema.Schema.Draft7 do
   @schema %{
-  "$schema" => "http =>//json-schema.org/draft-04/schema#",
-  "title" => "JSON API Schema",
-  "description" => "This is a schema for responses in the JSON API format. For more, see http =>//jsonapi.org",
-  "oneOf" => [
-    %{
-      "$ref" => "#/definitions/success"
-    },
-    %{
-      "$ref" => "#/definitions/failure"
-    },
-    %{
-      "$ref" => "#/definitions/info"
-    }
-  ],
-
+  "$schema" => "http =>//json-schema.org/draft-07/schema#",
+  "$id" => "http =>//json-schema.org/draft-07/schema#",
+  "title" => "Core schema meta-schema",
   "definitions" => %{
-    "success" => %{
-      "type" => "object",
-      "required" => [
-        "data"
-      ],
-      "properties" => %{
-        "data" => %{
-          "$ref" => "#/definitions/data"
-        },
-        "included" => %{
-          "description" => "To reduce the number of HTTP requests, servers **MAY** allow responses that include related resources along with the requested primary resources. Such responses are called \"compound documents\".",
-          "type" => "array",
-          "items" => %{
-            "$ref" => "#/definitions/resource"
-          },
-          "uniqueItems" => true
-        },
-        "meta" => %{
-          "$ref" => "#/definitions/meta"
-        },
-        "links" => %{
-          "description" => "Link members related to the primary data.",
-          "allOf" => [
-            %{
-              "$ref" => "#/definitions/links"
-            },
-            %{
-              "$ref" => "#/definitions/pagination"
-            }
-          ]
-        },
-        "jsonapi" => %{
-          "$ref" => "#/definitions/jsonapi"
-        }
-      },
-      "additionalProperties" => false
-    },
-    "failure" => %{
-      "type" => "object",
-      "required" => [
-        "errors"
-      ],
-      "properties" => %{
-        "errors" => %{
-          "type" => "array",
-          "items" => %{
-            "$ref" => "#/definitions/error"
-          },
-          "uniqueItems" => true
-        },
-        "meta" => %{
-          "$ref" => "#/definitions/meta"
-        },
-        "jsonapi" => %{
-          "$ref" => "#/definitions/jsonapi"
-        },
-        "links" => %{
-          "$ref" => "#/definitions/links"
-        }
-      },
-      "additionalProperties" => false
-    },
-    "info" => %{
-      "type" => "object",
-      "required" => [
-        "meta"
-      ],
-      "properties" => %{
-        "meta" => %{
-          "$ref" => "#/definitions/meta"
-        },
-        "links" => %{
-          "$ref" => "#/definitions/links"
-        },
-        "jsonapi" => %{
-          "$ref" => "#/definitions/jsonapi"
-        }
-      },
-      "additionalProperties" => false
-    },
-
-    "meta" => %{
-      "description" => "Non-standard meta-information that can not be represented as an attribute or relationship.",
-      "type" => "object",
-      "additionalProperties" => true
-    },
-    "data" => %{
-      "description" => "The document's \"primary data\" is a representation of the resource or collection of resources targeted by a request.",
-      "oneOf" => [
-        %{
-          "$ref" => "#/definitions/resource"
-        },
-        %{
-          "description" => "An array of resource objects, an array of resource identifier objects, or an empty array ([]), for requests that target resource collections.",
-          "type" => "array",
-          "items" => %{
-            "$ref" => "#/definitions/resource"
-          },
-          "uniqueItems" => true
-        },
-        %{
-          "description" => "null if the request is one that might correspond to a single resource, but doesn't currently.",
-          "type" => "null"
-        }
-      ]
-    },
-    "resource" => %{
-      "description" => "\"Resource objects\" appear in a JSON API document to represent resources.",
-      "type" => "object",
-      "required" => [
-        "type",
-        "id"
-      ],
-      "properties" => %{
-        "type" => %{
-          "type" => "string"
-        },
-        "id" => %{
-          "type" => "string"
-        },
-        "attributes" => %{
-          "$ref" => "#/definitions/attributes"
-        },
-        "relationships" => %{
-          "$ref" => "#/definitions/relationships"
-        },
-        "links" => %{
-          "$ref" => "#/definitions/links"
-        },
-        "meta" => %{
-          "$ref" => "#/definitions/meta"
-        }
-      },
-      "additionalProperties" => false
-    },
-
-    "links" => %{
-      "description" => "A resource object **MAY** contain references to other resource objects (\"relationships\"). Relationships may be to-one or to-many. Relationships can be specified by including a member in a resource's links object.",
-      "type" => "object",
-      "properties" => %{
-        "self" => %{
-          "description" => "A `self` member, whose value is a URL for the relationship itself (a \"relationship URL\"). This URL allows the client to directly manipulate the relationship. For example, it would allow a client to remove an `author` from an `article` without deleting the people resource itself.",
-          "type" => "string",
-          "format" => "uri"
-        },
-        "related" => %{
-          "$ref" => "#/definitions/link"
-        }
-      },
-      "additionalProperties" => true
-    },
-    "link" => %{
-      "description" => "A link **MUST** be represented as either => a string containing the link's URL or a link object.",
-      "oneOf" => [
-        %{
-          "description" => "A string containing the link's URL.",
-          "type" => "string",
-          "format" => "uri"
-        },
-        %{
-          "type" => "object",
-          "required" => [
-            "href"
-          ],
-          "properties" => %{
-            "href" => %{
-              "description" => "A string containing the link's URL.",
-              "type" => "string",
-              "format" => "uri"
-            },
-            "meta" => %{
-              "$ref" => "#/definitions/meta"
-            }
-          }
-        }
-      ]
-    },
-
-    "attributes" => %{
-      "description" => "Members of the attributes object (\"attributes\") represent information about the resource object in which it's defined.",
-      "type" => "object",
-      "patternProperties" => %{
-        "^(?!relationships$|links$)\\w[-\\w_]*$" => %{
-          "description" => "Attributes may contain any valid JSON value."
-        }
-      },
-      "additionalProperties" => false
-    },
-
-    "relationships" => %{
-      "description" => "Members of the relationships object (\"relationships\") represent references from the resource object in which it's defined to other resource objects.",
-      "type" => "object",
-      "patternProperties" => %{
-        "^\\w[-\\w_]*$" => %{
-          "properties" => %{
-            "links" => %{
-              "$ref" => "#/definitions/links"
-            },
-            "data" => %{
-              "description" => "Member, whose value represents \"resource linkage\".",
-              "oneOf" => [
-                %{
-                  "$ref" => "#/definitions/relationshipToOne"
-                },
-                %{
-                  "$ref" => "#/definitions/relationshipToMany"
-                }
-              ]
-            },
-            "meta" => %{
-              "$ref" => "#/definitions/meta"
-            }
-          },
-          "anyOf" => [
-            %{"required" => ["data"]},
-            %{"required" => ["meta"]},
-            %{"required" => ["links"]}
-          ],
-          "additionalProperties" => false
-        }
-      },
-      "additionalProperties" => false
-    },
-    "relationshipToOne" => %{
-      "description" => "References to other resource objects in a to-one (\"relationship\"). Relationships can be specified by including a member in a resource's links object.",
-      "anyOf" => [
-        %{
-          "$ref" => "#/definitions/empty"
-        },
-        %{
-          "$ref" => "#/definitions/linkage"
-        }
-      ]
-    },
-    "relationshipToMany" => %{
-      "description" => "An array of objects each containing \"type\" and \"id\" members for to-many relationships.",
+    "schemaArray" => %{
       "type" => "array",
-      "items" => %{
-        "$ref" => "#/definitions/linkage"
-      },
-      "uniqueItems" => true
+      "minItems" => 1,
+      "items" => %{ "$ref" => "#" }
     },
-    "empty" => %{
-      "description" => "Describes an empty to-one relationship.",
-      "type" => "null"
+    "nonNegativeInteger" => %{
+      "type" => "integer",
+      "minimum" => 0
     },
-    "linkage" => %{
-      "description" => "The \"type\" and \"id\" to non-empty members.",
-      "type" => "object",
-      "required" => [
-        "type",
-        "id"
+    "nonNegativeIntegerDefault0" => %{
+      "allOf" => [
+        %{ "$ref" => "#/definitions/nonNegativeInteger" },
+        %{ "default" => 0 }
+      ]
+    },
+    "simpleTypes" => %{
+      "enum" => [
+        "array",
+        "boolean",
+        "integer",
+        "null",
+        "number",
+        "object",
+        "string"
+      ]
+    },
+    "stringArray" => %{
+      "type" => "array",
+      "items" => %{ "type" => "string" },
+      "uniqueItems" => true,
+      "default" => []
+    }
+  },
+  "type" => ["object", "boolean"],
+  "properties" => %{
+    "$id" => %{
+      "type" => "string",
+      "format" => "uri-reference"
+    },
+    "$schema" => %{
+      "type" => "string",
+      "format" => "uri"
+    },
+    "$ref" => %{
+      "type" => "string",
+      "format" => "uri-reference"
+    },
+    "$comment" => %{
+      "type" => "string"
+    },
+    "title" => %{
+      "type" => "string"
+    },
+    "description" => %{
+      "type" => "string"
+    },
+    "default" => true,
+    "readOnly" => %{
+      "type" => "boolean",
+      "default" => false
+    },
+    "examples" => %{
+      "type" => "array",
+      "items" => true
+    },
+    "multipleOf" => %{
+      "type" => "number",
+      "exclusiveMinimum" => 0
+    },
+    "maximum" => %{
+      "type" => "number"
+    },
+    "exclusiveMaximum" => %{
+      "type" => "number"
+    },
+    "minimum" => %{
+      "type" => "number"
+    },
+    "exclusiveMinimum" => %{
+      "type" => "number"
+    },
+    "maxLength" => %{ "$ref" => "#/definitions/nonNegativeInteger" },
+    "minLength" => %{ "$ref" => "#/definitions/nonNegativeIntegerDefault0" },
+    "pattern" => %{
+      "type" => "string",
+      "format" => "regex"
+    },
+    "additionalItems" => %{ "$ref" => "#" },
+    "items" => %{
+      "anyOf" => [
+        %{ "$ref" => "#" },
+        %{ "$ref" => "#/definitions/schemaArray" }
       ],
-      "properties" => %{
-        "type" => %{
-          "type" => "string"
-        },
-        "id" => %{
-          "type" => "string"
-        },
-        "meta" => %{
-          "$ref" => "#/definitions/meta"
-        }
-      },
-      "additionalProperties" => false
+      "default" => true
     },
-    "pagination" => %{
+    "maxItems" => %{ "$ref" => "#/definitions/nonNegativeInteger" },
+    "minItems" => %{ "$ref" => "#/definitions/nonNegativeIntegerDefault0" },
+    "uniqueItems" => %{
+      "type" => "boolean",
+      "default" => false
+    },
+    "contains" => %{ "$ref" => "#" },
+    "maxProperties" => %{ "$ref" => "#/definitions/nonNegativeInteger" },
+    "minProperties" => %{ "$ref" => "#/definitions/nonNegativeIntegerDefault0" },
+    "required" => %{ "$ref" => "#/definitions/stringArray" },
+    "additionalProperties" => %{ "$ref" => "#" },
+    "definitions" => %{
       "type" => "object",
-      "properties" => %{
-        "first" => %{
-          "description" => "The first page of data",
-          "oneOf" => [
-            %{ "type" => "string", "format" => "uri" },
-            %{ "type" => "null" }
-          ]
-        },
-        "last" => %{
-          "description" => "The last page of data",
-          "oneOf" => [
-            %{ "type" => "string", "format" => "uri" },
-            %{ "type" => "null" }
-          ]
-        },
-        "prev" => %{
-          "description" => "The previous page of data",
-          "oneOf" => [
-            %{ "type" => "string", "format" => "uri" },
-            %{ "type" => "null" }
-          ]
-        },
-        "next" => %{
-          "description" => "The next page of data",
-          "oneOf" => [
-            %{ "type" => "string", "format" => "uri" },
-            %{ "type" => "null" }
-          ]
-        }
+      "additionalProperties" => %{ "$ref" => "#" },
+      "default" => %{}
+    },
+    "properties" => %{
+      "type" => "object",
+      "additionalProperties" => %{ "$ref" => "#" },
+      "default" => %{}
+    },
+    "patternProperties" => %{
+      "type" => "object",
+      "additionalProperties" => %{ "$ref" => "#" },
+      "propertyNames" => %{ "format" => "regex" },
+      "default" => %{}
+    },
+    "dependencies" => %{
+      "type" => "object",
+      "additionalProperties" => %{
+        "anyOf" => [
+          %{ "$ref" => "#" },
+          %{ "$ref" => "#/definitions/stringArray" }
+        ]
       }
     },
-
-    "jsonapi" => %{
-      "description" => "An object describing the server's implementation",
-      "type" => "object",
-      "properties" => %{
-        "version" => %{
-          "type" => "string"
-        },
-        "meta" => %{
-          "$ref" => "#/definitions/meta"
-        }
-      },
-      "additionalProperties" => false
+    "propertyNames" => %{ "$ref" => "#" },
+    "const" => true,
+    "enum" => %{
+      "type" => "array",
+      "items" => true,
+      "minItems" => 1,
+      "uniqueItems" => true
     },
-
-    "error" => %{
-      "type" => "object",
-      "properties" => %{
-        "id" => %{
-          "description" => "A unique identifier for this particular occurrence of the problem.",
-          "type" => "string"
-        },
-        "links" => %{
-          "$ref" => "#/definitions/links"
-        },
-        "status" => %{
-          "description" => "The HTTP status code applicable to this problem, expressed as a string value.",
-          "type" => "string"
-        },
-        "code" => %{
-          "description" => "An application-specific error code, expressed as a string value.",
-          "type" => "string"
-        },
-        "title" => %{
-          "description" => "A short, human-readable summary of the problem. It **SHOULD NOT** change from occurrence to occurrence of the problem, except for purposes of localization.",
-          "type" => "string"
-        },
-        "detail" => %{
-          "description" => "A human-readable explanation specific to this occurrence of the problem.",
-          "type" => "string"
-        },
-        "source" => %{
-          "type" => "object",
-          "properties" => %{
-            "pointer" => %{
-              "description" => "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \"/data\" for a primary data object, or \"/data/attributes/title\" for a specific attribute].",
-              "type" => "string"
-            },
-            "parameter" => %{
-              "description" => "A string indicating which query parameter caused the error.",
-              "type" => "string"
-            }
-          }
-        },
-        "meta" => %{
-          "$ref" => "#/definitions/meta"
+    "type" => %{
+      "anyOf" => [
+        %{ "$ref" => "#/definitions/simpleTypes" },
+        %{
+          "type" => "array",
+          "items" => %{ "$ref" => "#/definitions/simpleTypes" },
+          "minItems" => 1,
+          "uniqueItems" => true
         }
-      },
-      "additionalProperties" => false
-    }
+      ]
+    },
+    "format" => %{ "type" => "string" },
+    "contentMediaType" => %{ "type" => "string" },
+    "contentEncoding" => %{ "type" => "string" },
+    "if" => %{"$ref" => "#"},
+    "then" => %{"$ref" => "#"},
+    "else" => %{"$ref" => "#"},
+    "allOf" => %{ "$ref" => "#/definitions/schemaArray" },
+    "anyOf" => %{ "$ref" => "#/definitions/schemaArray" },
+    "oneOf" => %{ "$ref" => "#/definitions/schemaArray" },
+    "not" => %{ "$ref" => "#" }
+  },
+  "default" => true
   }
-}
 
-
-
-@spec schema() :: ExJsonSchema.json
-def schema, do: @schema
+  @spec schema() :: ExJsonSchema.json
+  def schema, do: @schema
 end
