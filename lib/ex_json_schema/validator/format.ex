@@ -37,6 +37,10 @@ defmodule ExJsonSchema.Validator.Format do
     []
   end
 
+  defp do_validate(_, data) when not is_bitstring(data) do
+    []
+  end
+
   defp do_validate("date", data) do
     validate_with_regex(data, @date_regex, fn data -> "Expected #{inspect(data)} to be a valid date." end)
   end
