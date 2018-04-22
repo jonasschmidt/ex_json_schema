@@ -69,15 +69,7 @@ defmodule ExJsonSchema.Schema do
     get_ref_schema_with_schema(root.refs[url], path, ref)
   end
 
-  @spec resolve_root(Root.t() | boolean) :: Root.t()
-  defp resolve_root(false) do
-    %Root{schema: @false_value_schema}
-  end
-
-  defp resolve_root(true) do
-    %Root{schema: @true_value_schema}
-  end
-
+  @spec resolve_root(boolean | Root.t()) :: Root.t()
   defp resolve_root(root) do
     schema_version =
       root.schema
