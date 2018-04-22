@@ -8,9 +8,10 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
       alias ExJsonSchema.Test.Support.TestHelpers
 
       @schema_tests_path opts[:schema_tests_path]
+      @schema_url opts[:schema_url]
 
       @active [
-        # "Recursive references between schemas: valid tree"
+        # "minimum validation: boundary point is valid"
       ]
 
       "#{@schema_tests_path}**/*.json"
@@ -26,7 +27,7 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
         |> Enum.each(fn fixture ->
           %{"description" => description, "schema" => schema, "tests" => tests} = fixture
 
-          @schema schema
+          @schema (if is_map(schema), do: Map.put_new(schema, "$schema", @schema_url), else: schema)
 
           Enum.each(tests, fn t ->
             @test t
@@ -40,6 +41,7 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
                     |> ExJsonSchema.Validator.valid?(@test["data"])
                   rescue
                     e in ExJsonSchema.Schema.InvalidSchemaError ->
+                      IO.inspect e
                       false
                   end
 

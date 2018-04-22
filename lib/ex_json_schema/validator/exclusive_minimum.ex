@@ -7,7 +7,15 @@ defmodule ExJsonSchema.Validator.ExclusiveMinimum do
 
   @impl ExJsonSchema.Validator
   @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
-  def validate(_, _, {"exclusiveMinimum", minimum}, data) do
+  def validate(%{version: 4}, schema, {"exclusiveMinimum", true}, data) do
+    schema
+    |> Map.get("minimum")
+    |> do_validate(data)
+  end
+
+  def validate(root, schema, {"exclusiveMinimum", minimum}, data) do
+    IO.inspect root.version, label: "VERSION"
+    IO.inspect schema
     do_validate(minimum, data)
   end
 

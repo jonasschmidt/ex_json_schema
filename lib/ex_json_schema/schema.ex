@@ -99,7 +99,7 @@ defmodule ExJsonSchema.Schema do
   defp schema_version!(@draft4_schema_url <> _), do: 4
   defp schema_version!(@draft6_schema_url <> _), do: 6
   defp schema_version!(@draft7_schema_url <> _), do: 7
-  defp schema_version!(@current_draft_schema_url <> _), do: :current
+  defp schema_version!(@current_draft_schema_url <> _), do: 6
   defp schema_version!(_), do: raise UnsupportedSchemaVersionError
 
   @spec assert_valid_schema!(map) :: :ok | no_return
@@ -110,14 +110,18 @@ defmodule ExJsonSchema.Schema do
          false <- meta06?(schema),
          false <- meta07?(schema),
          schema_module <- choose_meta_schema_validation_module(schema_url),
-         {:error, errors} <- ExJsonSchema.Validator.validate(resolve(schema_module.schema()), schema)
-    do
+         {:error, errors} <- ExJsonSchema.Validator.validate(resolve(schema_module.schema()), schema) do
       raise InvalidSchemaError, message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
     else
       _ ->
         :ok
     end
   end
+
+  defp choose_meta_schema_validation_module(@draft4_schema_url <> _), do: Draft4
+  defp choose_meta_schema_validation_module(@draft6_schema_url <> _), do: Draft6
+  defp choose_meta_schema_validation_module(@draft7_schema_url <> _), do: Draft7
+  defp choose_meta_schema_validation_module(_), do: Draft4
 
   defp resolve_with_root(root, schema, scope \\ "")
   defp resolve_with_root(root, schema = %{"$id" => id}, scope) when is_bitstring(id), do: do_resolve(root, schema, scope <> id)
@@ -143,6 +147,7 @@ defmodule ExJsonSchema.Schema do
 
     sanitized_schema =
       schema
+      # |> IO.inspect
       |> sanitize_properties_attribute()
       |> sanitize_additional_items_attribute()
 
@@ -279,10 +284,10 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  defp remote_schema(@current_draft_schema_url), do: Draft4.schema()
-  defp remote_schema(@draft4_schema_url), do: Draft4.schema()
-  defp remote_schema(@draft6_schema_url), do: Draft6.schema()
-  defp remote_schema(@draft7_schema_url), do: Draft7.schema()
+  defp remote_schema(@current_draft_schema_url <> _), do: Draft4.schema()
+  defp remote_schema(@draft4_schema_url <> _), do: Draft4.schema()
+  defp remote_schema(@draft6_schema_url <> _), do: Draft6.schema()
+  defp remote_schema(@draft7_schema_url <> _), do: Draft7.schema()
   defp remote_schema(url) when is_bitstring(url), do: fetch_remote_schema(url)
 
   defp resolve_remote_schema(root, url, remote_schema) do
@@ -347,12 +352,7 @@ defmodule ExJsonSchema.Schema do
     end)
   end
 
-  defp choose_meta_schema_validation_module(@draft4_schema_url <> _), do: Draft4
-  defp choose_meta_schema_validation_module(@draft6_schema_url <> _), do: Draft6
-  defp choose_meta_schema_validation_module(@draft7_schema_url <> _), do: Draft7
-  defp choose_meta_schema_validation_module(_), do: Draft6
-
-  defp meta04?(%{"id" => @draft4_schema_url <> _}), do: true
+  defp meta04?(%{"$schema" => @draft4_schema_url <> _}), do: true
   defp meta04?(_), do: false
 
   defp meta06?(%{"$schema" => @draft6_schema_url <> _}), do: true

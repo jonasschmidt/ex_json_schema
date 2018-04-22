@@ -44,7 +44,6 @@ defmodule ExJsonSchema.Validator do
     errors =
       root
       |> validate(root.schema, data, ["#"])
-      # |> IO.inspect
       |> errors_with_string_paths()
 
     if Enum.empty?(errors) do
