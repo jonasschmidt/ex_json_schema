@@ -41,7 +41,7 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
     end
   end
 
-  defp do_validate(_, _) do
+  defp do_validate(_, _, _) do
     []
   end
 end
