@@ -7,8 +7,6 @@ defmodule ExJsonSchema.JsonSchemaDraft7TestSuiteTest do
       "if-then-else",
       "iri",
       "optional/format/idn-email",
-      "optional/format/iri",
-      "optional/format/iri-reference",
       "optional/format/idn-hostname"
     ],
     ignored_tests: [
