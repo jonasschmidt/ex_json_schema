@@ -9,14 +9,8 @@ defmodule ExJsonSchema.Validator.Ref do
   @impl ExJsonSchema.Validator
   @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
 
-  def validate(root, _, {"$ref", ref}, data) do
-
-    validations = do_validate(root, ref, data)
-    unless Enum.empty?(validations) do
-      # validations |> IO.inspect(label: inspect(ref))
-    end
-
-    validations
+  def validate(root, schema, {"$ref", ref}, data) do
+    do_validate(root, ref, data)
   end
 
   def validate(_, _, _, _) do
@@ -31,18 +25,13 @@ defmodule ExJsonSchema.Validator.Ref do
     [{"$ref to false is always invalid.", []}]
   end
 
-  defp do_validate(root, path, data) when is_bitstring(path) do
+  defp do_validate(root, path, data) when is_bitstring(path) or is_list(path) do
     schema = Schema.get_ref_schema(root, path)
     Validator.validate(root, schema, data)
   end
 
   defp do_validate(root, ref, data) when is_map(ref) do
     Validator.validate(root, ref, data)
-  end
-
-  defp do_validate(root, path, data) when is_list(path) do
-    schema = Schema.get_ref_schema(root, path)
-    Validator.validate(root, schema, data)
   end
 
   defp do_validate(_, _, _) do
