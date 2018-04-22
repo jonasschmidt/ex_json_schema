@@ -14,7 +14,7 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
 
   @impl ExJsonSchema.Validator
   @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
-  def validate(root, schema, {"contentMediaType", content_media_type}, data) do
+  def validate(%{version: version}, schema, {"contentMediaType", content_media_type}, data) when version >= 7 do
     do_validate(schema, content_media_type, data)
   end
 

@@ -33,6 +33,7 @@ defmodule ExJsonSchema.JsonSchemaDraft7TestSuiteTest do
       "root ref in remote ref: object is invalid",
       "root ref in remote ref: string is valid",
       "valid definition: valid definition schema",
+      "validation of regular expressions: a regular expression with unclosed parens is invalid",
       "validation of string-encoded content based on media type: an invalid JSON document",
     ],
     schema_url: "http://json-schema.org/draft-07/schema"

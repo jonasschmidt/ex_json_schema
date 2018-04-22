@@ -14,7 +14,7 @@ defmodule ExJsonSchema.Validator.ContentEncoding do
 
   @impl ExJsonSchema.Validator
   @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
-  def validate(root, _, {"contentEncoding", content_encoding}, data) do
+  def validate(%{version: version}, _, {"contentEncoding", content_encoding}, data) when version >= 7 do
     do_validate(content_encoding, data)
   end
 
