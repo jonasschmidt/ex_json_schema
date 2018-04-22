@@ -8,8 +8,6 @@ defmodule ExJsonSchema.Validator.AnyOf do
   @impl ExJsonSchema.Validator
   @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
   def validate(root, _, {"anyOf", any_of}, data) do
-    # IO.inspect any_of
-    # IO.inspect data
     do_validate(root, any_of, data)
   end
 
