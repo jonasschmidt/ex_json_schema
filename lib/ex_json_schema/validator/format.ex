@@ -1,4 +1,12 @@
 defmodule ExJsonSchema.Validator.Format do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"format"` attributes.
+
+  See:
+  https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-7
+  https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-8
+  https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-7
+  """
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator

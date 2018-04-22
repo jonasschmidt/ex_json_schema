@@ -64,13 +64,7 @@ defmodule ExJsonSchema.Validator do
     schema
     |> Enum.flat_map(fn property ->
       Enum.flat_map(@validators, fn validator ->
-        validations = validator.validate(root, schema, property, data)
-        unless Enum.empty?(validations) do
-          # IO.inspect validator
-          # IO.inspect validations
-        end
-
-        validations
+        validator.validate(root, schema, property, data)
       end)
     end)
     |> Enum.map(fn {msg, p} -> {msg, path ++ p} end)

@@ -21,7 +21,7 @@ defmodule ExJsonSchema.Validator.ExclusiveMinimum do
     |> do_validate(data)
   end
 
-  def validate(root, schema, {"exclusiveMinimum", minimum}, data) do
+  def validate(_, _, {"exclusiveMinimum", minimum}, data) do
     do_validate(minimum, data)
   end
 

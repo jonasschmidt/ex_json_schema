@@ -10,9 +10,8 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
       @schema_tests_path opts[:schema_tests_path]
       @schema_url opts[:schema_url]
 
-      @active [
-        # "minimum validation: boundary point is valid"
-      ]
+      @ignored_suites Keyword.get(opts, :ignored_suites, [])
+      @ignored_tests Keyword.get(opts, :ignored_tests, [])
 
       "#{@schema_tests_path}**/*.json"
       |> Path.wildcard()
@@ -31,7 +30,7 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
 
           Enum.each(tests, fn t ->
             @test t
-            if Enum.empty?(@active) || "#{description}: #{@test["description"]}" in @active do
+            unless name in @ignored_suites or "#{description}: #{@test["description"]}" in @ignored_tests do
               @tag String.to_atom("json_schema_" <> name)
               test "[#{name}] #{description}: #{@test["description"]}" do
                 valid? =
@@ -41,7 +40,6 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
                     |> ExJsonSchema.Validator.valid?(@test["data"])
                   rescue
                     e in ExJsonSchema.Schema.InvalidSchemaError ->
-                      IO.inspect e
                       false
                   end
 
