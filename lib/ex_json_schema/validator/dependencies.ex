@@ -37,7 +37,7 @@ defmodule ExJsonSchema.Validator.Dependencies do
     []
   end
 
-  defp validate_dependency(root, _, property, false, data) do
+  defp validate_dependency(_, _, property, false, data) do
     if Map.has_key?(data, property) do
       [{"Expected data not to have property #{property} but it did.", []}]
     else

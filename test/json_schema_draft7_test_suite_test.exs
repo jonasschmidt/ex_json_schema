@@ -5,6 +5,11 @@ defmodule ExJsonSchema.JsonSchemaDraft7TestSuiteTest do
     schema_tests_path: "test/JSON-Schema-Test-Suite/tests/draft7/",
     ignored_suites: [
       "if-then-else",
+      "iri",
+      "optional/format/idn-email",
+      "optional/format/iri",
+      "optional/format/iri-reference",
+      "optional/format/idn-hostname"
     ],
     ignored_tests: [
       "$ref to boolean schema true: any value is valid",

@@ -14,6 +14,8 @@ defmodule ExJsonSchema.Validator do
     ExJsonSchema.Validator.AllOf,
     ExJsonSchema.Validator.Const,
     ExJsonSchema.Validator.Contains,
+    ExJsonSchema.Validator.ContentEncoding,
+    ExJsonSchema.Validator.ContentMediaType,
     ExJsonSchema.Validator.Dependencies,
     ExJsonSchema.Validator.Enum,
     ExJsonSchema.Validator.ExclusiveMaximum,
