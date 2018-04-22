@@ -155,6 +155,6 @@ defmodule ExJsonSchema.Schema.Draft6 do
 }
 
 
-@spec schema() :: ExJsonSchema.json
+@spec schema() :: ExJsonSchema.data
 def schema, do: @schema
 end

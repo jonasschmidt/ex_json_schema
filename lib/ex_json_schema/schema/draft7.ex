@@ -168,6 +168,6 @@ defmodule ExJsonSchema.Schema.Draft7 do
   "default" => true
   }
 
-  @spec schema() :: ExJsonSchema.json
+  @spec schema() :: ExJsonSchema.data
   def schema, do: @schema
 end

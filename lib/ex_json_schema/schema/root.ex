@@ -8,6 +8,6 @@ defmodule ExJsonSchema.Schema.Root do
     schema: ExJsonSchema.Schema.resolved,
     refs: %{String.t => ExJsonSchema.Schema.resolved},
     location: :root | String.t,
-    version: non_neg_integer
+    version: non_neg_integer | nil
   }
 end
