@@ -99,7 +99,7 @@ defmodule ExJsonSchema.Schema do
   defp schema_version!(@draft4_schema_url <> _), do: 4
   defp schema_version!(@draft6_schema_url <> _), do: 6
   defp schema_version!(@draft7_schema_url <> _), do: 7
-  defp schema_version!(@current_draft_schema_url <> _), do: 6
+  defp schema_version!(@current_draft_schema_url <> _), do: 7
   defp schema_version!(_), do: raise UnsupportedSchemaVersionError
 
   @spec assert_valid_schema!(map) :: :ok | no_return

@@ -8,8 +8,7 @@ defmodule ExJsonSchema.Validator.Ref do
 
   @impl ExJsonSchema.Validator
   @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
-
-  def validate(root, schema, {"$ref", ref}, data) do
+  def validate(root, _, {"$ref", ref}, data) do
     do_validate(root, ref, data)
   end
 

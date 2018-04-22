@@ -30,21 +30,23 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
 
           Enum.each(tests, fn t ->
             @test t
-            unless name in @ignored_suites or "#{description}: #{@test["description"]}" in @ignored_tests do
-              @tag String.to_atom("json_schema_" <> name)
-              test "[#{name}] #{description}: #{@test["description"]}" do
-                valid? =
-                  try do
-                    @schema
-                    |> ExJsonSchema.Schema.resolve()
-                    |> ExJsonSchema.Validator.valid?(@test["data"])
-                  rescue
-                    e in ExJsonSchema.Schema.InvalidSchemaError ->
-                      false
-                  end
 
-                assert(valid? == @test["valid"])
-              end
+            if name in @ignored_suites or "#{description}: #{@test["description"]}" in @ignored_tests do
+              @tag :skip
+            end
+            @tag String.to_atom("json_schema_" <> name)
+            test "[#{name}] #{description}: #{@test["description"]}" do
+              valid? =
+                try do
+                  @schema
+                  |> ExJsonSchema.Schema.resolve()
+                  |> ExJsonSchema.Validator.valid?(@test["data"])
+                rescue
+                  e in ExJsonSchema.Schema.InvalidSchemaError ->
+                    false
+                end
+
+              assert(valid? == @test["valid"])
             end
           end)
         end)
