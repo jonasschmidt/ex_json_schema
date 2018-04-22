@@ -105,6 +105,12 @@ defmodule ExJsonSchema.Validator.Items do
     Validator.validate(root, schema, item, [index])
   end
 
+  defp valid_item?(root, schema, item, index) do
+    root
+    |> validate_item(schema, item, index)
+    |> Enum.empty?()
+  end
+
   defp additional_items_schema(schema = %{}), do: schema
   defp additional_items_schema(true), do: %{}
   defp additional_items_schema(_), do: nil
@@ -114,10 +120,7 @@ defmodule ExJsonSchema.Validator.Items do
     |> Enum.with_index()
     |> Enum.reject(fn {item, index} ->
       schema = Enum.at(schemata, index)
-      root
-      |> validate_item(schema, item, index)
-      |> Enum.empty?()
-      |> Kernel.||(schema == true)
+      schema == true || valid_item?(root, schema, item, index)
     end)
   end
 end
