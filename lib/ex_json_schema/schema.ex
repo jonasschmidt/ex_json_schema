@@ -104,15 +104,16 @@ defmodule ExJsonSchema.Schema do
 
   @spec assert_valid_schema!(map) :: :ok | no_return
   defp assert_valid_schema!(schema) do
-    case {meta04?(schema), meta06?(schema), meta07?(schema)} do
-      {false, false, false} ->
-        schema_module = choose_meta_schema_validation_module(schema)
-        case ExJsonSchema.Validator.validate(resolve(schema_module.schema()), schema) do
-          {:error, errors} ->
-            raise InvalidSchemaError, message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
-          _ -> :ok
-        end
-        _ -> :ok
+    with false <- meta04?(schema),
+         false <- meta06?(schema),
+         false <- meta07?(schema),
+         schema_module <- choose_meta_schema_validation_module(schema),
+         {:error, errors} <- ExJsonSchema.Validator.validate(resolve(schema_module.schema()), schema)
+    do
+      raise InvalidSchemaError, message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
+    else
+      _ ->
+        :ok
     end
   end
 
@@ -123,11 +124,27 @@ defmodule ExJsonSchema.Schema do
   defp resolve_with_root(root, non_schema, _scope), do: {root, non_schema}
 
   defp do_resolve(root, schema, scope) do
-    {root, schema} = Enum.reduce(schema, {root, %{}}, fn (property, {root, schema}) ->
-      {root, {k, v}} = resolve_property(root, property, scope)
-      {root, Map.put(schema, k, v)}
-    end)
-    {root, schema |> sanitize_properties_attribute |> sanitize_additional_items_attribute}
+    {root, schema} =
+      if Map.has_key?(schema, "$ref") do
+        schema
+        |> Map.take(["$ref"])
+        |> Enum.reduce({root, %{}}, fn (property, {root, schema}) ->
+          {root, {k, v}} = resolve_property(root, property, scope)
+          {root, Map.put(schema, k, v)}
+        end)#
+      else
+        Enum.reduce(schema, {root, %{}}, fn (property, {root, schema}) ->
+          {root, {k, v}} = resolve_property(root, property, scope)
+          {root, Map.put(schema, k, v)}
+        end)
+      end
+
+    sanitized_schema =
+      schema
+      |> sanitize_properties_attribute()
+      |> sanitize_additional_items_attribute()
+
+    {root, sanitized_schema}
   end
 
   defp resolve_property(root, {"not", true}, _scope) do
@@ -181,6 +198,7 @@ defmodule ExJsonSchema.Schema do
         "https://" <> _ -> ref
         _else ->  scope <> ref |> String.replace("##", "#")
       end
+
 
     {root, path} = resolve_ref(root, scoped_ref)
     {root, {"$ref", path}}
@@ -274,6 +292,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp fetch_and_resolve_remote_schema(root, url) when is_bitstring(url) do
+    IO.inspect url
     resolve_remote_schema(root, url, fetch_remote_schema(url))
   end
 
@@ -346,7 +365,7 @@ defmodule ExJsonSchema.Schema do
 
   defp meta04?(schema) do
     schema
-    |> Map.get("id", "")
+    |> Map.get("$schema", "")
     |> String.starts_with?(@draft4_schema_url)
   end
 
@@ -358,7 +377,7 @@ defmodule ExJsonSchema.Schema do
 
   defp meta07?(schema) do
     schema
-    |> Map.get("id", "")
+    |> Map.get("$schema", "")
     |> String.starts_with?(@draft7_schema_url)
   end
 
