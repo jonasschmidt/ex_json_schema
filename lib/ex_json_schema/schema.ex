@@ -147,7 +147,6 @@ defmodule ExJsonSchema.Schema do
 
     sanitized_schema =
       schema
-      # |> IO.inspect
       |> sanitize_properties_attribute()
       |> sanitize_additional_items_attribute()
 

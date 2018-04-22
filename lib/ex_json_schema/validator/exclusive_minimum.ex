@@ -14,8 +14,6 @@ defmodule ExJsonSchema.Validator.ExclusiveMinimum do
   end
 
   def validate(root, schema, {"exclusiveMinimum", minimum}, data) do
-    IO.inspect root.version, label: "VERSION"
-    IO.inspect schema
     do_validate(minimum, data)
   end
 
