@@ -7,7 +7,6 @@ defmodule ExJsonSchema.Validator.Pattern do
 
   @impl ExJsonSchema.Validator
   @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
-
   def validate(_, _, {"pattern", pattern}, data) do
     do_validate(pattern, data)
   end

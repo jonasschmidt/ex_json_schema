@@ -7,7 +7,6 @@ defmodule ExJsonSchema.Validator.MinLength do
 
   @impl ExJsonSchema.Validator
   @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
-
   def validate(_, _, {"minLength", min_length}, data) do
     do_validate(min_length, data)
   end

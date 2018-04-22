@@ -7,7 +7,6 @@ defmodule ExJsonSchema.Validator.AllOf do
 
   @impl ExJsonSchema.Validator
   @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
-
   def validate(root, _, {"allOf", all_of}, data) do
     do_validate(root, all_of, data)
   end

@@ -11,7 +11,6 @@ defmodule ExJsonSchema.Mixfile do
       deps: deps(),
       package: package(),
       test_coverage: [tool: ExCoveralls],
-
       preferred_cli_env: [coveralls: :test]
     ]
   end

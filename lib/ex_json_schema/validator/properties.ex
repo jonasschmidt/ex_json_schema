@@ -7,7 +7,6 @@ defmodule ExJsonSchema.Validator.Properties do
 
   @impl ExJsonSchema.Validator
   @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
-
   def validate(root, schema, {"properties", _}, data) do
     do_validate(root, schema, data)
   end
