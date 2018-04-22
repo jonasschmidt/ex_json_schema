@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.Contains do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"contains"` attributes.
+
+  See:
+  https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.14
+  https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-6.4.6
+  """
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator

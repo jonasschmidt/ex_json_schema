@@ -1,4 +1,12 @@
 defmodule ExJsonSchema.Validator.Enum do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"enum"` attributes.
+
+  See:
+  https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.5.1
+  https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.23
+  https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-6.1.2
+  """
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator

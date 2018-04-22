@@ -1,4 +1,12 @@
 defmodule ExJsonSchema.Validator.AllOf do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"allOf"` attributes.
+
+  See:
+  https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.5.3
+  https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.26
+  https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-6.7.1
+  """
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
