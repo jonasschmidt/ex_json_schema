@@ -85,7 +85,7 @@ defmodule ExJsonSchema.Schema do
     |> Map.put(:schema, schema)
   end
 
-  @spec schema_version!(String.t()) :: non_neg_integer | :current | no_return
+  @spec schema_version!(String.t()) :: non_neg_integer | no_return
   defp schema_version!(@draft4_schema_url <> _), do: 4
   defp schema_version!(@draft6_schema_url <> _), do: 6
   defp schema_version!(@draft7_schema_url <> _), do: 7
@@ -221,10 +221,6 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_ref(root, "#") do
     {root, [root.location]}
-  end
-
-  defp resolve_ref(root, ref = %{}) do
-    {root, ref}
   end
 
   defp resolve_ref(root, ref) do
