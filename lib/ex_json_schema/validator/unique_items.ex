@@ -20,7 +20,13 @@ defmodule ExJsonSchema.Validator.UniqueItems do
   end
 
   defp do_validate(true, items) when is_list(items) do
-    if Enum.uniq(items) == items do
+    unique? =
+      items
+      |> Enum.uniq()
+      |> Enum.count()
+      |> Kernel.==(Enum.count(items))
+
+    if unique? do
       []
     else
       [{"Expected items to be unique but they were not.", []}]
