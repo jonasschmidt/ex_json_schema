@@ -70,12 +70,20 @@ defmodule ExJsonSchema.Schema do
     get_ref_schema_with_schema(root.refs[url], path, ref)
   end
 
-  @spec resolve_root(boolean | Root.t()) :: Root.t()
+  @spec resolve_root(boolean | Root.t()) :: Root.t() | no_return
   defp resolve_root(root) do
     schema_version =
       root.schema
       |> Map.get("$schema", @current_draft_schema_url <> "#")
-      |> schema_version!()
+      |> schema_version()
+
+    schema_version =
+      case schema_version do
+        {:ok, version} ->
+          version
+        :error ->
+          raise(UnsupportedSchemaVersionError)
+      end
 
     assert_valid_schema!(root.schema)
 
@@ -86,12 +94,12 @@ defmodule ExJsonSchema.Schema do
     |> Map.put(:schema, schema)
   end
 
-  @spec schema_version!(String.t()) :: non_neg_integer | no_return
-  defp schema_version!(@draft4_schema_url <> _), do: 4
-  defp schema_version!(@draft6_schema_url <> _), do: 6
-  defp schema_version!(@draft7_schema_url <> _), do: 7
-  defp schema_version!(@current_draft_schema_url <> _), do: 7
-  defp schema_version!(_), do: raise(UnsupportedSchemaVersionError)
+  @spec schema_version(String.t()) :: {:ok, non_neg_integer} | :error
+  defp schema_version(@draft4_schema_url <> _), do: {:ok, 4}
+  defp schema_version(@draft6_schema_url <> _), do: {:ok, 6}
+  defp schema_version(@draft7_schema_url <> _), do: {:ok, 7}
+  defp schema_version(@current_draft_schema_url <> _), do: {:ok, 7}
+  defp schema_version(_), do: :error
 
   @spec assert_valid_schema!(map) :: :ok | no_return
   defp assert_valid_schema!(schema) do
