@@ -49,10 +49,13 @@ defmodule ExJsonSchema.Validator.Type do
   defp valid?(_, "null", data), do: is_nil(data)
   defp valid?(_, "boolean", data), do: is_boolean(data)
   defp valid?(_, "string", data), do: is_binary(data)
-  defp valid?(4, "integer", data), do: is_integer(data)
-  defp valid?(_, "integer", data) do
-    is_integer(data) or (is_float(data) and Float.round(data) == data)
+  defp valid?(_, "integer", data) when is_integer(data), do: true
+
+  defp valid?(version, "integer", data) when version >= 6 do
+    is_float(data) and Float.round(data) == data
   end
+
+  defp valid?(_, "integer", _), do: false
 
   defp valid?(version, type, data) when is_list(type) do
     Enum.any?(type, &valid?(version, &1, data))

@@ -1,6 +1,6 @@
 defmodule ExJsonSchema.Schema do
   defmodule UnsupportedSchemaVersionError do
-    defexception message: "unsupported schema version, only draft 4 is supported"
+    defexception message: "Unsupported schema version, only draft 4, 6, and 7 are supported."
   end
 
   defmodule InvalidSchemaError do
