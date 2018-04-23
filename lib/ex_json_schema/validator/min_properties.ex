@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.MinProperties do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"minProperties"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 

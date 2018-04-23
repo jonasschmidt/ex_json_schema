@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.Not do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"not"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 

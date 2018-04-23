@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.UniqueItems do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"uniqueItems"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 

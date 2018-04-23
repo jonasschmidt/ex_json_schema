@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.MaxLength do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"maxLength"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 

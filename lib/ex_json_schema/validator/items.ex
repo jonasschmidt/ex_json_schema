@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.Items do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"items"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 

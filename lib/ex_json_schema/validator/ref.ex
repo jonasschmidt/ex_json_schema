@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.Ref do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"$ref"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator

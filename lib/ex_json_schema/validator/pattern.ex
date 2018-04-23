@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.Pattern do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"pattern"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 

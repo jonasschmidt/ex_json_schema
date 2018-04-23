@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.PropertyNames do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"propertyNames"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 

@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.MaxProperties do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"maxProperties"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 

@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.OneOf do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"oneOf"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 

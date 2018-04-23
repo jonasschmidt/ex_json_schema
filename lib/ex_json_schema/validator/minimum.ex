@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.Minimum do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"minimum"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 

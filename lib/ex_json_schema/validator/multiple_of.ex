@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.MultipleOf do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"multipleOf"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 

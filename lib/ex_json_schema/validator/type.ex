@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.Type do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"type"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 

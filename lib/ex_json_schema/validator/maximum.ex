@@ -1,4 +1,11 @@
 defmodule ExJsonSchema.Validator.Maximum do
+  @moduledoc """
+  `ExJsonSchema.Validator` implementation for `"maximum"` attributes.
+
+  See:
+
+  """
+
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 
