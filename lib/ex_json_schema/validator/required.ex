@@ -3,7 +3,9 @@ defmodule ExJsonSchema.Validator.Required do
   `ExJsonSchema.Validator` implementation for `"required"` attributes.
 
   See:
-
+  https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.4.3
+  https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.17
+  https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-6.5.3
   """
 
   alias ExJsonSchema.Schema.Root

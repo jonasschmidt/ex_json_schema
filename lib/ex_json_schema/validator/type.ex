@@ -3,7 +3,9 @@ defmodule ExJsonSchema.Validator.Type do
   `ExJsonSchema.Validator` implementation for `"type"` attributes.
 
   See:
-
+  https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.5.2
+  https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.25
+  https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-6.1.1
   """
 
   alias ExJsonSchema.Schema.Root

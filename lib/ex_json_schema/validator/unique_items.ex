@@ -3,7 +3,9 @@ defmodule ExJsonSchema.Validator.UniqueItems do
   `ExJsonSchema.Validator` implementation for `"uniqueItems"` attributes.
 
   See:
-
+  https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.3.4
+  https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.13
+  https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-6.4.5
   """
 
   alias ExJsonSchema.Schema.Root

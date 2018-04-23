@@ -1,10 +1,9 @@
 defmodule ExJsonSchema.Validator.ContentMediaType do
   @moduledoc """
-  `ExJsonSchema.Validator` implementation for `"contains"` attributes.
+  `ExJsonSchema.Validator` implementation for `"contentMediaType"` attributes.
 
   See:
-  https://tools.ietf.org/html/draft-wright-json-schema-validation-01#section-6.14
-  https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-6.4.6
+  https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-8.4
   """
 
   alias ExJsonSchema.Schema.Root
