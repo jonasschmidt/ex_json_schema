@@ -376,7 +376,7 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  @spec ref_to_string([String.t() | atom]) :: String.t()
+  @spec ref_to_string([String.t() | :root]) :: String.t()
   defp ref_to_string([:root | path]), do: Enum.join(["#" | path], "/")
   defp ref_to_string([url | path]), do: Enum.join([url <> "#" | path], "/")
 end
