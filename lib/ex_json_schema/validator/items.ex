@@ -26,19 +26,19 @@ defmodule ExJsonSchema.Validator.Items do
     []
   end
 
-  def do_validate(_, %{"items" => true}, _) do
+  defp do_validate(_, %{"items" => true}, _) do
     []
   end
 
-  def do_validate(_, %{"items" => false}, []) do
+  defp do_validate(_, %{"items" => false}, []) do
     []
   end
 
-  def do_validate(_, %{"items" => false}, _) do
+  defp do_validate(_, %{"items" => false}, _) do
     [{"Schema does not allow items.", []}]
   end
 
-  def do_validate(root, %{"items" => schemata, "additionalItems" => false}, items)
+  defp do_validate(root, %{"items" => schemata, "additionalItems" => false}, items)
       when is_list(items) and is_list(schemata) do
     cond do
       Enum.count(schemata) < Enum.count(items) ->
@@ -54,7 +54,7 @@ defmodule ExJsonSchema.Validator.Items do
     end
   end
 
-  def do_validate(root, %{"items" => schema = %{}, "additionalItems" => false}, items)
+  defp do_validate(root, %{"items" => schema = %{}, "additionalItems" => false}, items)
       when is_list(items) do
     additional_items =
       items
@@ -72,7 +72,7 @@ defmodule ExJsonSchema.Validator.Items do
     end
   end
 
-  def do_validate(root, %{"items" => schemata, "additionalItems" => additional_items}, items)
+  defp do_validate(root, %{"items" => schemata, "additionalItems" => additional_items}, items)
       when is_list(items) and is_list(schemata) do
     items
     |> Enum.with_index()
@@ -82,7 +82,7 @@ defmodule ExJsonSchema.Validator.Items do
     end)
   end
 
-  def do_validate(root, %{"items" => schema = %{}}, items) when is_list(items) do
+  defp do_validate(root, %{"items" => schema = %{}}, items) when is_list(items) do
     items
     |> Enum.with_index()
     |> Enum.flat_map(fn {item, index} ->
@@ -90,7 +90,7 @@ defmodule ExJsonSchema.Validator.Items do
     end)
   end
 
-  def do_validate(root, %{"items" => schema}, items) when is_list(items) and is_list(schema) do
+  defp do_validate(root, %{"items" => schema}, items) when is_list(items) and is_list(schema) do
     items
     |> Enum.with_index()
     |> Enum.flat_map(fn {item, index} ->
@@ -98,11 +98,11 @@ defmodule ExJsonSchema.Validator.Items do
     end)
   end
 
-  def do_validate(_, %{"items" => _}, _) do
+  defp do_validate(_, %{"items" => _}, _) do
     []
   end
 
-  def do_validate(_, _, _), do: []
+  defp do_validate(_, _, _), do: []
 
   defp validate_item(_, nil, _, _) do
     [{"Schema does not allow additional items.", []}]
@@ -130,7 +130,7 @@ defmodule ExJsonSchema.Validator.Items do
   defp additional_items_schema(true), do: %{}
   defp additional_items_schema(_), do: nil
 
-  def additional_items(root, schemata, items) do
+  defp additional_items(root, schemata, items) do
     items
     |> Enum.with_index()
     |> Enum.reject(fn {item, index} ->
