@@ -35,10 +35,14 @@ defmodule ExJsonSchema.Validator.Type do
     if valid?(version, type, data) do
       []
     else
-      [
-        {"Type mismatch. Expected #{type |> type_name} but got #{data |> data_type |> type_name}.",
-         []}
-      ]
+      type_name = type_name(type)
+
+      data_type_name =
+        data
+        |> data_type()
+        |> type_name()
+
+      [{"Type mismatch. Expected #{type_name} but got #{data_type_name}.", []}]
     end
   end
 
