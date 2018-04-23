@@ -1,10 +1,8 @@
 defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
-
   use ExUnit.CaseTemplate
 
   using opts do
     quote bind_quoted: [opts: opts] do
-
       alias ExJsonSchema.Test.Support.TestHelpers
 
       @schema_tests_path opts[:schema_tests_path]
@@ -26,14 +24,16 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
         |> Enum.each(fn fixture ->
           %{"description" => description, "schema" => schema, "tests" => tests} = fixture
 
-          @schema (if is_map(schema), do: Map.put_new(schema, "$schema", @schema_url), else: schema)
+          @schema if is_map(schema), do: Map.put_new(schema, "$schema", @schema_url), else: schema
 
           Enum.each(tests, fn t ->
             @test t
 
-            if name in @ignored_suites or "#{description}: #{@test["description"]}" in @ignored_tests do
+            if name in @ignored_suites or
+                 "#{description}: #{@test["description"]}" in @ignored_tests do
               @tag :skip
             end
+
             @tag String.to_atom("json_schema_" <> name)
             test "[#{name}] #{description}: #{@test["description"]}" do
               valid? =

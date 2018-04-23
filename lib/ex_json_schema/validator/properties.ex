@@ -1,12 +1,16 @@
 defmodule ExJsonSchema.Validator.Properties do
-
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
+  @spec validate(
+          Root.t(),
+          ExJsonSchema.data(),
+          {String.t(), ExJsonSchema.data()},
+          ExJsonSchema.data()
+        ) :: Validator.errors_with_list_paths()
   def validate(root, schema, {"properties", _}, data) do
     do_validate(root, schema, data)
   end
@@ -17,10 +21,14 @@ defmodule ExJsonSchema.Validator.Properties do
 
   defp do_validate(root, schema, properties = %{}) do
     validated_named_properties = validate_named_properties(root, schema["properties"], properties)
-    validated_pattern_properties = validate_pattern_properties(root, schema["patternProperties"], properties)
+
+    validated_pattern_properties =
+      validate_pattern_properties(root, schema["patternProperties"], properties)
+
     validated_known_properties = validated_named_properties ++ validated_pattern_properties
 
     remaining_properties = unvalidated_properties(properties, validated_known_properties)
+
     validated_additional_properties =
       validate_additional_properties(root, schema["additionalProperties"], remaining_properties)
 
@@ -67,7 +75,7 @@ defmodule ExJsonSchema.Validator.Properties do
 
       invalid_entries ->
         Enum.map(invalid_entries, fn name ->
-          {name , {"Cannot have a value for property #{name}", []}}
+          {name, {"Cannot have a value for property #{name}", []}}
         end)
     end
   end

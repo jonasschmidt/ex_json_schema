@@ -1,12 +1,16 @@
 defmodule ExJsonSchema.Validator.PropertyNames do
-
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
+  @spec validate(
+          Root.t(),
+          ExJsonSchema.data(),
+          {String.t(), ExJsonSchema.data()},
+          ExJsonSchema.data()
+        ) :: Validator.errors_with_list_paths()
   def validate(root, _, {"propertyNames", property_names}, data) do
     do_validate(root, property_names, data)
   end
@@ -24,9 +28,10 @@ defmodule ExJsonSchema.Validator.PropertyNames do
   end
 
   defp do_validate(root, property_names = %{}, data = %{}) do
-    valid? = Enum.all?(data, fn {name, _} ->
-      Validator.valid?(root, property_names, name)
-    end)
+    valid? =
+      Enum.all?(data, fn {name, _} ->
+        Validator.valid?(root, property_names, name)
+      end)
 
     if valid? do
       []

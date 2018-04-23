@@ -13,8 +13,14 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
-  def validate(%{version: version}, schema, {"contentMediaType", content_media_type}, data) when version >= 7 do
+  @spec validate(
+          Root.t(),
+          ExJsonSchema.data(),
+          {String.t(), ExJsonSchema.data()},
+          ExJsonSchema.data()
+        ) :: Validator.errors_with_list_paths()
+  def validate(%{version: version}, schema, {"contentMediaType", content_media_type}, data)
+      when version >= 7 do
     do_validate(schema, content_media_type, data)
   end
 
@@ -36,6 +42,7 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
     case Poison.decode(data) do
       {:ok, _} ->
         []
+
       {:error, _} ->
         [{"Invalid JSON string.", []}]
     end

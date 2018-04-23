@@ -13,7 +13,12 @@ defmodule ExJsonSchema.Validator.Contains do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
+  @spec validate(
+          Root.t(),
+          ExJsonSchema.data(),
+          {String.t(), ExJsonSchema.data()},
+          ExJsonSchema.data()
+        ) :: Validator.errors_with_list_paths()
   def validate(root, _, {"contains", contains}, data) do
     do_validate(root, contains, data)
   end

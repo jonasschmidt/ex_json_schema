@@ -1,12 +1,16 @@
 defmodule ExJsonSchema.Validator do
-
   alias ExJsonSchema.Schema
   alias ExJsonSchema.Schema.Root
 
-  @type errors :: [{String.t, String.t}] | []
-  @type errors_with_list_paths :: [{String.t, [String.t | integer]}] | []
+  @type errors :: [{String.t(), String.t()}] | []
+  @type errors_with_list_paths :: [{String.t(), [String.t() | integer]}] | []
 
-  @callback validate(Root.t, ExJsonSchema.data, {String.t(), ExJsonSchema.data}, ExJsonSchema.data) :: errors_with_list_paths
+  @callback validate(
+              Root.t(),
+              ExJsonSchema.data(),
+              {String.t(), ExJsonSchema.data()},
+              ExJsonSchema.data()
+            ) :: errors_with_list_paths
 
   @validators [
     ExJsonSchema.Validator.Ref,
@@ -41,7 +45,7 @@ defmodule ExJsonSchema.Validator do
     ExJsonSchema.Validator.UniqueItems
   ]
 
-  @spec validate(Root.t | ExJsonSchema.data, ExJsonSchema.data) :: :ok | {:error, errors}
+  @spec validate(Root.t() | ExJsonSchema.data(), ExJsonSchema.data()) :: :ok | {:error, errors}
   def validate(root = %Root{}, data) do
     errors =
       root
@@ -61,7 +65,8 @@ defmodule ExJsonSchema.Validator do
     |> validate(data)
   end
 
-  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data, [String.t | integer]) :: errors_with_list_paths
+  @spec validate(Root.t(), Schema.resolved(), ExJsonSchema.data(), [String.t() | integer]) ::
+          errors_with_list_paths
   def validate(root, schema, data, path \\ []) do
     schema
     |> Enum.flat_map(fn property ->
@@ -72,7 +77,7 @@ defmodule ExJsonSchema.Validator do
     |> Enum.map(fn {msg, p} -> {msg, path ++ p} end)
   end
 
-  @spec valid?(Root.t | ExJsonSchema.data, ExJsonSchema.data) :: boolean
+  @spec valid?(Root.t() | ExJsonSchema.data(), ExJsonSchema.data()) :: boolean
   def valid?(root = %Root{}, data) do
     valid?(root, root.schema, data)
   end
@@ -83,7 +88,7 @@ defmodule ExJsonSchema.Validator do
     |> valid?(data)
   end
 
-  @spec valid?(Root.t, Schema.resolved, ExJsonSchema.data) :: boolean
+  @spec valid?(Root.t(), Schema.resolved(), ExJsonSchema.data()) :: boolean
   def valid?(root, schema, data) do
     root
     |> validate(schema, data)

@@ -14,7 +14,12 @@ defmodule ExJsonSchema.Validator.ExclusiveMaximum do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
+  @spec validate(
+          Root.t(),
+          ExJsonSchema.data(),
+          {String.t(), ExJsonSchema.data()},
+          ExJsonSchema.data()
+        ) :: Validator.errors_with_list_paths()
   def validate(%{version: 4}, schema, {"exclusiveMaximum", true}, data) do
     schema
     |> Map.get("maximum")

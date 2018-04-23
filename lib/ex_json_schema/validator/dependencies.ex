@@ -1,12 +1,16 @@
 defmodule ExJsonSchema.Validator.Dependencies do
-
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
+  @spec validate(
+          Root.t(),
+          ExJsonSchema.data(),
+          {String.t(), ExJsonSchema.data()},
+          ExJsonSchema.data()
+        ) :: Validator.errors_with_list_paths()
   def validate(root, _, {"dependencies", dependencies}, data) do
     do_validate(root, dependencies, data)
   end
@@ -45,14 +49,18 @@ defmodule ExJsonSchema.Validator.Dependencies do
     end
   end
 
-  defp validate_dependency(root, schema, property, dependencies, data) when is_list(dependencies) do
+  defp validate_dependency(root, schema, property, dependencies, data)
+       when is_list(dependencies) do
     dependencies
     |> List.wrap()
     |> Enum.flat_map(fn dependency ->
       if Map.has_key?(data, dependency) do
         Validator.validate(root, schema, Map.get(data, dependency))
       else
-        [{"Property #{inspect(property)} depends on #{inspect(dependency)} to be present but it was not.", []}]
+        [
+          {"Property #{inspect(property)} depends on #{inspect(dependency)} to be present but it was not.",
+           []}
+        ]
       end
     end)
   end
@@ -64,7 +72,10 @@ defmodule ExJsonSchema.Validator.Dependencies do
       if Map.has_key?(data, dependency) do
         Validator.validate(root, schema, Map.get(data, dependency))
       else
-        [{"Property #{inspect(property)} depends on #{inspect(dependency)} to be present but it was not.", []}]
+        [
+          {"Property #{inspect(property)} depends on #{inspect(dependency)} to be present but it was not.",
+           []}
+        ]
       end
     end)
   end

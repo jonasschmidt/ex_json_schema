@@ -1,12 +1,16 @@
 defmodule ExJsonSchema.Validator.Items do
-
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
+  @spec validate(
+          Root.t(),
+          ExJsonSchema.data(),
+          {String.t(), ExJsonSchema.data()},
+          ExJsonSchema.data()
+        ) :: Validator.errors_with_list_paths()
   def validate(root, schema, {"items", _}, data) do
     do_validate(root, schema, data)
   end
@@ -27,20 +31,24 @@ defmodule ExJsonSchema.Validator.Items do
     [{"Schema does not allow items.", []}]
   end
 
-  def do_validate(root, %{"items" => schemata, "additionalItems" => false}, items) when is_list(items) and is_list(schemata) do
+  def do_validate(root, %{"items" => schemata, "additionalItems" => false}, items)
+      when is_list(items) and is_list(schemata) do
     cond do
       Enum.count(schemata) < Enum.count(items) ->
         Enum.map(items, fn _ ->
           {"Schema does not allow additional items", []}
         end)
+
       Enum.empty?(additional_items(root, schemata, items)) ->
         []
+
       true ->
         [{"Expected items to match schema but they didn't.", []}]
     end
   end
 
-  def do_validate(root, %{"items" => schema = %{}, "additionalItems" => false}, items) when is_list(items) do
+  def do_validate(root, %{"items" => schema = %{}, "additionalItems" => false}, items)
+      when is_list(items) do
     additional_items =
       items
       |> Enum.with_index()
@@ -57,9 +65,10 @@ defmodule ExJsonSchema.Validator.Items do
     end
   end
 
-  def do_validate(root, %{"items" => schemata, "additionalItems" => additional_items}, items) when is_list(items) and is_list(schemata) do
+  def do_validate(root, %{"items" => schemata, "additionalItems" => additional_items}, items)
+      when is_list(items) and is_list(schemata) do
     items
-    |> Enum.with_index
+    |> Enum.with_index()
     |> Enum.flat_map(fn {item, index} ->
       schema = Enum.at(schemata, index, additional_items_schema(additional_items))
       validate_item(root, schema, item, index)

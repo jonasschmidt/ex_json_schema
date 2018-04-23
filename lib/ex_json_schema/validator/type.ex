@@ -1,12 +1,16 @@
 defmodule ExJsonSchema.Validator.Type do
-
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(Root.t(), ExJsonSchema.data(), {String.t(), ExJsonSchema.data()}, ExJsonSchema.data()) :: Validator.errors_with_list_paths
+  @spec validate(
+          Root.t(),
+          ExJsonSchema.data(),
+          {String.t(), ExJsonSchema.data()},
+          ExJsonSchema.data()
+        ) :: Validator.errors_with_list_paths()
   def validate(_, _, {"type", type}, data) do
     do_validate(type, data)
   end
@@ -19,7 +23,10 @@ defmodule ExJsonSchema.Validator.Type do
     if valid?(type, data) do
       []
     else
-      [{"Type mismatch. Expected #{type |> type_name} but got #{data |> data_type |> type_name}.", []}]
+      [
+        {"Type mismatch. Expected #{type |> type_name} but got #{data |> data_type |> type_name}.",
+         []}
+      ]
     end
   end
 
@@ -40,7 +47,7 @@ defmodule ExJsonSchema.Validator.Type do
   end
 
   defp valid?("integer", data) do
-    is_integer(data) or (is_float(data) and (Float.round(data) == data))
+    is_integer(data) or (is_float(data) and Float.round(data) == data)
   end
 
   defp valid?("number", data) do

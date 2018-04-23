@@ -8,7 +8,8 @@ defmodule ExJsonSchema.Schema do
   end
 
   defmodule UndefinedRemoteSchemaResolverError do
-    defexception message: "trying to resolve a remote schema but no remote schema resolver function is defined"
+    defexception message:
+                   "trying to resolve a remote schema but no remote schema resolver function is defined"
   end
 
   alias ExJsonSchema.Schema.Draft4
@@ -16,7 +17,7 @@ defmodule ExJsonSchema.Schema do
   alias ExJsonSchema.Schema.Draft7
   alias ExJsonSchema.Schema.Root
 
-  @type resolved :: %{String.t => ExJsonSchema.data | (Root.t -> {Root.t, resolved})}
+  @type resolved :: %{String.t() => ExJsonSchema.data() | (Root.t() -> {Root.t(), resolved})}
 
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
@@ -38,12 +39,12 @@ defmodule ExJsonSchema.Schema do
 
   @true_value_schema %{
     "anyOf" => [
-        %{"type" => "object"},
-        %{"type" => "array"},
-        %{"type" => "boolean"},
-        %{"type" => "string"},
-        %{"type" => "number"},
-        %{"type" => "null"}
+      %{"type" => "object"},
+      %{"type" => "array"},
+      %{"type" => "boolean"},
+      %{"type" => "string"},
+      %{"type" => "number"},
+      %{"type" => "null"}
     ]
   }
 
@@ -60,7 +61,7 @@ defmodule ExJsonSchema.Schema do
 
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
-  @spec get_ref_schema(Root.t, [:root | String.t]) :: ExJsonSchema.data
+  @spec get_ref_schema(Root.t(), [:root | String.t()]) :: ExJsonSchema.data()
   def get_ref_schema(root = %Root{}, [:root | path] = ref) do
     get_ref_schema_with_schema(root.schema, path, ref)
   end
@@ -90,7 +91,7 @@ defmodule ExJsonSchema.Schema do
   defp schema_version!(@draft6_schema_url <> _), do: 6
   defp schema_version!(@draft7_schema_url <> _), do: 7
   defp schema_version!(@current_draft_schema_url <> _), do: 7
-  defp schema_version!(_), do: raise UnsupportedSchemaVersionError
+  defp schema_version!(_), do: raise(UnsupportedSchemaVersionError)
 
   @spec assert_valid_schema!(map) :: :ok | no_return
   defp assert_valid_schema!(schema) do
@@ -100,8 +101,10 @@ defmodule ExJsonSchema.Schema do
          false <- meta06?(schema),
          false <- meta07?(schema),
          schema_module <- choose_meta_schema_validation_module(schema_url),
-         {:error, errors} <- ExJsonSchema.Validator.validate(resolve(schema_module.schema()), schema) do
-      raise InvalidSchemaError, message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
+         {:error, errors} <-
+           ExJsonSchema.Validator.validate(resolve(schema_module.schema()), schema) do
+      raise InvalidSchemaError,
+        message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
     else
       _ ->
         :ok
@@ -114,8 +117,13 @@ defmodule ExJsonSchema.Schema do
   defp choose_meta_schema_validation_module(_), do: Draft4
 
   defp resolve_with_root(root, schema, scope \\ "")
-  defp resolve_with_root(root, schema = %{"$id" => id}, scope) when is_bitstring(id), do: do_resolve(root, schema, scope <> id)
-  defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_bitstring(id), do: do_resolve(root, schema, scope <> id)
+
+  defp resolve_with_root(root, schema = %{"$id" => id}, scope) when is_bitstring(id),
+    do: do_resolve(root, schema, scope <> id)
+
+  defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_bitstring(id),
+    do: do_resolve(root, schema, scope <> id)
+
   defp resolve_with_root(root, schema = %{}, scope), do: do_resolve(root, schema, scope)
   defp resolve_with_root(root, non_schema, _scope), do: {root, non_schema}
 
@@ -124,12 +132,14 @@ defmodule ExJsonSchema.Schema do
       if Map.has_key?(schema, "$ref") do
         schema
         |> Map.take(["$ref"])
-        |> Enum.reduce({root, %{}}, fn (property, {root, schema}) ->
+        |> Enum.reduce({root, %{}}, fn property, {root, schema} ->
           {root, {k, v}} = resolve_property(root, property, scope)
           {root, Map.put(schema, k, v)}
-        end)#
+        end)
+
+        #
       else
-        Enum.reduce(schema, {root, %{}}, fn (property, {root, schema}) ->
+        Enum.reduce(schema, {root, %{}}, fn property, {root, schema} ->
           {root, {k, v}} = resolve_property(root, property, scope)
           {root, Map.put(schema, k, v)}
         end)
@@ -152,38 +162,59 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp resolve_property(root, {"oneOf", values}, scope) when is_list(values) do
-    {root, values} = Enum.reduce(values, {root, []}, fn (value, {root, values}) ->
-      case value do
-        true -> {root, [@true_value_schema|values]}
-        false -> {root, [@false_value_schema|values]}
-        _ -> {root, resolved} = resolve_with_root(root, value, scope)
-             {root, [resolved | values]}
-      end
-    end)
+    {root, values} =
+      Enum.reduce(values, {root, []}, fn value, {root, values} ->
+        case value do
+          true ->
+            {root, [@true_value_schema | values]}
+
+          false ->
+            {root, [@false_value_schema | values]}
+
+          _ ->
+            {root, resolved} = resolve_with_root(root, value, scope)
+            {root, [resolved | values]}
+        end
+      end)
+
     {root, {"oneOf", Enum.reverse(values)}}
   end
 
   defp resolve_property(root, {"allOf", values}, scope) when is_list(values) do
-    {root, values} = Enum.reduce values, {root, []}, fn (value, {root, values}) ->
-      case value do
-        true -> {root, [@true_value_schema|values]}
-        false -> {root, [@false_value_schema|values]}
-        _ -> {root, resolved} = resolve_with_root(root, value, scope)
-             {root, [resolved | values]}
-      end
-    end
+    {root, values} =
+      Enum.reduce(values, {root, []}, fn value, {root, values} ->
+        case value do
+          true ->
+            {root, [@true_value_schema | values]}
+
+          false ->
+            {root, [@false_value_schema | values]}
+
+          _ ->
+            {root, resolved} = resolve_with_root(root, value, scope)
+            {root, [resolved | values]}
+        end
+      end)
+
     {root, {"allOf", Enum.reverse(values)}}
   end
 
   defp resolve_property(root, {"anyOf", values}, scope) when is_list(values) do
-    {root, values} = Enum.reduce values, {root, []}, fn (value, {root, values}) ->
-      case value do
-        true -> {root, [@true_value_schema|values]}
-        false -> {root, [@false_value_schema|values]}
-        _ -> {root, resolved} = resolve_with_root(root, value, scope)
-             {root, [resolved | values]}
-      end
-    end
+    {root, values} =
+      Enum.reduce(values, {root, []}, fn value, {root, values} ->
+        case value do
+          true ->
+            {root, [@true_value_schema | values]}
+
+          false ->
+            {root, [@false_value_schema | values]}
+
+          _ ->
+            {root, resolved} = resolve_with_root(root, value, scope)
+            {root, [resolved | values]}
+        end
+      end)
+
     {root, {"anyOf", Enum.reverse(values)}}
   end
 
@@ -210,10 +241,12 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp resolve_property(root, {key, values}, scope) when is_list(values) do
-    {root, values} = Enum.reduce values, {root, []}, fn (value, {root, values}) ->
-      {root, resolved} = resolve_with_root(root, value, scope)
-      {root, [resolved | values]}
-    end
+    {root, values} =
+      Enum.reduce(values, {root, []}, fn value, {root, values} ->
+        {root, resolved} = resolve_with_root(root, value, scope)
+        {root, [resolved | values]}
+      end)
+
     {root, {key, Enum.reverse(values)}}
   end
 
@@ -234,7 +267,7 @@ defmodule ExJsonSchema.Schema do
   defp fragment!([], _), do: nil
   defp fragment!([""], _), do: nil
   defp fragment!([fragment = "/" <> _], _), do: fragment
-  defp fragment!(_, ref), do: raise InvalidSchemaError, message: "invalid reference #{ref}"
+  defp fragment!(_, ref), do: raise(InvalidSchemaError, message: "invalid reference #{ref}")
 
   defp root_and_path_for_url(root, fragment, "") do
     {root, [root.location | relative_path(fragment)]}
@@ -250,10 +283,12 @@ defmodule ExJsonSchema.Schema do
 
   defp relative_ref_path(ref) do
     ["" | keys] = unescaped_ref_segments(ref)
+
     Enum.map(keys, fn key ->
       case Integer.parse(key) do
         {integer, _} ->
           integer
+
         :error ->
           key
       end
@@ -294,7 +329,8 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp remote_schema_resolver do
-    Application.get_env(:ex_json_schema, :remote_schema_resolver) || fn _url -> raise UndefinedRemoteSchemaResolverError end
+    Application.get_env(:ex_json_schema, :remote_schema_resolver) ||
+      fn _url -> raise UndefinedRemoteSchemaResolverError end
   end
 
   defp assert_reference_valid(path, root, _ref) do

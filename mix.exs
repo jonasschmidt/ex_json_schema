@@ -7,7 +7,8 @@ defmodule ExJsonSchema.Mixfile do
       version: "0.5.6",
       elixir: "~> 1.3",
       elixirc_paths: elixirc_paths(Mix.env()),
-      description: "A JSON Schema validator with full support for the draft 4 specification and zero dependencies.",
+      description:
+        "A JSON Schema validator with full support for the draft 4 specification and zero dependencies.",
       deps: deps(),
       package: package(),
       test_coverage: [tool: ExCoveralls],
