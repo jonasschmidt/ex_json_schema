@@ -1,12 +1,9 @@
 defmodule ExJsonSchema.Test.Support.TestHelpers do
+  @spec load_schema_test(name :: String.t(), schema_tests_path :: String.t()) :: map | no_return
   def load_schema_test(name, schema_tests_path) do
-    (name <> ".json")
-    |> schema_test_path(schema_tests_path)
+    schema_tests_path
+    |> Path.join(name <> ".json")
     |> File.read!()
     |> Poison.Parser.parse!()
-  end
-
-  defp schema_test_path(filename, schema_tests_path) do
-    Path.join(schema_tests_path, filename)
   end
 end
