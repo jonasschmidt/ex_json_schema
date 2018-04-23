@@ -85,7 +85,7 @@ defmodule ExJsonSchema.Schema do
           version
 
         :error ->
-          raise(UnsupportedSchemaVersionError)
+          raise UnsupportedSchemaVersionError
       end
 
     case assert_valid_schema(root.schema) do
@@ -113,12 +113,13 @@ defmodule ExJsonSchema.Schema do
 
   @spec assert_valid_schema(map) :: :ok | {:error, Validator.errors_with_list_paths()}
   defp assert_valid_schema(schema) do
-    schema_url = Map.get(schema, "$schema", @current_draft_schema_url <> "#")
-
     with false <- meta04?(schema),
          false <- meta06?(schema),
          false <- meta07?(schema) do
-      schema_module = choose_meta_schema_validation_module(schema_url)
+      schema_module =
+        schema
+        |> Map.get("$schema", @current_draft_schema_url <> "#")
+        |> choose_meta_schema_validation_module()
 
       schema_module.schema()
       |> resolve()
@@ -133,7 +134,7 @@ defmodule ExJsonSchema.Schema do
   defp choose_meta_schema_validation_module(@draft4_schema_url <> _), do: Draft4
   defp choose_meta_schema_validation_module(@draft6_schema_url <> _), do: Draft6
   defp choose_meta_schema_validation_module(@draft7_schema_url <> _), do: Draft7
-  defp choose_meta_schema_validation_module(_), do: Draft7
+  defp choose_meta_schema_validation_module(_), do: Draft4
 
   defp resolve_with_root(root, schema, scope \\ "")
 
@@ -155,8 +156,6 @@ defmodule ExJsonSchema.Schema do
           {root, {k, v}} = resolve_property(root, property, scope)
           {root, Map.put(schema, k, v)}
         end)
-
-        #
       else
         Enum.reduce(schema, {root, %{}}, fn property, {root, schema} ->
           {root, {k, v}} = resolve_property(root, property, scope)
@@ -238,17 +237,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp resolve_property(root, {"$ref", ref}, scope) when is_bitstring(ref) do
-    scoped_ref =
-      case ref do
-        "http://" <> _ ->
-          ref
-
-        "https://" <> _ ->
-          ref
-
-        _else ->
-          String.replace(scope <> ref, "##", "#")
-      end
+    scoped_ref = scoped_ref(scope, ref)
 
     {root, path} = resolve_ref(root, scoped_ref)
     {root, {"$ref", path}}
@@ -270,6 +259,14 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp resolve_property(root, tuple, _) when is_tuple(tuple), do: {root, tuple}
+
+  @spec scoped_ref(scope :: String.t(), ref :: String.t()) :: String.t()
+  defp scoped_ref(_, ref = "http://" <> _), do: ref
+  defp scoped_ref(_, ref = "https://" <> _), do: ref
+
+  defp scoped_ref(scope, ref) do
+    String.replace(scope <> ref, "##", "#")
+  end
 
   defp resolve_ref(root, "#") do
     {root, [root.location]}
