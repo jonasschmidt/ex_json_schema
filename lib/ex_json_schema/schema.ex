@@ -179,63 +179,6 @@ defmodule ExJsonSchema.Schema do
     {root, {"not", @false_value_schema}}
   end
 
-  defp resolve_property(root, {"oneOf", values}, scope) when is_list(values) do
-    {root, values} =
-      Enum.reduce(values, {root, []}, fn value, {root, values} ->
-        case value do
-          true ->
-            {root, [@true_value_schema | values]}
-
-          false ->
-            {root, [@false_value_schema | values]}
-
-          _ ->
-            {root, resolved} = resolve_with_root(root, value, scope)
-            {root, [resolved | values]}
-        end
-      end)
-
-    {root, {"oneOf", Enum.reverse(values)}}
-  end
-
-  defp resolve_property(root, {"allOf", values}, scope) when is_list(values) do
-    {root, values} =
-      Enum.reduce(values, {root, []}, fn value, {root, values} ->
-        case value do
-          true ->
-            {root, [@true_value_schema | values]}
-
-          false ->
-            {root, [@false_value_schema | values]}
-
-          _ ->
-            {root, resolved} = resolve_with_root(root, value, scope)
-            {root, [resolved | values]}
-        end
-      end)
-
-    {root, {"allOf", Enum.reverse(values)}}
-  end
-
-  defp resolve_property(root, {"anyOf", values}, scope) when is_list(values) do
-    {root, values} =
-      Enum.reduce(values, {root, []}, fn value, {root, values} ->
-        case value do
-          true ->
-            {root, [@true_value_schema | values]}
-
-          false ->
-            {root, [@false_value_schema | values]}
-
-          _ ->
-            {root, resolved} = resolve_with_root(root, value, scope)
-            {root, [resolved | values]}
-        end
-      end)
-
-    {root, {"anyOf", Enum.reverse(values)}}
-  end
-
   defp resolve_property(root, {"$ref", ref}, scope) when is_bitstring(ref) do
     scoped_ref = scoped_ref(scope, ref)
 
@@ -250,10 +193,7 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_property(root, {key, values}, scope) when is_list(values) do
     {root, values} =
-      Enum.reduce(values, {root, []}, fn value, {root, values} ->
-        {root, resolved} = resolve_with_root(root, value, scope)
-        {root, [resolved | values]}
-      end)
+      Enum.reduce(values, {root, []}, &resolve_value(&1, &2, scope))
 
     {root, {key, Enum.reverse(values)}}
   end
@@ -268,6 +208,19 @@ defmodule ExJsonSchema.Schema do
     String.replace(scope <> ref, "##", "#")
   end
 
+  defp resolve_value(true, {root, values}, _) do
+    {root, [@true_value_schema | values]}
+  end
+
+  defp resolve_value(false, {root, values}, _) do
+    {root, [@false_value_schema | values]}
+  end
+
+  defp resolve_value(value, {root, values}, scope) do
+    {root, resolved} = resolve_with_root(root, value, scope)
+    {root, [resolved | values]}
+  end
+
   defp resolve_ref(root, "#") do
     {root, [root.location]}
   end
@@ -280,6 +233,7 @@ defmodule ExJsonSchema.Schema do
     {root, path}
   end
 
+  @spec fragment!([String.t], String.t()) :: String.t() | nil | no_return
   defp fragment!([], _), do: nil
   defp fragment!([""], _), do: nil
   defp fragment!([fragment = "/" <> _], _), do: fragment
@@ -302,7 +256,7 @@ defmodule ExJsonSchema.Schema do
 
     Enum.map(keys, fn key ->
       case Integer.parse(key) do
-        {integer, _} ->
+        {integer, ""} ->
           integer
 
         :error ->
@@ -320,6 +274,7 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
+  @spec remote_schema(String.t()) :: ExJsonSchema.object()
   defp remote_schema(@current_draft_schema_url <> _), do: Draft4.schema()
   defp remote_schema(@draft4_schema_url <> _), do: Draft4.schema()
   defp remote_schema(@draft6_schema_url <> _), do: Draft6.schema()
@@ -421,6 +376,7 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  defp ref_to_string([:root | path]), do: ["#" | path] |> Enum.join("/")
-  defp ref_to_string([url | path]), do: [url <> "#" | path] |> Enum.join("/")
+  @spec ref_to_string([String.t() | atom]) :: String.t()
+  defp ref_to_string([:root | path]), do: Enum.join(["#" | path], "/")
+  defp ref_to_string([url | path]), do: Enum.join([url <> "#" | path], "/")
 end
