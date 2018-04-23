@@ -31,7 +31,7 @@ defmodule ExJsonSchema.Validator.Const do
     if const == data do
       []
     else
-      [{"Expected data to be #{inspect(const)} but it wasn't", []}]
+      [{"Expected data to be #{inspect(const)} but got #{inspect(data)}", []}]
     end
   end
 end
