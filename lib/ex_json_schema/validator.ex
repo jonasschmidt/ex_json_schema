@@ -13,9 +13,8 @@ defmodule ExJsonSchema.Validator do
             ) :: errors_with_list_paths
 
   @validators [
-    ExJsonSchema.Validator.Ref,
-    ExJsonSchema.Validator.AnyOf,
     ExJsonSchema.Validator.AllOf,
+    ExJsonSchema.Validator.AnyOf,
     ExJsonSchema.Validator.Const,
     ExJsonSchema.Validator.Contains,
     ExJsonSchema.Validator.ContentEncoding,
@@ -40,6 +39,7 @@ defmodule ExJsonSchema.Validator do
     ExJsonSchema.Validator.Pattern,
     ExJsonSchema.Validator.Properties,
     ExJsonSchema.Validator.PropertyNames,
+    ExJsonSchema.Validator.Ref,
     ExJsonSchema.Validator.Required,
     ExJsonSchema.Validator.Type,
     ExJsonSchema.Validator.UniqueItems
