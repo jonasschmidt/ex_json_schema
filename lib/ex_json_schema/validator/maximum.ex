@@ -6,10 +6,10 @@ defmodule ExJsonSchema.Validator.Maximum do
 
   @impl ExJsonSchema.Validator
   @spec validate(
-          Root.t(),
-          ExJsonSchema.data(),
-          {String.t(), ExJsonSchema.data()},
-          ExJsonSchema.data()
+          root :: Root.t(),
+          schema :: ExJsonSchema.data(),
+          property :: {String.t(), ExJsonSchema.data()},
+          data :: ExJsonSchema.data()
         ) :: Validator.errors_with_list_paths()
   def validate(_, _, {"maximum", maximum}, data) do
     do_validate(maximum, data)
