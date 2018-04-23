@@ -1,4 +1,6 @@
 defmodule ExJsonSchema.Schema do
+  alias ExJsonSchema.Validator
+
   defmodule UnsupportedSchemaVersionError do
     defexception message: "Unsupported schema version, only draft 4, 6, and 7 are supported."
   end
@@ -81,11 +83,19 @@ defmodule ExJsonSchema.Schema do
       case schema_version do
         {:ok, version} ->
           version
+
         :error ->
           raise(UnsupportedSchemaVersionError)
       end
 
-    assert_valid_schema!(root.schema)
+    case assert_valid_schema(root.schema) do
+      :ok ->
+        :ok
+
+      {:error, errors} ->
+        raise InvalidSchemaError,
+          message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
+    end
 
     {root, schema} = resolve_with_root(root, root.schema)
 
@@ -101,28 +111,29 @@ defmodule ExJsonSchema.Schema do
   defp schema_version(@current_draft_schema_url <> _), do: {:ok, 7}
   defp schema_version(_), do: :error
 
-  @spec assert_valid_schema!(map) :: :ok | no_return
-  defp assert_valid_schema!(schema) do
+  @spec assert_valid_schema(map) :: :ok | {:error, Validator.errors_with_list_paths()}
+  defp assert_valid_schema(schema) do
     schema_url = Map.get(schema, "$schema", @current_draft_schema_url <> "#")
 
     with false <- meta04?(schema),
          false <- meta06?(schema),
-         false <- meta07?(schema),
-         schema_module <- choose_meta_schema_validation_module(schema_url),
-         {:error, errors} <-
-           ExJsonSchema.Validator.validate(resolve(schema_module.schema()), schema) do
-      raise InvalidSchemaError,
-        message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
+         false <- meta07?(schema) do
+      schema_module = choose_meta_schema_validation_module(schema_url)
+
+      schema_module.schema()
+      |> resolve()
+      |> ExJsonSchema.Validator.validate(schema)
     else
       _ ->
         :ok
     end
   end
 
+  @spec choose_meta_schema_validation_module(String.t()) :: module
   defp choose_meta_schema_validation_module(@draft4_schema_url <> _), do: Draft4
   defp choose_meta_schema_validation_module(@draft6_schema_url <> _), do: Draft6
   defp choose_meta_schema_validation_module(@draft7_schema_url <> _), do: Draft7
-  defp choose_meta_schema_validation_module(_), do: Draft4
+  defp choose_meta_schema_validation_module(_), do: Draft7
 
   defp resolve_with_root(root, schema, scope \\ "")
 

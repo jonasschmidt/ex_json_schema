@@ -39,7 +39,7 @@ defmodule ExJsonSchema.Validator.Items do
   end
 
   defp do_validate(root, %{"items" => schemata, "additionalItems" => false}, items)
-      when is_list(items) and is_list(schemata) do
+       when is_list(items) and is_list(schemata) do
     cond do
       Enum.count(schemata) < Enum.count(items) ->
         Enum.map(items, fn _ ->
@@ -55,7 +55,7 @@ defmodule ExJsonSchema.Validator.Items do
   end
 
   defp do_validate(root, %{"items" => schema = %{}, "additionalItems" => false}, items)
-      when is_list(items) do
+       when is_list(items) do
     additional_items =
       items
       |> Enum.with_index()
@@ -73,7 +73,7 @@ defmodule ExJsonSchema.Validator.Items do
   end
 
   defp do_validate(root, %{"items" => schemata, "additionalItems" => additional_items}, items)
-      when is_list(items) and is_list(schemata) do
+       when is_list(items) and is_list(schemata) do
     items
     |> Enum.with_index()
     |> Enum.flat_map(fn {item, index} ->
