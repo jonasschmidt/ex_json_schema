@@ -62,17 +62,13 @@ defmodule ExJsonSchema.Validator.Type do
     is_map(data)
   end
 
-  defp data_type(data) do
-    cond do
-      is_nil(data) -> "null"
-      is_boolean(data) -> "boolean"
-      is_binary(data) -> "string"
-      is_integer(data) -> "integer"
-      is_number(data) -> "number"
-      is_list(data) -> "array"
-      is_map(data) -> "object"
-    end
-  end
+  defp data_type(nil), do: "null"
+  defp data_type(data) when is_binary(data), do: "string"
+  defp data_type(data) when is_boolean(data), do: "boolean"
+  defp data_type(data) when is_integer(data), do: "integer"
+  defp data_type(data) when is_list(data), do: "array"
+  defp data_type(data) when is_map(data), do: "object"
+  defp data_type(data) when is_number(data), do: "number"
 
   defp type_name(type) do
     type
