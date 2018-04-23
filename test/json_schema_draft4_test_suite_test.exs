@@ -22,7 +22,6 @@ defmodule ExJsonSchema.JsonSchemaDraft4TestSuiteTest do
       "root ref in remote ref: null is valid",
       "root ref in remote ref: object is invalid",
       "root ref in remote ref: string is valid",
-      "some languages do not distinguish between different types of numeric value: a float is not an integer even without fractional part",
       "valid definition: valid definition schema"
     ]
 end
