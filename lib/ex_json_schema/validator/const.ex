@@ -19,7 +19,7 @@ defmodule ExJsonSchema.Validator.Const do
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
         ) :: Validator.errors_with_list_paths()
-  def validate(_, _, {"const", const}, data) do
+  def validate(%{version: version}, _, {"const", const}, data) when version >= 6 do
     do_validate(const, data)
   end
 

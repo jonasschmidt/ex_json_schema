@@ -19,7 +19,7 @@ defmodule ExJsonSchema.Validator.Contains do
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
         ) :: Validator.errors_with_list_paths()
-  def validate(root, _, {"contains", contains}, data) do
+  def validate(root = %{version: version}, _, {"contains", contains}, data) when version >= 6 do
     do_validate(root, contains, data)
   end
 

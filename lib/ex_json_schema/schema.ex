@@ -202,8 +202,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp resolve_property(root, {key, values}, scope) when is_list(values) do
-    {root, values} =
-      Enum.reduce(values, {root, []}, &resolve_value(&1, &2, scope))
+    {root, values} = Enum.reduce(values, {root, []}, &resolve_value(&1, &2, scope))
 
     {root, {key, Enum.reverse(values)}}
   end
@@ -213,10 +212,7 @@ defmodule ExJsonSchema.Schema do
   @spec scoped_ref(scope :: String.t(), ref :: String.t()) :: String.t()
   defp scoped_ref(_, ref = "http://" <> _), do: ref
   defp scoped_ref(_, ref = "https://" <> _), do: ref
-
-  defp scoped_ref(scope, ref) do
-    String.replace(scope <> ref, "##", "#")
-  end
+  defp scoped_ref(scope, ref), do: String.replace(scope <> ref, "##", "#")
 
   defp resolve_value(true, {root, values}, _) do
     {root, [@true_value_schema | values]}
@@ -243,7 +239,7 @@ defmodule ExJsonSchema.Schema do
     {root, path}
   end
 
-  @spec fragment!([String.t], String.t()) :: String.t() | nil | no_return
+  @spec fragment!([String.t()], String.t()) :: String.t() | nil | no_return
   defp fragment!([], _), do: nil
   defp fragment!([""], _), do: nil
   defp fragment!([fragment = "/" <> _], _), do: fragment
@@ -378,7 +374,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp get_ref_schema_with_schema(schema, [idx | path], ref) when is_integer(idx) do
-    idx + 1
+    (idx + 1)
     |> :lists.nth(schema)
     |> get_ref_schema_with_schema(path, ref)
   end
