@@ -63,13 +63,25 @@ defmodule ExJsonSchema.Schema do
 
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
 
-  @spec get_ref_schema(Root.t(), [:root | String.t()]) :: ExJsonSchema.data()
+  @spec get_ref_schema(Root.t(), [:root | String.t()]) :: ExJsonSchema.data() | no_return
   def get_ref_schema(root = %Root{}, [:root | path] = ref) do
-    get_ref_schema_with_schema(root.schema, path, ref)
+    case get_ref_schema_with_schema(root.schema, path, ref) do
+      {:error, error} ->
+        raise InvalidSchemaError, message: error
+
+      ref_schema ->
+        ref_schema
+    end
   end
 
   def get_ref_schema(root = %Root{}, [url | path] = ref) when is_binary(url) do
-    get_ref_schema_with_schema(root.refs[url], path, ref)
+    case get_ref_schema_with_schema(root.refs[url], path, ref) do
+      {:error, error} ->
+        raise InvalidSchemaError, message: error
+
+      ref_schema ->
+        ref_schema
+    end
   end
 
   @spec resolve_root(boolean | Root.t()) :: Root.t() | no_return
@@ -148,20 +160,18 @@ defmodule ExJsonSchema.Schema do
   defp resolve_with_root(root, non_schema, _scope), do: {root, non_schema}
 
   defp do_resolve(root, schema, scope) do
-    {root, schema} =
+    schema =
       if Map.has_key?(schema, "$ref") do
-        schema
-        |> Map.take(["$ref"])
-        |> Enum.reduce({root, %{}}, fn property, {root, schema} ->
-          {root, {k, v}} = resolve_property(root, property, scope)
-          {root, Map.put(schema, k, v)}
-        end)
+        Map.take(schema, ["$ref"])
       else
-        Enum.reduce(schema, {root, %{}}, fn property, {root, schema} ->
-          {root, {k, v}} = resolve_property(root, property, scope)
-          {root, Map.put(schema, k, v)}
-        end)
+        schema
       end
+
+    {root, schema} =
+      Enum.reduce(schema, {root, %{}}, fn property, {root, schema} ->
+        {root, {k, v}} = resolve_property(root, property, scope)
+        {root, Map.put(schema, k, v)}
+      end)
 
     sanitized_schema =
       schema
@@ -354,7 +364,7 @@ defmodule ExJsonSchema.Schema do
   defp meta07?(_), do: false
 
   defp get_ref_schema_with_schema(nil, _, ref) do
-    raise InvalidSchemaError, message: "reference #{ref_to_string(ref)} could not be resolved"
+    {:error, "reference #{ref_to_string(ref)} could not be resolved"}
   end
 
   defp get_ref_schema_with_schema(schema, [], _) do
@@ -368,15 +378,12 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp get_ref_schema_with_schema(schema, [idx | path], ref) when is_integer(idx) do
-    try do
-      get_ref_schema_with_schema(:lists.nth(idx + 1, schema), path, ref)
-    catch
-      :error, :function_clause ->
-        raise InvalidSchemaError, message: "reference #{ref_to_string(ref)} could not be resolved"
-    end
+    idx + 1
+    |> :lists.nth(schema)
+    |> get_ref_schema_with_schema(path, ref)
   end
 
-  @spec ref_to_string([String.t() | :root]) :: String.t()
+  @spec ref_to_string([:root | String.t()]) :: String.t()
   defp ref_to_string([:root | path]), do: Enum.join(["#" | path], "/")
   defp ref_to_string([url | path]), do: Enum.join([url <> "#" | path], "/")
 end
