@@ -69,6 +69,12 @@ defmodule ExJsonSchema.Schema do
       {:error, error} ->
         raise InvalidSchemaError, message: error
 
+      true ->
+        @true_value_schema
+
+      false ->
+        @false_value_schema
+
       ref_schema ->
         ref_schema
     end
@@ -78,6 +84,12 @@ defmodule ExJsonSchema.Schema do
     case get_ref_schema_with_schema(root.refs[url], path, ref) do
       {:error, error} ->
         raise InvalidSchemaError, message: error
+
+      true ->
+        @true_value_schema
+
+      false ->
+        @false_value_schema
 
       ref_schema ->
         ref_schema
@@ -162,7 +174,7 @@ defmodule ExJsonSchema.Schema do
   defp do_resolve(root, schema, scope) do
     schema =
       if Map.has_key?(schema, "$ref") do
-        Map.take(schema, ["$ref"])
+        Map.take(schema, ["$ref", "definitions"])
       else
         schema
       end
@@ -192,8 +204,22 @@ defmodule ExJsonSchema.Schema do
   defp resolve_property(root, {"$ref", ref}, scope) when is_bitstring(ref) do
     scoped_ref = scoped_ref(scope, ref)
 
-    {root, path} = resolve_ref(root, scoped_ref)
-    {root, {"$ref", path}}
+    case resolve_ref(root, scoped_ref) do
+      {:error, message} ->
+        raise InvalidSchemaError, message: message
+      {root, path} ->
+        {root, {"$ref", path}}
+    end
+  end
+
+  defp resolve_property(root, {"definitions", value}, scope) when is_map(value) do
+    {root, resolved_definitions} =
+      Enum.reduce(value, {root, %{}}, fn {definition, value}, {root, definitions} ->
+        {root, resolved} = resolve_with_root(root, value, scope)
+        {root, Map.put(definitions, definition, resolved)}
+      end)
+
+    {root, {"definitions", Map.merge(root.definitions, resolved_definitions)}}
   end
 
   defp resolve_property(root, {key, value}, scope) when is_map(value) do
@@ -233,17 +259,22 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_ref(root, ref) do
     [url | fragments] = String.split(ref, "#")
-    fragment = fragment!(fragments, ref)
-    {root, path} = root_and_path_for_url(root, fragment, url)
-    assert_reference_valid(path, root, ref)
-    {root, path}
+    case fragment(fragments, ref) do
+      {:error, message} ->
+        {:error, message}
+
+      fragment ->
+        {root, path} = root_and_path_for_url(root, fragment, url)
+        assert_reference_valid(path, root, ref)
+        {root, path}
+    end
   end
 
-  @spec fragment!([String.t()], String.t()) :: String.t() | nil | no_return
-  defp fragment!([], _), do: nil
-  defp fragment!([""], _), do: nil
-  defp fragment!([fragment = "/" <> _], _), do: fragment
-  defp fragment!(_, ref), do: raise(InvalidSchemaError, message: "invalid reference #{ref}")
+  @spec fragment([String.t()], String.t()) :: String.t() | {:error, String.t()}
+  defp fragment([], _), do: nil
+  defp fragment([""], _), do: nil
+  defp fragment([fragment = "/" <> _], _), do: fragment
+  defp fragment(_, ref), do: {:error, "invalid reference #{ref}"}
 
   defp root_and_path_for_url(root, fragment, "") do
     {root, [root.location | relative_path(fragment)]}
@@ -275,7 +306,7 @@ defmodule ExJsonSchema.Schema do
     if root.refs[url] do
       root
     else
-      remote_schema = remote_schema(url)
+      remote_schema = remote_schema(url) #|> IO.inspect
       resolve_remote_schema(root, url, remote_schema)
     end
   end
@@ -305,13 +336,21 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  defp remote_schema_resolver do
+  defp remote_schema_resolver() do
     Application.get_env(:ex_json_schema, :remote_schema_resolver) ||
       fn _url -> raise UndefinedRemoteSchemaResolverError end
   end
 
   defp assert_reference_valid(path, root, _ref) do
     get_ref_schema(root, path)
+  end
+
+  defp sanitize_additional_items_attribute(schema) do
+    if needs_additional_items_attribute?(schema) do
+      Map.put(schema, "additionalItems", true)
+    else
+      schema
+    end
   end
 
   defp sanitize_properties_attribute(schema) do
@@ -322,22 +361,14 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
+  defp needs_additional_items_attribute?(%{"additionalItems" => _}), do: false
+  defp needs_additional_items_attribute?(%{"items" => items}) when is_list(items), do: true
+  defp needs_additional_items_attribute?(_), do: false
+
   defp needs_properties_attribute?(%{"properties" => _}), do: false
   defp needs_properties_attribute?(%{"patternProperties" => _}), do: true
   defp needs_properties_attribute?(%{"additionalProperties" => _}), do: true
   defp needs_properties_attribute?(_), do: false
-
-  defp sanitize_additional_items_attribute(schema) do
-    if needs_additional_items_attribute?(schema) do
-      Map.put(schema, "additionalItems", true)
-    else
-      schema
-    end
-  end
-
-  defp needs_additional_items_attribute?(%{"additionalItems" => _}), do: false
-  defp needs_additional_items_attribute?(%{"items" => items}) when is_list(items), do: true
-  defp needs_additional_items_attribute?(_), do: false
 
   defp unescaped_ref_segments(ref) do
     ref
