@@ -187,7 +187,6 @@ defmodule ExJsonSchema.Schema do
 
     sanitized_schema =
       schema
-      |> sanitize_properties_attribute()
       |> sanitize_additional_items_attribute()
 
     {root, sanitized_schema}
@@ -353,22 +352,9 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  defp sanitize_properties_attribute(schema) do
-    if needs_properties_attribute?(schema) do
-      Map.put(schema, "properties", %{})
-    else
-      schema
-    end
-  end
-
   defp needs_additional_items_attribute?(%{"additionalItems" => _}), do: false
   defp needs_additional_items_attribute?(%{"items" => items}) when is_list(items), do: true
   defp needs_additional_items_attribute?(_), do: false
-
-  defp needs_properties_attribute?(%{"properties" => _}), do: false
-  defp needs_properties_attribute?(%{"patternProperties" => _}), do: true
-  defp needs_properties_attribute?(%{"additionalProperties" => _}), do: true
-  defp needs_properties_attribute?(_), do: false
 
   defp unescaped_ref_segments(ref) do
     ref

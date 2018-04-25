@@ -22,6 +22,14 @@ defmodule ExJsonSchema.Validator.Properties do
     do_validate(root, schema, data)
   end
 
+  def validate(root, schema, {"additionalProperties", _}, data) do
+    do_validate(root, Map.put_new(schema, "properties", %{}), data)
+  end
+
+  def validate(root, schema, {"patternProperties", _}, data) do
+    do_validate(root, Map.put_new(schema, "properties", %{}), data)
+  end
+
   def validate(_, _, _, _) do
     []
   end
