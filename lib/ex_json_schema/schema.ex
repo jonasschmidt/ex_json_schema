@@ -179,17 +179,10 @@ defmodule ExJsonSchema.Schema do
         schema
       end
 
-    {root, schema} =
-      Enum.reduce(schema, {root, %{}}, fn property, {root, schema} ->
-        {root, {k, v}} = resolve_property(root, property, scope)
-        {root, Map.put(schema, k, v)}
-      end)
-
-    sanitized_schema =
-      schema
-      |> sanitize_additional_items_attribute()
-
-    {root, sanitized_schema}
+    Enum.reduce(schema, {root, %{}}, fn property, {root, schema} ->
+      {root, {k, v}} = resolve_property(root, property, scope)
+      {root, Map.put(schema, k, v)}
+    end)
   end
 
   defp resolve_property(root, {"not", true}, _scope) do
@@ -343,18 +336,6 @@ defmodule ExJsonSchema.Schema do
   defp assert_reference_valid(path, root, _ref) do
     get_ref_schema(root, path)
   end
-
-  defp sanitize_additional_items_attribute(schema) do
-    if needs_additional_items_attribute?(schema) do
-      Map.put(schema, "additionalItems", true)
-    else
-      schema
-    end
-  end
-
-  defp needs_additional_items_attribute?(%{"additionalItems" => _}), do: false
-  defp needs_additional_items_attribute?(%{"items" => items}) when is_list(items), do: true
-  defp needs_additional_items_attribute?(_), do: false
 
   defp unescaped_ref_segments(ref) do
     ref

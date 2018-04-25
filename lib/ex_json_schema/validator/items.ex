@@ -18,8 +18,12 @@ defmodule ExJsonSchema.Validator.Items do
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
         ) :: Validator.errors_with_list_paths()
-  def validate(root, schema, {"items", _}, data) do
+  def validate(root, schema, {"additionalItems", _}, data) do
     do_validate(root, schema, data)
+  end
+
+  def validate(root, schema, {"items", _}, data) do
+    do_validate(root, Map.put_new(schema, "additionalItems", true), data)
   end
 
   def validate(_, _, _, _) do
