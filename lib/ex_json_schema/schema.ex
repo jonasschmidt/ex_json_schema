@@ -306,7 +306,7 @@ defmodule ExJsonSchema.Schema do
     if root.refs[url] do
       root
     else
-      remote_schema = remote_schema(url) #|> IO.inspect
+      remote_schema = remote_schema(url)
       resolve_remote_schema(root, url, remote_schema)
     end
   end

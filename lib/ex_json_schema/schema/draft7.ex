@@ -1,7 +1,7 @@
 defmodule ExJsonSchema.Schema.Draft7 do
   @schema %{
-    "$schema" => "http =>//json-schema.org/draft-07/schema#",
-    "$id" => "http =>//json-schema.org/draft-07/schema#",
+    "$schema" => "http://json-schema.org/draft-07/schema#",
+    "$id" => "http://json-schema.org/draft-07/schema#",
     "title" => "Core schema meta-schema",
     "definitions" => %{
       "schemaArray" => %{
