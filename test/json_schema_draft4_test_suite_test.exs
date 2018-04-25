@@ -15,7 +15,6 @@ defmodule ExJsonSchema.JsonSchemaDraft4TestSuiteTest do
       "fragment within remote ref: remote fragment valid",
       "multiple dependencies subschema: no dependency",
       "multiple dependencies subschema: valid",
-      "nested refs: nested ref valid",
       "ref within remote ref: ref within ref valid",
       "remote ref, containing refs itself: remote ref valid",
       "remote ref: remote ref valid",
