@@ -12,13 +12,11 @@ defmodule ExJsonSchema.JsonSchemaDraft6TestSuiteTest do
       "base URI change - change folder: number is valid",
       "base URI change - change folder: string is invalid",
       "base URI change: base URI change ref valid",
-      "fragment within remote ref: remote fragment valid",
       "invalid definition: invalid definition schema",
       "multiple dependencies subschema: no dependency",
       "multiple dependencies subschema: valid",
       "ref within remote ref: ref within ref valid",
       "remote ref, containing refs itself: remote ref invalid",
-      "remote ref: remote ref valid",
       "root ref in remote ref: null is valid",
       "root ref in remote ref: object is invalid",
       "root ref in remote ref: string is valid"

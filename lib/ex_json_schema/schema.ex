@@ -158,7 +158,7 @@ defmodule ExJsonSchema.Schema do
   defp choose_meta_schema_validation_module(@draft4_schema_url <> _), do: Draft4
   defp choose_meta_schema_validation_module(@draft6_schema_url <> _), do: Draft6
   defp choose_meta_schema_validation_module(@draft7_schema_url <> _), do: Draft7
-  defp choose_meta_schema_validation_module(_), do: Draft4
+  defp choose_meta_schema_validation_module(_), do: Draft7
 
   defp resolve_with_root(root, schema, scope \\ "")
 

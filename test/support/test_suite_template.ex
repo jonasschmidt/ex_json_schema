@@ -34,6 +34,13 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
               @tag :skip
             end
 
+            @active [
+              "root ref in remote ref: null is valid",
+            ]
+            if "#{description}: #{@test["description"]}" in @active and not name in @ignored_tests do
+              @tag :only
+            end
+
             @tag String.to_atom("json_schema_" <> name)
             test "[#{name}] #{description}: #{@test["description"]}" do
               valid? =
