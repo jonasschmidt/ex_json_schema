@@ -15,7 +15,6 @@ defmodule ExJsonSchema.JsonSchemaDraft6TestSuiteTest do
       "invalid definition: invalid definition schema",
       "multiple dependencies subschema: no dependency",
       "multiple dependencies subschema: valid",
-      "ref within remote ref: ref within ref valid",
       "remote ref, containing refs itself: remote ref invalid",
       "root ref in remote ref: null is valid",
       "root ref in remote ref: object is invalid",

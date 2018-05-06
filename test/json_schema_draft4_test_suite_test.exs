@@ -14,7 +14,6 @@ defmodule ExJsonSchema.JsonSchemaDraft4TestSuiteTest do
       "base URI change: base URI change ref valid",
       "multiple dependencies subschema: no dependency",
       "multiple dependencies subschema: valid",
-      "ref within remote ref: ref within ref valid",
       "remote ref, containing refs itself: remote ref valid",
       "root ref in remote ref: null is valid",
       "root ref in remote ref: object is invalid",
