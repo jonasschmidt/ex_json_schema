@@ -4,7 +4,7 @@ defmodule ExJsonSchema.Mixfile do
   def project do
     [
       app: :ex_json_schema,
-      version: "0.5.6",
+      version: "0.5.7",
       elixir: "~> 1.3",
       elixirc_paths: elixirc_paths(Mix.env()),
       description:
