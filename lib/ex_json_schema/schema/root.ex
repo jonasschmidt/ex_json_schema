@@ -10,7 +10,7 @@ defmodule ExJsonSchema.Schema.Root do
           schema: ExJsonSchema.Schema.resolved(),
           refs: %{String.t() => ExJsonSchema.Schema.resolved()},
           location: :root | String.t(),
-          definitions: [ExJsonSchema.Schema.resolved()],
+          definitions: %{String.t() => ExJsonSchema.Schema.resolved()},
           version: non_neg_integer | nil
         }
 end
