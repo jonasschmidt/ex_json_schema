@@ -12,7 +12,7 @@ defmodule ExJsonSchema.Mixfile do
       package: package(),
       elixirc_paths: elixirc_paths(Mix.env()),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [coveralls: :test]
+      preferred_cli_env: [coveralls: :test, dialyzer: :dev]
     ]
   end
 
