@@ -27,7 +27,7 @@ defmodule ExJsonSchema.Mixfile do
       {:excoveralls, "~> 0.4", only: :test},
       {:mix_test_watch, "~> 0.2.6", only: [:dev, :test]},
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
+      {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false}
     ]
   end
 
