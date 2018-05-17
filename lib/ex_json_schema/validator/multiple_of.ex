@@ -39,12 +39,10 @@ defmodule ExJsonSchema.Validator.MultipleOf do
   end
 
   defp do_validate(multiple_of, data) when is_number(multiple_of) and is_number(data) do
-    case Float.ratio(data / multiple_of) do
-      {_, 1} ->
-        []
-
-      _ ->
-        [{"Expected value to be a multiple of #{multiple_of} but got #{data}.", []}]
+    if Float.ceil(data / multiple_of) == Float.floor(data / multiple_of) do
+      []
+    else
+      [{"Expected value to be a multiple of #{multiple_of} but got #{data}.", []}]
     end
   end
 
