@@ -4,6 +4,6 @@ defmodule ExJsonSchema.Test.Support.TestHelpers do
     schema_tests_path
     |> Path.join(name <> ".json")
     |> File.read!()
-    |> Poison.Parser.parse!()
+    |> Poison.decode!()
   end
 end
