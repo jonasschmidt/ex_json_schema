@@ -9,6 +9,10 @@ defmodule ExJsonSchema.Schema do
     defexception message: "invalid schema"
   end
 
+  defmodule MissingJsonDecoderError do
+    defexception message: "JSON decoder not specified."
+  end
+
   defmodule UndefinedRemoteSchemaResolverError do
     defexception message:
                    "trying to resolve a remote schema but no remote schema resolver function is defined"
@@ -19,7 +23,8 @@ defmodule ExJsonSchema.Schema do
   alias ExJsonSchema.Schema.Draft7
   alias ExJsonSchema.Schema.Root
 
-  @type resolved :: %{String.t() => ExJsonSchema.data() | (Root.t() -> {Root.t(), resolved})} | [resolved]
+  @type resolved ::
+          %{String.t() => ExJsonSchema.data() | (Root.t() -> {Root.t(), resolved})} | [resolved]
 
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
@@ -49,6 +54,15 @@ defmodule ExJsonSchema.Schema do
       %{"type" => "null"}
     ]
   }
+
+  @spec decode_json(String.t()) :: {:ok, String.t()} | {:error, String.t()}
+  def decode_json(json) do
+    decoder =
+      Application.get_env(:ex_json_schema, :decode_json) ||
+        fn _json -> raise MissingJsonDecoderError end
+
+    decoder.(json)
+  end
 
   @spec resolve(boolean | Root.t() | ExJsonSchema.data()) :: Root.t() | no_return
   def resolve(false) do
@@ -199,6 +213,7 @@ defmodule ExJsonSchema.Schema do
     case resolve_ref(root, scoped_ref) do
       {:error, message} ->
         raise InvalidSchemaError, message: message
+
       {root, path} ->
         {root, {"$ref", path}}
     end
@@ -251,6 +266,7 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_ref(root, ref) do
     [url | fragments] = String.split(ref, "#")
+
     case fragment(fragments, ref) do
       {:error, message} ->
         {:error, message}

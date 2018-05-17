@@ -5,7 +5,6 @@ defmodule ExJsonSchema.Schema.Root do
             location: :root,
             version: nil
 
-
   @type t :: %ExJsonSchema.Schema.Root{
           schema: ExJsonSchema.Schema.resolved(),
           refs: %{String.t() => ExJsonSchema.Schema.resolved()},

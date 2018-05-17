@@ -29,7 +29,7 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
 
   defp do_validate(%{"contentEncoding" => "base64"}, "application/json", data) do
     with {:ok, json} <- Base.decode64(data),
-         {:ok, _} <- Poison.decode(json) do
+         {:ok, _} <- ExJsonSchema.Schema.decode_json(json) do
       []
     else
       _ ->
@@ -38,7 +38,7 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
   end
 
   defp do_validate(_, "application/json", data) do
-    case Poison.decode(data) do
+    case ExJsonSchema.Schema.decode_json(data) do
       {:ok, _} ->
         []
 
