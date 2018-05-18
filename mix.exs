@@ -12,7 +12,7 @@ defmodule ExJsonSchema.Mixfile do
       package: package(),
       elixirc_paths: elixirc_paths(Mix.env()),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [coveralls: :test],
+      preferred_cli_env: [coveralls: :test, dialyzer: :test],
       dialyzer: [plt_add_apps: [:ex_unit]]
     ]
   end
@@ -28,7 +28,7 @@ defmodule ExJsonSchema.Mixfile do
       {:excoveralls, "~> 0.4", only: :test},
       {:mix_test_watch, "~> 0.2.6", only: [:dev, :test]},
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 0.5", only: [:test], runtime: false}
     ]
   end
 
