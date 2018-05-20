@@ -15,7 +15,7 @@ defmodule NExJsonSchema.JsonSchemaTestSuiteTest.Helpers do
     (name <> ".json")
     |> schema_test_path
     |> File.read!()
-    |> Poison.Parser.parse!()
+    |> Jason.decode!()
   end
 end
 
