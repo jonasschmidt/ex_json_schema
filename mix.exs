@@ -10,27 +10,21 @@ defmodule ExJsonSchema.Mixfile do
         "A JSON Schema validator with full support for the draft 4 specification and zero dependencies.",
       deps: deps(),
       package: package(),
+      elixirc_paths: elixirc_paths(Mix.env()),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [coveralls: :test]
+      preferred_cli_env: [coveralls: :test, dialyzer: :test],
+      dialyzer: [
+        plt_add_apps: [:ex_unit],
+        plt_core_path: ".",
+        plt_add_deps: :transitive
+      ]
     ]
   end
 
-  # Configuration for the OTP application
-  #
-  # Type `mix help compile.app` for more information
   def application do
-    [applications: []]
+    [extra_applications: []]
   end
 
-  # Dependencies can be Hex packages:
-  #
-  #   {:mydep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
-  #
-  # Type `mix help deps` for more examples and options
   defp deps do
     [
       {:httpoison, "~> 0.8", only: :test},
@@ -38,9 +32,12 @@ defmodule ExJsonSchema.Mixfile do
       {:excoveralls, "~> 0.4", only: :test},
       {:mix_test_watch, "~> 0.2.6", only: [:dev, :test]},
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 0.5", only: [:test], runtime: false}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp package do
     [
