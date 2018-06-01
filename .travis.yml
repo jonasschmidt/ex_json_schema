@@ -23,7 +23,7 @@ env:
 before_install:
   - git submodule update --init --recursive
 script:
-  - "mix do deps.get, deps.compile, compile --warnings-as-errors, dialyzer --halt-exit-status, coveralls.travis"
+  - "mix do deps.get, deps.compile, compile --warnings-as-errors, dialyzer --halt-exit-status && mix coveralls.travis"
 notifications:
   email:
     - jonas.schmidt@gmx.com
