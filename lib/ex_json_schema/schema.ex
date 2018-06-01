@@ -23,7 +23,8 @@ defmodule ExJsonSchema.Schema do
   alias ExJsonSchema.Schema.Draft7
   alias ExJsonSchema.Schema.Root
 
-  @type resolved :: %{String.t() => ExJsonSchema.data() | (Root.t() -> {Root.t(), resolved})}
+  @type resolved ::
+          %{String.t() => ExJsonSchema.data() | (Root.t() -> {Root.t(), resolved})} | [resolved]
 
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
@@ -277,7 +278,7 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  @spec fragment([String.t()], String.t()) :: String.t() | {:error, String.t()}
+  @spec fragment([String.t()], String.t()) :: String.t() | nil | {:error, String.t()}
   defp fragment([], _), do: nil
   defp fragment([""], _), do: nil
   defp fragment([fragment = "/" <> _], _), do: fragment
