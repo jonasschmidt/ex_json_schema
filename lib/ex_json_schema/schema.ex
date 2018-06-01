@@ -23,8 +23,7 @@ defmodule ExJsonSchema.Schema do
   alias ExJsonSchema.Schema.Draft7
   alias ExJsonSchema.Schema.Root
 
-  @type resolved ::
-          %{String.t() => ExJsonSchema.data() | (Root.t() -> {Root.t(), resolved})} | [resolved]
+  @type resolved :: %{String.t() => ExJsonSchema.data() | (Root.t() -> {Root.t(), resolved})}
 
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
@@ -285,13 +284,16 @@ defmodule ExJsonSchema.Schema do
   defp fragment(_, ref), do: {:error, "invalid reference #{ref}"}
 
   defp root_and_path_for_url(root, fragment, "") do
-    {root, [root.location | relative_ref_path(fragment)]}
+    {root, [root.location | relative_path(fragment)]}
   end
 
   defp root_and_path_for_url(root, fragment, url) do
     root = resolve_and_cache_remote_schema(root, url)
-    {root, [url | relative_ref_path(fragment)]}
+    {root, [url | relative_path(fragment)]}
   end
+
+  defp relative_path(nil), do: []
+  defp relative_path(fragment), do: relative_ref_path(fragment)
 
   defp relative_ref_path(ref) do
     ["" | keys] = unescaped_ref_segments(ref)
