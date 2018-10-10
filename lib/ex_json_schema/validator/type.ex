@@ -43,6 +43,7 @@ defmodule ExJsonSchema.Validator.Type do
       is_number(data) -> "number"
       is_list(data) -> "array"
       is_map(data) -> "object"
+      true -> "unknown"
     end
   end
 end
