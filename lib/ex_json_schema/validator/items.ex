@@ -2,6 +2,7 @@ defmodule ExJsonSchema.Validator.Items do
   alias ExJsonSchema.Schema
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Validator.Error
+  alias ExJsonSchema.Schema.Root
 
   @spec validate(Root.t, Schema.resolved, [ExJsonSchema.data]) :: Validator.errors
   def validate(root, %{"items" => schema = %{}}, items) when is_list(items) do
@@ -12,7 +13,6 @@ defmodule ExJsonSchema.Validator.Items do
     end)
   end
 
-  @spec validate(Root.t, Schema.resolved, [ExJsonSchema.data]) :: Validator.errors
   def validate(root, %{"items" => schemata, "additionalItems" => additional_items}, items) when is_list(items) and is_list(schemata) do
     validate_items(root, {schemata, additional_items}, items, {[], 0})
     |> Enum.reverse

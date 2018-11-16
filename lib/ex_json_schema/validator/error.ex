@@ -1,5 +1,33 @@
 defmodule ExJsonSchema.Validator.Error do
+  alias ExJsonSchema.Validator.Error
+
   defstruct [:error, :path]
+
+  @type t ::
+          %Error{}
+          | %Error.Type{}
+          | %Error.AllOf{}
+          | %Error.AnyOf{}
+          | %Error.OneOf{}
+          | %Error.InvalidAtIndex{}
+          | %Error.Not{}
+          | %Error.AdditionalProperties{}
+          | %Error.MinProperties{}
+          | %Error.MaxProperties{}
+          | %Error.Required{}
+          | %Error.Dependencies{}
+          | %Error.AdditionalItems{}
+          | %Error.MinItems{}
+          | %Error.MaxItems{}
+          | %Error.UniqueItems{}
+          | %Error.Enum{}
+          | %Error.Minimum{}
+          | %Error.Maximum{}
+          | %Error.MultipleOf{}
+          | %Error.MinLength{}
+          | %Error.MaxLength{}
+          | %Error.Pattern{}
+          | %Error.Format{}
 
   defmodule Type, do: defstruct [:expected, :actual]
   defmodule AllOf, do: defstruct [:invalid]

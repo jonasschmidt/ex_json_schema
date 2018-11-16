@@ -2,6 +2,7 @@ defmodule ExJsonSchema.Validator.Dependencies do
   alias ExJsonSchema.Schema
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Validator.Error
+  alias ExJsonSchema.Schema.Root
 
   @spec validate(Root.t, Schema.resolved, ExJsonSchema.json) :: Validator.errors
   def validate(root, dependencies, data) when is_map(data) do

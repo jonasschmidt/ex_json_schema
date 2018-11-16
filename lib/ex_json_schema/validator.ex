@@ -8,9 +8,9 @@ defmodule ExJsonSchema.Validator do
   alias ExJsonSchema.Schema
   alias ExJsonSchema.Schema.Root
 
-  @type errors :: [{String.t, String.t}] | []
+  @type errors :: [Error.t()] | []
 
-  @spec validate(Root.t | ExJsonSchema.object, ExJsonSchema.data) :: :ok | {:error, errors}
+  @spec validate(Root.t | ExJsonSchema.data, ExJsonSchema.data) :: :ok | {:error, errors} | Schema.invalid_reference_error
   def validate(root = %Root{}, data) do
     validate(root, root.schema, data)
   end
@@ -19,7 +19,7 @@ defmodule ExJsonSchema.Validator do
     validate(Schema.resolve(schema), data)
   end
 
-  @spec validate(Root.t, ExJsonSchema.json_path | Schema.resolved, ExJsonSchema.data) :: errors | Schema.invalid_reference_error
+  @spec validate(Root.t, ExJsonSchema.json_path | Schema.resolved, ExJsonSchema.data) :: :ok | {:error, errors} | Schema.invalid_reference_error
   def validate(root, schema_or_ref, data) do
     case validation_errors(root, schema_or_ref, data) do
       {:error, _error} = error -> error
@@ -28,7 +28,7 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
-  @spec validation_errors(Root.t, ExJsonSchema.json_path | Schema.resolved, ExJsonSchema.data, [String.t | integer]) :: errors | Schema.invalid_reference_error
+  @spec validation_errors(Root.t, ExJsonSchema.json_path | Schema.resolved, ExJsonSchema.data, String.t) :: errors | Schema.invalid_reference_error
   def validation_errors(root, schema_or_ref, data, path \\ "#")
   def validation_errors(root, ref, data, path) when is_binary(ref) do
     case Schema.get_fragment(root, ref) do
@@ -41,7 +41,7 @@ defmodule ExJsonSchema.Validator do
     |> Enum.map(fn %Error{path: p} = error -> %{error | path: path <> p} end)
   end
 
-  @spec valid?(Root.t | ExJsonSchema.object, ExJsonSchema.data) :: boolean
+  @spec valid?(Root.t | ExJsonSchema.data, ExJsonSchema.data) :: boolean
   def valid?(root = %Root{}, data), do: valid?(root, root.schema, data)
 
   def valid?(schema = %{}, data), do: valid?(Schema.resolve(schema), data)

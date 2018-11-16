@@ -2,6 +2,7 @@ defmodule ExJsonSchema.Validator.Properties do
   alias ExJsonSchema.Schema
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Validator.Error
+  alias ExJsonSchema.Schema.Root
 
   @spec validate(Root.t, Schema.resolved, ExJsonSchema.json) :: Validator.errors
   def validate(root, schema, properties = %{}) do

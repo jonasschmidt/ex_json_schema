@@ -26,7 +26,7 @@ defmodule ExJsonSchema.Schema do
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
 
-  @spec resolve(Root.t | ExJsonSchema.object) :: Root.t | no_return
+  @spec resolve(Root.t | ExJsonSchema.data) :: Root.t | no_return
   def resolve(root = %Root{}), do: resolve_root(root)
 
   def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
@@ -173,7 +173,7 @@ defmodule ExJsonSchema.Schema do
     resolve_remote_schema(root, url, Draft4.schema)
   end
   defp fetch_and_resolve_remote_schema(root, url) do
-    resolve_remote_schema(root, url, remote_schema_resolver().(url))
+    resolve_remote_schema(root, url, fetch_remote_schema(url))
   end
 
   defp resolve_remote_schema(root, url, remote_schema) do
@@ -244,6 +244,7 @@ defmodule ExJsonSchema.Schema do
   defp ref_to_string([:root | path]), do: ["#" | path] |> Enum.join("/")
   defp ref_to_string([url | path]), do: [url <> "#" | path] |> Enum.join("/")
 
+  @spec raise_invalid_reference_error(ref :: binary() | list()) :: no_return
   def raise_invalid_reference_error(ref) when is_binary(ref), do: raise InvalidReferenceError, message: "invalid reference #{ref}"
   def raise_invalid_reference_error(ref), do: ref |> ref_to_string |> raise_invalid_reference_error
 end
