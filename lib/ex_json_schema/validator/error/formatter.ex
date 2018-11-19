@@ -26,7 +26,7 @@ defmodule ExJsonSchema.Validator.Error.Formatter do
       {
         msg,
         path
-        |> Enum.filter(fn p -> p not in ["oneOf", "anyOf"] end)
+        |> Enum.filter(fn p -> not Enum.member?(["oneOf", "allOf", "anyOf"], p) end)
         |> Enum.join("/")
       }
     end)

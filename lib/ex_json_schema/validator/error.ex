@@ -80,7 +80,7 @@ defmodule ExJsonSchema.Validator.Error do
     end
 
     def to_string(%Required{missing: missing}) do
-      "Required properties #{Enum.join(missing, ",")} were not present"
+      "Required properties #{Enum.join(missing, ", ")} were not present"
     end
   end
 
