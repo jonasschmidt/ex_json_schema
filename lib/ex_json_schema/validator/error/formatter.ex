@@ -1,4 +1,4 @@
-defmodule ExJsonSchema.ErrorFormatter do
+defmodule ExJsonSchema.Validator.Error.Formatter do
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Validator.Error
 
