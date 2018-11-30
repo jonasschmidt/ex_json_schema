@@ -17,30 +17,33 @@ defmodule ExJsonSchema.ValidatorTest do
   end
 
   test "trying to validate a fragment with an invalid path" do
-    assert validate(@schema_with_ref, "#/properties/bar", "foo") == {:error, :invalid_reference}
-    assert valid?(@schema_with_ref, "#/properties/bar", 123) == {:error, :invalid_reference}
+    assert validate_fragment(@schema_with_ref, "#/properties/bar", "foo") ==
+             {:error, :invalid_reference}
+
+    assert valid_fragment?(@schema_with_ref, "#/properties/bar", 123) ==
+             {:error, :invalid_reference}
   end
 
   test "validating a fragment with a path" do
-    assert validate(@schema_with_ref, "#/properties/foo", "foo") ==
+    assert validate_fragment(@schema_with_ref, "#/properties/foo", "foo") ==
              {:error,
               [
                 %Error{error: %Error.Type{actual: "string", expected: ["integer"]}, path: "#"}
               ]}
 
-    assert valid?(@schema_with_ref, "#/properties/foo", 123)
+    assert valid_fragment?(@schema_with_ref, "#/properties/foo", 123)
   end
 
   test "validating a fragment with a partial schema" do
     fragment = Schema.get_fragment!(@schema_with_ref, "#/properties/foo")
 
-    assert validate(@schema_with_ref, fragment, "foo") ==
+    assert validate_fragment(@schema_with_ref, fragment, "foo") ==
              {:error,
               [
                 %Error{error: %Error.Type{actual: "string", expected: ["integer"]}, path: "#"}
               ]}
 
-    assert valid?(@schema_with_ref, fragment, 123)
+    assert valid_fragment?(@schema_with_ref, fragment, 123)
   end
 
   test "required properties are not validated when the data is not a map" do
@@ -510,14 +513,11 @@ defmodule ExJsonSchema.ValidatorTest do
     )
   end
 
-  test "chain validator and formatter" do
-    assert :ok =
-             validate(%{"format" => "ipv4"}, "12.12.12.12")
-             |> Error.StringFormatter.format()
+  test "give formatter as an option" do
+    assert :ok = validate(%{"type" => "string"}, "foo", error_formatter: Error.StringFormatter)
 
-    assert [{"Expected to be a valid IPv4 address.", "#"}] =
-             validate(%{"format" => "ipv4"}, "12.12.12")
-             |> Error.StringFormatter.format()
+    assert {:error, [{"Type mismatch. Expected String but got Integer.", "#"}]} =
+             validate(%{"type" => "string"}, 666, error_formatter: Error.StringFormatter)
   end
 
   defp assert_validation_errors(schema, data, expected_errors, expected_error_structs) do

@@ -8,25 +8,38 @@ defmodule ExJsonSchema.Validator do
   alias ExJsonSchema.Schema
   alias ExJsonSchema.Schema.Root
 
-  @type errors :: [%Error{}]
+  @type errors :: [%Error{}] | list
+  @type options :: [error_formatter: module()]
 
   @spec validate(Root.t() | ExJsonSchema.object(), ExJsonSchema.data()) ::
           :ok | {:error, errors} | no_return
-  def validate(root = %Root{}, data) do
-    validate(root, root.schema, data)
+  def validate(root, data, options \\ [])
+
+  def validate(root = %Root{}, data, options) when is_list(options) do
+    validate_fragment(root, root.schema, data, options)
   end
 
-  def validate(schema = %{}, data) do
-    validate(Schema.resolve(schema), data)
+  def validate(schema = %{}, data, options) when is_list(options) do
+    validate(Schema.resolve(schema), data, options)
   end
 
-  @spec validate(Root.t(), ExJsonSchema.json_path() | Schema.resolved(), ExJsonSchema.data()) ::
-          :ok | {:error, errors} | Schema.invalid_reference_error() | no_return
-  def validate(root, schema_or_ref, data) do
-    case validation_errors(root, schema_or_ref, data) do
-      {:error, _error} = error -> error
-      [] -> :ok
-      errors -> {:error, errors}
+  @spec validate_fragment(
+          Root.t(),
+          ExJsonSchema.json_path() | Schema.resolved(),
+          ExJsonSchema.data(),
+          options
+        ) :: :ok | {:error, errors} | Schema.invalid_reference_error() | no_return
+  def validate_fragment(root, schema_or_ref, data, options \\ []) when is_list(options) do
+    result =
+      case validation_errors(root, schema_or_ref, data) do
+        {:error, _error} = error -> error
+        [] -> :ok
+        errors -> {:error, errors}
+      end
+
+    case options[:error_formatter] do
+      nil -> result
+      formatter -> format_errors(result, formatter)
     end
   end
 
@@ -51,18 +64,27 @@ defmodule ExJsonSchema.Validator do
   end
 
   @spec valid?(Root.t() | ExJsonSchema.object(), ExJsonSchema.data()) :: boolean | no_return
-  def valid?(root = %Root{}, data), do: valid?(root, root.schema, data)
+  def valid?(root = %Root{}, data), do: valid_fragment?(root, root.schema, data)
 
   def valid?(schema = %{}, data), do: valid?(Schema.resolve(schema), data)
 
-  @spec valid?(Root.t(), ExJsonSchema.json_path() | Schema.resolved(), ExJsonSchema.data()) ::
-          boolean | Schema.invalid_reference_error() | no_return
-  def valid?(root, schema_or_ref, data) do
+  @spec valid_fragment?(
+          Root.t(),
+          ExJsonSchema.json_path() | Schema.resolved(),
+          ExJsonSchema.data()
+        ) :: boolean | Schema.invalid_reference_error() | no_return
+  def valid_fragment?(root, schema_or_ref, data) do
     case validation_errors(root, schema_or_ref, data) do
       {:error, _error} = error -> error
       [] -> true
       _errors -> false
     end
+  end
+
+  defp format_errors(:ok, _error_formatter), do: :ok
+
+  defp format_errors({:error, errors}, error_formatter) do
+    {:error, error_formatter.format(errors)}
   end
 
   defp validate_aspect(root, _, {"$ref", path}, data) do
@@ -140,7 +162,7 @@ defmodule ExJsonSchema.Validator do
   end
 
   defp validate_aspect(root, _, {"not", not_schema}, data) do
-    case valid?(root, not_schema, data) do
+    case valid_fragment?(root, not_schema, data) do
       true -> [%Error{error: %Error.Not{}, path: ""}]
       false -> []
     end

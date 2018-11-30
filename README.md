@@ -89,14 +89,14 @@ It is also possible to validate against a subset of the schema by providing eith
 iex> fragment = ExJsonSchema.Schema.get_fragment!(schema, "#/properties/foo")
 {:ok, %{"type" => "string"}}
 
-iex> ExJsonSchema.Validator.valid?(schema, fragment, "bar")
+iex> ExJsonSchema.Validator.valid_fragment?(schema, fragment, "bar")
 true
 ```
 
 or a path:
 
 ```elixir
-iex> ExJsonSchema.Validator.valid?(schema, "#/foo", "bar")
+iex> ExJsonSchema.Validator.valid_fragment?(schema, "#/foo", "bar")
 true
 ```
 

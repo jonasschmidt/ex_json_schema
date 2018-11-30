@@ -1,14 +1,7 @@
 defmodule ExJsonSchema.Validator.Error.StringFormatter do
   alias ExJsonSchema.Validator.Error
 
-  @spec format(
-          ExJsonSchema.Validator.errors()
-          | {:error, ExJsonSchema.Validator.errors()}
-          | :ok
-        ) :: [{String.t(), String.t()}] | :ok
-  def format(:ok), do: :ok
-  def format({:error, errors}), do: format(errors)
-
+  @spec format(ExJsonSchema.Validator.errors()) :: [{String.t(), String.t()}]
   def format(errors) do
     Enum.map(errors, fn %Error{error: error, path: path} ->
       {to_string(error), path}
