@@ -4,7 +4,8 @@ defmodule ExJsonSchema.Validator.Dependencies do
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Validator.Error
 
-  @spec validate(Root.t, Schema.resolved, ExJsonSchema.data) :: Validator.errors | no_return
+  @spec validate(Root.t(), Schema.resolved(), ExJsonSchema.data()) ::
+          Validator.errors() | no_return
   def validate(root, dependencies, data) when is_map(data) do
     dependencies
     |> Enum.filter(&Map.has_key?(data, elem(&1, 0)))
@@ -21,8 +22,11 @@ defmodule ExJsonSchema.Validator.Dependencies do
 
   defp validate_dependency(_, property, dependencies, data) do
     case Enum.filter(List.wrap(dependencies), &(!Map.has_key?(data, &1))) do
-      [] -> []
-      missing -> [%Error{error: %Error.Dependencies{property: property, missing: missing}, path: ""}]
+      [] ->
+        []
+
+      missing ->
+        [%Error{error: %Error.Dependencies{property: property, missing: missing}, path: ""}]
     end
   end
 end

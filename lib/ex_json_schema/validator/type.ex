@@ -2,16 +2,24 @@ defmodule ExJsonSchema.Validator.Type do
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Validator.Error
 
-  @spec validate(String.t, ExJsonSchema.data) :: Validator.errors
+  @spec validate(String.t(), ExJsonSchema.data()) :: Validator.errors()
   def validate(type, data) do
     case valid?(type, data) do
-      true -> []
-      false -> [%Error{error: %Error.Type{expected: List.wrap(type), actual: data |> data_type}, path: ""}]
+      true ->
+        []
+
+      false ->
+        [
+          %Error{
+            error: %Error.Type{expected: List.wrap(type), actual: data |> data_type},
+            path: ""
+          }
+        ]
     end
   end
 
   defp valid?(type, data) when is_list(type) do
-    Enum.any? type, &valid?(&1, data)
+    Enum.any?(type, &valid?(&1, data))
   end
 
   defp valid?(type, data) do
