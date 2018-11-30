@@ -1,49 +1,95 @@
 defmodule ExJsonSchema.Validator.Error do
   defstruct [:error, :path]
 
-  defmodule(Type, do: defstruct([:expected, :actual]))
+  defmodule Type do
+    defstruct([:expected, :actual])
+  end
 
-  defmodule(AllOf, do: defstruct([:invalid]))
+  defmodule AllOf do
+    defstruct([:invalid])
+  end
 
-  defmodule(AnyOf, do: defstruct([:invalid]))
+  defmodule AnyOf do
+    defstruct([:invalid])
+  end
 
-  defmodule(OneOf, do: defstruct([:valid_indices, :invalid]))
+  defmodule OneOf do
+    defstruct([:valid_indices, :invalid])
+  end
 
-  defmodule(InvalidAtIndex, do: defstruct([:index, :errors]))
+  defmodule InvalidAtIndex do
+    defstruct([:index, :errors])
+  end
 
-  defmodule(Not, do: defstruct([]))
+  defmodule Not do
+    defstruct([])
+  end
 
-  defmodule(AdditionalProperties, do: defstruct([]))
+  defmodule AdditionalProperties do
+    defstruct([])
+  end
 
-  defmodule(MinProperties, do: defstruct([:expected, :actual]))
+  defmodule MinProperties do
+    defstruct([:expected, :actual])
+  end
 
-  defmodule(MaxProperties, do: defstruct([:expected, :actual]))
+  defmodule MaxProperties do
+    defstruct([:expected, :actual])
+  end
 
-  defmodule(Required, do: defstruct([:missing]))
+  defmodule Required do
+    defstruct([:missing])
+  end
 
-  defmodule(Dependencies, do: defstruct([:property, :missing]))
+  defmodule Dependencies do
+    defstruct([:property, :missing])
+  end
 
-  defmodule(AdditionalItems, do: defstruct([:additional_indices]))
+  defmodule AdditionalItems do
+    defstruct([:additional_indices])
+  end
 
-  defmodule(MinItems, do: defstruct([:expected, :actual]))
+  defmodule MinItems do
+    defstruct([:expected, :actual])
+  end
 
-  defmodule(MaxItems, do: defstruct([:expected, :actual]))
+  defmodule MaxItems do
+    defstruct([:expected, :actual])
+  end
 
-  defmodule(UniqueItems, do: defstruct([]))
+  defmodule UniqueItems do
+    defstruct([])
+  end
 
-  defmodule(Enum, do: defstruct([]))
+  defmodule Enum do
+    defstruct([])
+  end
 
-  defmodule(Minimum, do: defstruct([:expected, :exclusive?]))
+  defmodule Minimum do
+    defstruct([:expected, :exclusive?])
+  end
 
-  defmodule(Maximum, do: defstruct([:expected, :exclusive?]))
+  defmodule Maximum do
+    defstruct([:expected, :exclusive?])
+  end
 
-  defmodule(MultipleOf, do: defstruct([:expected]))
+  defmodule MultipleOf do
+    defstruct([:expected])
+  end
 
-  defmodule(MinLength, do: defstruct([:expected, :actual]))
+  defmodule MinLength do
+    defstruct([:expected, :actual])
+  end
 
-  defmodule(MaxLength, do: defstruct([:expected, :actual]))
+  defmodule MaxLength do
+    defstruct([:expected, :actual])
+  end
 
-  defmodule(Pattern, do: defstruct([:expected]))
+  defmodule Pattern do
+    defstruct([:expected])
+  end
 
-  defmodule(Format, do: defstruct([:expected]))
+  defmodule Format do
+    defstruct([:expected])
+  end
 end
