@@ -128,9 +128,10 @@ defmodule ExJsonSchema.ValidatorTest do
   test "validation errors for invalid items" do
     assert_validation_errors(
       %{"items" => %{"type" => "string"}},
-      ["foo", "bar", 1, %{}], [
+      ["foo", "bar", 1, %{}, {"foo", "bar"}], [
         {"Type mismatch. Expected String but got Integer.", "#/2"},
-        {"Type mismatch. Expected String but got Object.", "#/3"}])
+        {"Type mismatch. Expected String but got Object.", "#/3"},
+        {"Type mismatch. Expected String but got Unknown.", "#/4"}])
   end
 
   test "validation errors for an invalid item with a list of item schemata and an invalid additional item" do
