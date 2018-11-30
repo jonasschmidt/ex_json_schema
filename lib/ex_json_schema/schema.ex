@@ -20,8 +20,10 @@ defmodule ExJsonSchema.Schema do
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
 
-  @type resolved :: %{String.t() => ExJsonSchema.json_value() | ref_path}
   @type ref_path :: [:root | String.t()]
+  @type resolved :: %{
+          String.t() => ExJsonSchema.data() | (Root.t() -> {Root.t(), resolved}) | ref_path
+        }
   @type invalid_reference_error :: {:error, :invalid_reference}
 
   @current_draft_schema_url "http://json-schema.org/schema"

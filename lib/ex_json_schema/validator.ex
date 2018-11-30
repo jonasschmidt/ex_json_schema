@@ -21,7 +21,7 @@ defmodule ExJsonSchema.Validator do
   end
 
   @spec validate(Root.t(), ExJsonSchema.json_path() | Schema.resolved(), ExJsonSchema.data()) ::
-          errors | Schema.invalid_reference_error() | no_return
+          :ok | {:error, errors} | Schema.invalid_reference_error() | no_return
   def validate(root, schema_or_ref, data) do
     case validation_errors(root, schema_or_ref, data) do
       {:error, _error} = error -> error
