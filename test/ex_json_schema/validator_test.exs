@@ -201,6 +201,15 @@ defmodule ExJsonSchema.ValidatorTest do
     )
   end
 
+  test "validation errors for an unknown type" do
+    assert_validation_errors(
+      %{"type" => "string"},
+      {:foo, "bar"},
+      [{"Type mismatch. Expected String but got Unknown.", "#"}],
+      [%Error{error: %Error.Type{expected: ["string"], actual: "unknown"}, path: "#"}]
+    )
+  end
+
   test "validation errors for invalid properties" do
     assert_validation_errors(
       %{
