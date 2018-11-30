@@ -47,7 +47,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"required" => ["foo"], "type" => "object"},
       "foo",
-      [{"Type mismatch. Expected object but got string.", "#"}],
+      [{"Type mismatch. Expected Object but got String.", "#"}],
       [%Error{error: %Error.Type{expected: ["object"], actual: "string"}, path: "#"}]
     )
   end
@@ -56,7 +56,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"foo" => %{"type" => "object"}, "properties" => %{"bar" => %{"$ref" => "#/foo"}}},
       %{"bar" => "baz"},
-      [{"Type mismatch. Expected object but got string.", "#/bar"}],
+      [{"Type mismatch. Expected Object but got String.", "#/bar"}],
       [%Error{error: %Error.Type{expected: ["object"], actual: "string"}, path: "#/bar"}]
     )
   end
@@ -65,7 +65,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"$ref" => "http://localhost:8000/subschema.json#/foo"},
       "foo",
-      [{"Type mismatch. Expected integer but got string.", "#"}],
+      [{"Type mismatch. Expected Integer but got String.", "#"}],
       [%Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#"}]
     )
   end
@@ -75,10 +75,8 @@ defmodule ExJsonSchema.ValidatorTest do
       %{"allOf" => [%{"type" => "number"}, %{"type" => "string"}, %{"type" => "integer"}]},
       "foo",
       [
-        {
-          "Expected all of the schemata to match, but the schemata at the following indexes did not: Index 0: ({Type mismatch. Expected number but got string., #}), Index 2: ({Type mismatch. Expected integer but got string., #})",
-          "#"
-        }
+        {"Expected all of the schemata to match, but the schemata at the following indexes did not: 0, 2.",
+         "#"}
       ],
       [
         %Error{
@@ -108,12 +106,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"anyOf" => [%{"type" => "number"}, %{"type" => "integer"}]},
       "foo",
-      [
-        {
-          "Expected any of the schemata to match but none did: Index 0: ({Type mismatch. Expected number but got string., #}), Index 1: ({Type mismatch. Expected integer but got string., #})",
-          "#"
-        }
-      ],
+      [{"Expected any of the schemata to match but none did.", "#"}],
       [
         %Error{
           error: %Error.AnyOf{
@@ -158,7 +151,7 @@ defmodule ExJsonSchema.ValidatorTest do
       "foo",
       [
         {
-          "Expected exactly one of the schemata to match, but none did: Index 0: ({Type mismatch. Expected number but got string., #}), Index 1: ({Type mismatch. Expected integer but got string., #})",
+          "Expected exactly one of the schemata to match, but none of them did.",
           "#"
         }
       ],
@@ -200,7 +193,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"type" => ["integer", "number"]},
       "foo",
-      [{"Type mismatch. Expected integer, number but got string.", "#"}],
+      [{"Type mismatch. Expected Integer, Number but got String.", "#"}],
       [%Error{error: %Error.Type{expected: ["integer", "number"], actual: "string"}, path: "#"}]
     )
   end
@@ -214,8 +207,8 @@ defmodule ExJsonSchema.ValidatorTest do
       },
       %{"foo" => true, "bar" => true, "baz" => 1, "xyz" => false},
       [
-        {"Type mismatch. Expected string but got boolean.", "#/foo"},
-        {"Type mismatch. Expected boolean but got integer.", "#/baz"},
+        {"Type mismatch. Expected String but got Boolean.", "#/foo"},
+        {"Type mismatch. Expected Boolean but got Integer.", "#/baz"},
         {"Schema does not allow additional properties.", "#/xyz"}
       ],
       [
@@ -233,7 +226,7 @@ defmodule ExJsonSchema.ValidatorTest do
         "additionalProperties" => %{"type" => "boolean"}
       },
       %{"foo" => "bar", "bar" => "baz"},
-      [{"Type mismatch. Expected boolean but got string.", "#/bar"}],
+      [{"Type mismatch. Expected Boolean but got String.", "#/bar"}],
       [%Error{error: %Error.Type{expected: ["boolean"], actual: "string"}, path: "#/bar"}]
     )
   end
@@ -256,14 +249,34 @@ defmodule ExJsonSchema.ValidatorTest do
     )
   end
 
+  test "validation errors for missing required property" do
+    assert_validation_errors(
+      %{"required" => ["foo", "bar", "baz"]},
+      %{"foo" => 1, "bar" => 2},
+      [
+        {"Required property baz was not present.", "#"}
+      ],
+      [%Error{error: %Error.Required{missing: ["baz"]}, path: "#"}]
+    )
+  end
+
   test "validation errors for missing required properties" do
     assert_validation_errors(
       %{"required" => ["foo", "bar", "baz"]},
       %{"foo" => 1},
       [
-        {"Required property bar, baz was not present.", "#"}
+        {"Required properties bar, baz were not present.", "#"}
       ],
       [%Error{error: %Error.Required{missing: ["bar", "baz"]}, path: "#"}]
+    )
+  end
+
+  test "validation errors for dependent property" do
+    assert_validation_errors(
+      %{"dependencies" => %{"foo" => ["bar", "baz", "qux"]}},
+      %{"foo" => 1, "bar" => 2, "baz" => 3},
+      [{"Property foo depends on property qux to be present but it was not.", "#"}],
+      [%Error{error: %Error.Dependencies{property: "foo", missing: ["qux"]}, path: "#"}]
     )
   end
 
@@ -271,7 +284,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"dependencies" => %{"foo" => ["bar", "baz", "qux"]}},
       %{"foo" => 1, "bar" => 2},
-      [{"Property foo depends on baz, qux to be present but it was not.", "#"}],
+      [{"Property foo depends on properties baz, qux to be present but they were not.", "#"}],
       [%Error{error: %Error.Dependencies{property: "foo", missing: ["baz", "qux"]}, path: "#"}]
     )
   end
@@ -280,7 +293,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"dependencies" => %{"foo" => %{"properties" => %{"bar" => %{"type" => "boolean"}}}}},
       %{"foo" => 1, "bar" => 2},
-      [{"Type mismatch. Expected boolean but got integer.", "#/bar"}],
+      [{"Type mismatch. Expected Boolean but got Integer.", "#/bar"}],
       [%Error{error: %Error.Type{expected: ["boolean"], actual: "integer"}, path: "#/bar"}]
     )
   end
@@ -290,8 +303,8 @@ defmodule ExJsonSchema.ValidatorTest do
       %{"items" => %{"type" => "string"}},
       ["foo", "bar", 1, %{}],
       [
-        {"Type mismatch. Expected string but got integer.", "#/2"},
-        {"Type mismatch. Expected string but got object.", "#/3"}
+        {"Type mismatch. Expected String but got Integer.", "#/2"},
+        {"Type mismatch. Expected String but got Object.", "#/3"}
       ],
       [
         %Error{error: %Error.Type{expected: ["string"], actual: "integer"}, path: "#/2"},
@@ -308,9 +321,9 @@ defmodule ExJsonSchema.ValidatorTest do
       },
       [%{}, 1, "foo", true, 2.2],
       [
-        {"Type mismatch. Expected string but got object.", "#/0"},
-        {"Type mismatch. Expected integer but got string.", "#/2"},
-        {"Type mismatch. Expected boolean but got number.", "#/4"}
+        {"Type mismatch. Expected String but got Object.", "#/0"},
+        {"Type mismatch. Expected Integer but got String.", "#/2"},
+        {"Type mismatch. Expected Boolean but got Number.", "#/4"}
       ],
       [
         %Error{error: %Error.Type{expected: ["string"], actual: "object"}, path: "#/0"},
@@ -360,7 +373,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"enum" => ["foo", "bar"]},
       %{"baz" => 1},
-      [{"Not a allowed value in enum.", "#"}],
+      [{"Value is not allowed in enum.", "#"}],
       [%Error{error: %Error.Enum{}, path: "#"}]
     )
   end
@@ -430,7 +443,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"pattern" => "^b..$"},
       "foo",
-      [{~s(Doesn't match pattern "^b..$".), "#"}],
+      [{~s(Does not match pattern "^b..$".), "#"}],
       [%Error{error: %Error.Pattern{expected: "^b..$"}, path: "#"}]
     )
   end
@@ -443,7 +456,7 @@ defmodule ExJsonSchema.ValidatorTest do
         }
       },
       %{"foo" => [%{"bar" => 1}, %{"bar" => "baz"}]},
-      [{"Type mismatch. Expected integer but got string.", "#/foo/1/bar"}],
+      [{"Type mismatch. Expected Integer but got String.", "#/foo/1/bar"}],
       [%Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#/foo/1/bar"}]
     )
   end
@@ -456,7 +469,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"format" => "date-time"},
       "2012-12-12 12:12:12",
-      [{"Expected to be a valid date-time.", "#"}],
+      [{"Expected to be a valid ISO 8601 date-time.", "#"}],
       [%Error{error: %Error.Format{expected: "date-time"}, path: "#"}]
     )
   end
@@ -483,7 +496,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"format" => "ipv4"},
       "12.12.12",
-      [{"Expected to be a valid ipv4.", "#"}],
+      [{"Expected to be a valid IPv4 address.", "#"}],
       [%Error{error: %Error.Format{expected: "ipv4"}, path: "#"}]
     )
   end
@@ -492,7 +505,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert_validation_errors(
       %{"format" => "ipv6"},
       "12:12:12",
-      [{"Expected to be a valid ipv6.", "#"}],
+      [{"Expected to be a valid IPv6 address.", "#"}],
       [%Error{error: %Error.Format{expected: "ipv6"}, path: "#"}]
     )
   end
@@ -502,7 +515,7 @@ defmodule ExJsonSchema.ValidatorTest do
              validate(%{"format" => "ipv4"}, "12.12.12.12")
              |> Error.StringFormatter.format()
 
-    assert [{"Expected to be a valid ipv4.", "#"}] =
+    assert [{"Expected to be a valid IPv4 address.", "#"}] =
              validate(%{"format" => "ipv4"}, "12.12.12")
              |> Error.StringFormatter.format()
   end

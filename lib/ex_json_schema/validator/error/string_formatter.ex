@@ -1,5 +1,4 @@
 defmodule ExJsonSchema.Validator.Error.StringFormatter do
-  alias ExJsonSchema.Validator.Error.StringFormatter
   alias ExJsonSchema.Validator.Error
 
   @spec format(
@@ -18,43 +17,39 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
 
   defimpl String.Chars, for: Error.Type do
     def to_string(%Error.Type{expected: expected, actual: actual}) do
-      "Type mismatch. Expected #{Enum.join(expected, ", ")} but got #{actual}."
+      "Type mismatch. Expected #{type_names(expected)} but got #{type_names(actual)}."
+    end
+
+    defp type_names(types) do
+      types
+      |> List.wrap()
+      |> Enum.map(&String.capitalize/1)
+      |> Enum.join(", ")
     end
   end
 
   defimpl String.Chars, for: Error.AllOf do
     def to_string(%Error.AllOf{invalid: invalid}) do
-      "Expected all of the schemata to match, but the schemata at the following indexes did not: " <>
-        Enum.map_join(invalid, ", ", &Kernel.to_string/1)
+      "Expected all of the schemata to match, but the schemata at the following indexes did not: #{
+        Enum.map_join(invalid, ", ", & &1.index)
+      }."
     end
   end
 
   defimpl String.Chars, for: Error.AnyOf do
-    def to_string(%Error.AnyOf{invalid: invalid}) do
-      "Expected any of the schemata to match but none did: " <>
-        Enum.map_join(invalid, ", ", &Kernel.to_string/1)
+    def to_string(%Error.AnyOf{}) do
+      "Expected any of the schemata to match but none did."
     end
   end
 
   defimpl String.Chars, for: Error.OneOf do
-    def to_string(%Error.OneOf{invalid: invalid, valid_indices: valid_indices}) do
+    def to_string(%Error.OneOf{valid_indices: valid_indices}) do
       if length(valid_indices) > 1 do
         "Expected exactly one of the schemata to match, but the schemata at the following indexes did: " <>
           Enum.join(valid_indices, ", ") <> "."
       else
-        "Expected exactly one of the schemata to match, but none did: " <>
-          Enum.map_join(invalid, ", ", &Kernel.to_string/1)
+        "Expected exactly one of the schemata to match, but none of them did."
       end
-    end
-  end
-
-  defimpl String.Chars, for: Error.InvalidAtIndex do
-    def to_string(%Error.InvalidAtIndex{index: index, errors: errors}) do
-      "Index #{index}: (#{
-        Enum.map_join(StringFormatter.format(errors), ", ", fn {error, path} ->
-          "{#{error}, #{path}}"
-        end)
-      })"
     end
   end
 
@@ -83,14 +78,22 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
   end
 
   defimpl String.Chars, for: Error.Required do
+    def to_string(%Error.Required{missing: [missing]}) do
+      "Required property #{missing} was not present."
+    end
+
     def to_string(%Error.Required{missing: missing}) do
-      "Required property #{Enum.join(missing, ", ")} was not present."
+      "Required properties #{Enum.join(missing, ", ")} were not present."
     end
   end
 
   defimpl String.Chars, for: Error.Dependencies do
+    def to_string(%Error.Dependencies{property: property, missing: [missing]}) do
+      "Property #{property} depends on property #{missing} to be present but it was not."
+    end
+
     def to_string(%Error.Dependencies{property: property, missing: missing}) do
-      "Property #{property} depends on #{Enum.join(missing, ", ")} to be present but it was not."
+      "Property #{property} depends on properties #{Enum.join(missing, ", ")} to be present but they were not."
     end
   end
 
@@ -120,7 +123,7 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
 
   defimpl String.Chars, for: Error.Enum do
     def to_string(%Error.Enum{}) do
-      "Not a allowed value in enum."
+      "Value is not allowed in enum."
     end
   end
 
@@ -156,13 +159,18 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
 
   defimpl String.Chars, for: Error.Pattern do
     def to_string(%Error.Pattern{expected: expected}) do
-      "Doesn't match pattern #{inspect(expected)}."
+      "Does not match pattern #{inspect(expected)}."
     end
   end
 
   defimpl String.Chars, for: Error.Format do
     def to_string(%Error.Format{expected: expected}) do
-      "Expected to be a valid #{expected}."
+      "Expected to be a valid #{format_name(expected)}."
     end
+
+    defp format_name("date-time"), do: "ISO 8601 date-time"
+    defp format_name("ipv4"), do: "IPv4 address"
+    defp format_name("ipv6"), do: "IPv6 address"
+    defp format_name(expected), do: expected
   end
 end
