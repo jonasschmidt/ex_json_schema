@@ -19,21 +19,22 @@ defmodule NExJsonSchema.Validator.Format do
   defp do_validate("date-time", data) do
     validate_with_regex_result =
       validate_with_regex(data, @date_time_regex, fn data ->
-        %{
-          description: "expected #{inspect(data)} to be a valid ISO 8601 date-time",
-          rule: :datetime,
-          params: [inspect(@date_time_regex)]
-        }
+        Validator.format_error(
+          :datetime,
+          "expected %{actual} to be a valid ISO 8601 date-time",
+          pattern: Regex.source(@date_time_regex),
+          actual: inspect(data)
+        )
       end)
 
     case validate_with_regex_result do
       [] ->
         validate_date_existence("date-time", data, fn data ->
-          %{
-            description: "expected #{inspect(data)} to be an existing date-time",
-            rule: :datetime,
-            params: []
-          }
+          Validator.format_error(
+            :datetime,
+            "expected %{actual} to be an existing date-time",
+            actual: inspect(data)
+          )
         end)
 
       error ->
@@ -44,21 +45,22 @@ defmodule NExJsonSchema.Validator.Format do
   defp do_validate("date", data) do
     validate_with_regex_result =
       validate_with_regex(data, @date_regex, fn data ->
-        %{
-          description: "expected #{inspect(data)} to be a valid ISO 8601 date",
-          rule: :date,
-          params: [inspect(@date_regex)]
-        }
+        Validator.format_error(
+          :date,
+          "expected %{actual} to be a valid ISO 8601 date",
+          pattern: Regex.source(@date_regex),
+          actual: inspect(data)
+        )
       end)
 
     case validate_with_regex_result do
       [] ->
         validate_date_existence("date", data, fn data ->
-          %{
-            description: "expected #{inspect(data)} to be an existing date",
-            rule: :date,
-            params: []
-          }
+          Validator.format_error(
+            :date,
+            "expected %{actual} to be an existing date",
+            actual: inspect(data)
+          )
         end)
 
       error ->
@@ -68,41 +70,45 @@ defmodule NExJsonSchema.Validator.Format do
 
   defp do_validate("email", data) do
     validate_with_regex(data, @email_regex, fn data ->
-      %{
-        description: "expected #{inspect(data)} to be an email address",
-        rule: :email,
-        params: [inspect(@email_regex)]
-      }
+      Validator.format_error(
+        :email,
+        "expected %{actual} to be an email address",
+        pattern: Regex.source(@email_regex),
+        actual: inspect(data)
+      )
     end)
   end
 
   defp do_validate("hostname", data) do
     validate_with_regex(data, @hostname_regex, fn data ->
-      %{
-        description: "expected #{inspect(data)} to be a host name",
-        rule: :format,
-        params: [inspect(@hostname_regex)]
-      }
+      Validator.format_error(
+        :format,
+        "expected %{actual} to be a host name",
+        pattern: Regex.source(@hostname_regex),
+        actual: inspect(data)
+      )
     end)
   end
 
   defp do_validate("ipv4", data) do
     validate_with_regex(data, @ipv4_regex, fn data ->
-      %{
-        description: "expected #{inspect(data)} to be an IPv4 address",
-        rule: :format,
-        params: [inspect(@ipv4_regex)]
-      }
+      Validator.format_error(
+        :format,
+        "expected %{actual} to be an IPv4 address",
+        pattern: Regex.source(@ipv4_regex),
+        actual: inspect(data)
+      )
     end)
   end
 
   defp do_validate("ipv6", data) do
     validate_with_regex(data, @ipv6_regex, fn data ->
-      %{
-        description: "expected #{inspect(data)} to be an IPv6 address",
-        rule: :format,
-        params: [inspect(@ipv6_regex)]
-      }
+      Validator.format_error(
+        :format,
+        "expected %{actual} to be an IPv6 address",
+        pattern: Regex.source(@ipv6_regex),
+        actual: inspect(data)
+      )
     end)
   end
 

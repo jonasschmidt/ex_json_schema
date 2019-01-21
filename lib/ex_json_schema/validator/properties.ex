@@ -49,11 +49,11 @@ defmodule NExJsonSchema.Validator.Properties do
 
   defp validate_additional_properties(_, false, properties) when map_size(properties) > 0 do
     Enum.map(properties, fn {name, _} ->
-      {%{
-         description: "schema does not allow additional properties",
-         rule: :schema,
-         params: properties
-       }, [name]}
+      {Validator.format_error(
+         :schema,
+         "schema does not allow additional properties",
+         properties: properties
+       ), [name]}
     end)
   end
 

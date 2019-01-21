@@ -9,11 +9,12 @@ defmodule NExJsonSchema.Validator.Type do
 
       false ->
         [
-          {%{
-             description: "type mismatch. Expected #{type |> type_name} but got #{data |> data_type |> type_name}",
-             rule: :cast,
-             params: [type]
-           }, []}
+          {Validator.format_error(
+             :cast,
+             "type mismatch. Expected %{expected} but got %{actual}",
+             expected: type,
+             actual: data_type(data)
+           ), []}
         ]
     end
   end

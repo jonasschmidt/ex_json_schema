@@ -29,7 +29,7 @@ defmodule NExJsonSchema.SchemaTest do
     schema = %{"properties" => "foo"}
 
     assert_raise NExJsonSchema.Schema.InvalidSchemaError,
-                 ~s(schema did not pass validation against its meta-schema: [{%{description: \"type mismatch. Expected Object but got String\", params: [\"object\"], rule: :cast}, \"$.properties\"}]),
+                 "schema did not pass validation against its meta-schema:\n* type mismatch. Expected object but got string (at $.properties)",
                  fn -> resolve(schema) end
   end
 

@@ -27,11 +27,10 @@ defmodule NExJsonSchema.Validator.Items do
 
   defp validate_item(_, nil, _, index) do
     [
-      {%{
-         description: "schema does not allow additional items",
-         rule: :schema,
-         params: []
-       }, ["[#{index}]"]}
+      {Validator.format_error(
+         :schema,
+         "schema does not allow additional items"
+       ), ["[#{index}]"]}
     ]
   end
 

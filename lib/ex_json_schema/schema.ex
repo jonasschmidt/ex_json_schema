@@ -50,12 +50,18 @@ defmodule NExJsonSchema.Schema do
       case NExJsonSchema.Validator.validate(resolve(Draft4.schema()), schema) do
         {:error, errors} ->
           raise InvalidSchemaError,
-            message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
+            message: "schema did not pass validation against its meta-schema:#{format_error_messages(errors)}"
 
         _ ->
           nil
       end
     end
+  end
+
+  defp format_error_messages([]), do: ""
+
+  defp format_error_messages([{%{description: description}, path} | errors]) do
+    "\n* #{description} (at #{path})" <> format_error_messages(errors)
   end
 
   defp supported_schema_version?(version) do

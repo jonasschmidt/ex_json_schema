@@ -45,6 +45,15 @@ defmodule NExJsonSchema.Validator do
     Enum.map(errors, fn {msg, path} -> {msg, Enum.join(path, ".")} end)
   end
 
+  def format_error(rule, raw_description, params \\ []) do
+    %{
+      raw_description: raw_description,
+      description: format_description(raw_description, params),
+      rule: rule,
+      params: params
+    }
+  end
+
   defp validate_aspect(root, _, {"$ref", path}, data) do
     schema = Schema.get_ref_schema(root, path)
     validate(root, schema, data)
@@ -59,13 +68,11 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description:
-               "expected all of the schemata to match, " <>
-                 "but the schemata at the following indexes did not: " <> "#{Enum.join(invalid_indexes, ", ")}",
-             rule: :schemata,
-             params: []
-           }, []}
+          {format_error(
+             :schemata,
+             "expected all of the schemata to match, but the schemata at the following indexes did not: %{indexes}",
+             indexes: invalid_indexes
+           ), []}
         ]
     end
   end
@@ -76,13 +83,7 @@ defmodule NExJsonSchema.Validator do
         []
 
       false ->
-        [
-          {%{
-             description: "expected any of the schemata to match but none did",
-             rule: :schemata,
-             params: []
-           }, []}
-        ]
+        [{format_error(:schemata, "expected any of the schemata to match but none did"), []}]
     end
   end
 
@@ -91,26 +92,18 @@ defmodule NExJsonSchema.Validator do
 
     case Enum.empty?(valid_indexes) do
       true ->
-        [
-          {%{
-             description: "expected exactly one of the schemata to match, but none of them did",
-             rule: :schemata,
-             params: []
-           }, []}
-        ]
+        [{format_error(:schemata, "expected exactly one of the schemata to match, but none of them did"), []}]
 
       false ->
         if Enum.count(valid_indexes) == 1 do
           []
         else
           [
-            {%{
-               description:
-                 "expected exactly one of the schemata to match, " <>
-                   "but the schemata at the following indexes did: " <> "#{Enum.join(valid_indexes, ", ")}",
-               rule: :schemata,
-               params: []
-             }, []}
+            {format_error(
+               :schemata,
+               "expected exactly one of the schemata to match, but the schemata at the following indexes did: %{indexes}",
+               indexes: valid_indexes
+             ), []}
           ]
         end
     end
@@ -120,11 +113,10 @@ defmodule NExJsonSchema.Validator do
     case valid?(root, not_schema, data) do
       true ->
         [
-          {%{
-             description: "expected schema not to match but it did",
-             rule: :schema,
-             params: []
-           }, []}
+          {format_error(
+             :schema,
+             "expected schema not to match but it did"
+           ), []}
         ]
 
       false ->
@@ -147,11 +139,12 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description: "expected a minimum of #{min_properties} properties but got #{Map.size(data)}",
-             rule: :length,
-             params: %{min: min_properties}
-           }, []}
+          {format_error(
+             :length,
+             "expected a minimum of %{min} properties but got %{actual}",
+             min: min_properties,
+             actual: Map.size(data)
+           ), []}
         ]
     end
   end
@@ -163,11 +156,12 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description: "expected a maximum of #{max_properties} properties but got #{Map.size(data)}",
-             rule: :length,
-             params: %{max: max_properties}
-           }, []}
+          {format_error(
+             :length,
+             "expected a maximum of %{max} properties but got %{actual}",
+             max: max_properties,
+             actual: Map.size(data)
+           ), []}
         ]
     end
   end
@@ -180,11 +174,11 @@ defmodule NExJsonSchema.Validator do
 
         false ->
           [
-            {%{
-               description: "required property #{property} was not present",
-               rule: :required,
-               params: []
-             }, [property]}
+            {format_error(
+               :required,
+               "required property %{property} was not present",
+               property: property
+             ), [property]}
           ]
       end
     end)
@@ -205,11 +199,12 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description: "expected a minimum of #{min_items} items but got #{count}",
-             rule: :length,
-             params: %{min: min_items}
-           }, []}
+          {format_error(
+             :length,
+             "expected a minimum of %{min} items but got %{actual}",
+             min: min_items,
+             actual: count
+           ), []}
         ]
     end
   end
@@ -221,11 +216,12 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description: "expected a maximum of #{max_items} items but got #{count}",
-             rule: :length,
-             params: %{max: max_items}
-           }, []}
+          {format_error(
+             :length,
+             "expected a maximum of %{max} items but got %{actual}",
+             max: max_items,
+             actual: count
+           ), []}
         ]
     end
   end
@@ -237,11 +233,10 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description: "expected items to be unique but they were not",
-             rule: :unique,
-             params: []
-           }, []}
+          {format_error(
+             :unique,
+             "expected items to be unique but they were not"
+           ), []}
         ]
     end
   end
@@ -253,11 +248,11 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description: "value is not allowed in enum",
-             rule: :inclusion,
-             params: enum
-           }, []}
+          {format_error(
+             :inclusion,
+             "value is not allowed in enum",
+             values: enum
+           ), []}
         ]
     end
   end
@@ -272,11 +267,11 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description: "expected the value to be #{if exclusive?, do: ">", else: ">="} #{minimum}",
-             rule: :number,
-             params: get_number_validation_params(:minimum, minimum, exclusive?)
-           }, []}
+          {format_error(
+             :number,
+             "expected the value to be #{if exclusive?, do: "> %{greater_than}", else: ">= %{greater_than_or_equal_to}"}",
+             get_number_validation_params(:minimum, minimum, exclusive?)
+           ), []}
         ]
     end
   end
@@ -291,11 +286,11 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description: "expected the value to be #{if exclusive?, do: "<", else: "<="} #{maximum}",
-             rule: :number,
-             params: get_number_validation_params(:maximum, maximum, exclusive?)
-           }, []}
+          {format_error(
+             :number,
+             "expected the value to be #{if exclusive?, do: "< %{less_than}", else: "<= %{less_than_or_equal_to}"}",
+             get_number_validation_params(:maximum, maximum, exclusive?)
+           ), []}
         ]
     end
   end
@@ -309,11 +304,12 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description: "expected value to be a multiple of #{multiple_of} but got #{data}",
-             rule: :number,
-             params: %{multiple_of: multiple_of}
-           }, []}
+          {format_error(
+             :number,
+             "expected value to be a multiple of %{multiple_of} but got %{actual}",
+             multiple_of: multiple_of,
+             actual: data
+           ), []}
         ]
     end
   end
@@ -325,11 +321,12 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description: "expected value to have a minimum length of #{min_length} but was #{length}",
-             rule: :length,
-             params: %{min: min_length}
-           }, []}
+          {format_error(
+             :length,
+             "expected value to have a minimum length of %{min} but was %{actual}",
+             min: min_length,
+             actual: length
+           ), []}
         ]
     end
   end
@@ -341,11 +338,12 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description: "expected value to have a maximum length of #{max_length} but was #{length}",
-             rule: :length,
-             params: %{max: max_length}
-           }, []}
+          {format_error(
+             :length,
+             "expected value to have a maximum length of %{max} but was %{actual}",
+             max: max_length,
+             actual: length
+           ), []}
         ]
     end
   end
@@ -357,11 +355,11 @@ defmodule NExJsonSchema.Validator do
 
       false ->
         [
-          {%{
-             description: "string does not match pattern #{inspect(pattern)}",
-             rule: :format,
-             params: [pattern]
-           }, []}
+          {format_error(
+             :format,
+             "string does not match pattern %{pattern}",
+             pattern: pattern
+           ), []}
         ]
     end
   end
@@ -372,10 +370,24 @@ defmodule NExJsonSchema.Validator do
 
   defp validate_aspect(_, _, _, _), do: []
 
-  defp get_number_validation_params(:maximum, value, true), do: %{less_than: value}
-  defp get_number_validation_params(:maximum, value, _), do: %{less_than_or_equal_to: value}
-  defp get_number_validation_params(:minimum, value, true), do: %{greater_than: value}
-  defp get_number_validation_params(:minimum, value, _), do: %{greater_than_or_equal_to: value}
+  defp format_description(raw_description, params) do
+    Enum.reduce(params, raw_description, fn {key, value}, acc ->
+      template = "%{#{key}}"
+
+      case String.contains?(acc, template) do
+        true -> String.replace(acc, template, format_parameter(value))
+        false -> acc
+      end
+    end)
+  end
+
+  defp format_parameter(value) when is_list(value), do: Enum.join(value, ", ")
+  defp format_parameter(value), do: to_string(value)
+
+  defp get_number_validation_params(:maximum, value, true), do: [less_than: value]
+  defp get_number_validation_params(:maximum, value, _), do: [less_than_or_equal_to: value]
+  defp get_number_validation_params(:minimum, value, true), do: [greater_than: value]
+  defp get_number_validation_params(:minimum, value, _), do: [greater_than_or_equal_to: value]
 
   defp validation_result_indexes(root, schemata, data, filter) do
     schemata

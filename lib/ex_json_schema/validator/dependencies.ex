@@ -26,11 +26,12 @@ defmodule NExJsonSchema.Validator.Dependencies do
 
         false ->
           [
-            {%{
-               description: "property #{property} depends on #{dependency} to be present but it was not",
-               rule: :dependency,
-               params: [dependency]
-             }, [property]}
+            {Validator.format_error(
+               :dependency,
+               "property %{property} depends on %{dependency} to be present but it was not",
+               property: property,
+               dependency: dependency
+             ), [property]}
           ]
       end
     end)
