@@ -21,9 +21,9 @@ defmodule NExJsonSchema.Validator.Format do
       validate_with_regex(data, @date_time_regex, fn data ->
         Validator.format_error(
           :datetime,
-          "expected %{actual} to be a valid ISO 8601 date-time",
+          "expected \"%{actual}\" to be a valid ISO 8601 date-time",
           pattern: Regex.source(@date_time_regex),
-          actual: inspect(data)
+          actual: data
         )
       end)
 
@@ -32,8 +32,8 @@ defmodule NExJsonSchema.Validator.Format do
         validate_date_existence("date-time", data, fn data ->
           Validator.format_error(
             :datetime,
-            "expected %{actual} to be an existing date-time",
-            actual: inspect(data)
+            "expected \"%{actual}\" to be an existing date-time",
+            actual: data
           )
         end)
 
@@ -47,9 +47,9 @@ defmodule NExJsonSchema.Validator.Format do
       validate_with_regex(data, @date_regex, fn data ->
         Validator.format_error(
           :date,
-          "expected %{actual} to be a valid ISO 8601 date",
+          "expected \"%{actual}\" to be a valid ISO 8601 date",
           pattern: Regex.source(@date_regex),
-          actual: inspect(data)
+          actual: data
         )
       end)
 
@@ -58,8 +58,8 @@ defmodule NExJsonSchema.Validator.Format do
         validate_date_existence("date", data, fn data ->
           Validator.format_error(
             :date,
-            "expected %{actual} to be an existing date",
-            actual: inspect(data)
+            "expected \"%{actual}\" to be an existing date",
+            actual: data
           )
         end)
 
@@ -72,9 +72,9 @@ defmodule NExJsonSchema.Validator.Format do
     validate_with_regex(data, @email_regex, fn data ->
       Validator.format_error(
         :email,
-        "expected %{actual} to be an email address",
+        "expected \"%{actual}\" to be an email address",
         pattern: Regex.source(@email_regex),
-        actual: inspect(data)
+        actual: data
       )
     end)
   end
@@ -83,9 +83,9 @@ defmodule NExJsonSchema.Validator.Format do
     validate_with_regex(data, @hostname_regex, fn data ->
       Validator.format_error(
         :format,
-        "expected %{actual} to be a host name",
+        "expected \"%{actual}\" to be a host name",
         pattern: Regex.source(@hostname_regex),
-        actual: inspect(data)
+        actual: data
       )
     end)
   end
@@ -94,9 +94,9 @@ defmodule NExJsonSchema.Validator.Format do
     validate_with_regex(data, @ipv4_regex, fn data ->
       Validator.format_error(
         :format,
-        "expected %{actual} to be an IPv4 address",
+        "expected \"%{actual}\" to be an IPv4 address",
         pattern: Regex.source(@ipv4_regex),
-        actual: inspect(data)
+        actual: data
       )
     end)
   end
@@ -105,9 +105,9 @@ defmodule NExJsonSchema.Validator.Format do
     validate_with_regex(data, @ipv6_regex, fn data ->
       Validator.format_error(
         :format,
-        "expected %{actual} to be an IPv6 address",
+        "expected \"%{actual}\" to be an IPv6 address",
         pattern: Regex.source(@ipv6_regex),
-        actual: inspect(data)
+        actual: data
       )
     end)
   end

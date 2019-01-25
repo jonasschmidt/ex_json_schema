@@ -50,7 +50,7 @@ defmodule NExJsonSchema.Validator do
       raw_description: raw_description,
       description: format_description(raw_description, params),
       rule: rule,
-      params: params
+      params: Map.new(params)
     }
   end
 
@@ -357,7 +357,7 @@ defmodule NExJsonSchema.Validator do
         [
           {format_error(
              :format,
-             "string does not match pattern %{pattern}",
+             "string does not match pattern \"%{pattern}\"",
              pattern: pattern
            ), []}
         ]
