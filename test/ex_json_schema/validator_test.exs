@@ -25,7 +25,7 @@ defmodule ExJsonSchema.ValidatorTest do
   end
 
   test "validating a fragment with a path" do
-    assert validate_fragment(@schema_with_ref, "#/properties/foo", "foo") ==
+    assert validate_fragment(@schema_with_ref, "#/properties/foo", "foo", error_formatter: false) ==
              {:error,
               [
                 %Error{error: %Error.Type{actual: "string", expected: ["integer"]}, path: "#"}
@@ -37,7 +37,7 @@ defmodule ExJsonSchema.ValidatorTest do
   test "validating a fragment with a partial schema" do
     fragment = Schema.get_fragment!(@schema_with_ref, "#/properties/foo")
 
-    assert validate_fragment(@schema_with_ref, fragment, "foo") ==
+    assert validate_fragment(@schema_with_ref, fragment, "foo", error_formatter: false) ==
              {:error,
               [
                 %Error{error: %Error.Type{actual: "string", expected: ["integer"]}, path: "#"}
@@ -513,15 +513,20 @@ defmodule ExJsonSchema.ValidatorTest do
     )
   end
 
-  test "give formatter as an option" do
+  test "passing the formatter as an option" do
     assert :ok = validate(%{"type" => "string"}, "foo", error_formatter: Error.StringFormatter)
 
     assert {:error, [{"Type mismatch. Expected String but got Integer.", "#"}]} =
              validate(%{"type" => "string"}, 666, error_formatter: Error.StringFormatter)
   end
 
+  test "using the string formatter by default" do
+    assert {:error, [{"Type mismatch. Expected String but got Integer.", "#"}]} =
+             validate(%{"type" => "string"}, 666)
+  end
+
   defp assert_validation_errors(schema, data, expected_errors, expected_error_structs) do
-    {:error, errors} = validate(schema, data)
+    {:error, errors} = validate(schema, data, error_formatter: false)
     assert errors == expected_error_structs
     assert Error.StringFormatter.format(errors) == expected_errors
   end

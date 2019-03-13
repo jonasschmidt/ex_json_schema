@@ -75,7 +75,7 @@ defmodule ExJsonSchema.Schema do
 
   defp assert_valid_schema(schema) do
     unless meta?(schema) do
-      case Validator.validate(resolve(Draft4.schema()), schema) do
+      case Validator.validate(resolve(Draft4.schema()), schema, error_formatter: false) do
         {:error, errors} ->
           raise InvalidSchemaError,
             message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"

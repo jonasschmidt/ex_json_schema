@@ -9,7 +9,7 @@ defmodule ExJsonSchema.Validator do
   alias ExJsonSchema.Schema.Root
 
   @type errors :: [%Error{}] | list
-  @type options :: [error_formatter: module()]
+  @type options :: [error_formatter: module() | false]
 
   @spec validate(Root.t() | ExJsonSchema.object(), ExJsonSchema.data()) ::
           :ok | {:error, errors} | no_return
@@ -37,8 +37,8 @@ defmodule ExJsonSchema.Validator do
         errors -> {:error, errors}
       end
 
-    case options[:error_formatter] do
-      nil -> result
+    case Keyword.get(options, :error_formatter, Error.StringFormatter) do
+      false -> result
       formatter -> format_errors(result, formatter)
     end
   end
@@ -83,9 +83,11 @@ defmodule ExJsonSchema.Validator do
 
   defp format_errors(:ok, _error_formatter), do: :ok
 
-  defp format_errors({:error, errors}, error_formatter) do
+  defp format_errors({:error, errors}, error_formatter) when is_list(errors) do
     {:error, error_formatter.format(errors)}
   end
+
+  defp format_errors({:error, _} = error, _error_formatter), do: error
 
   defp validate_aspect(root, _, {"$ref", path}, data) do
     schema = Schema.get_fragment!(root, path)
