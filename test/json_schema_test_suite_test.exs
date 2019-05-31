@@ -40,11 +40,6 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
     "ref" => %{
       "ref overrides any sibling keywords" => ["ref valid, maxItems ignored"],
       "Recursive references between schemas" => ["valid tree", "invalid tree"]
-    },
-    "refRemote" => %{
-      "root ref in remote ref" => ["string is valid", "null is valid", "object is invalid"],
-      "base URI change - change folder" => ["number is valid", "string is invalid"],
-      "base URI change - change folder in subschema" => ["number is valid", "string is invalid"]
     }
   }
 

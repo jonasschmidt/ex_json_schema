@@ -96,8 +96,15 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_with_root(root, schema, scope \\ "")
 
-  defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_binary(id),
-    do: do_resolve(root, schema, scope <> id)
+  defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_binary(id) do
+    scope =
+      case URI.parse(scope) do
+        %URI{host: nil} -> id
+        uri -> uri |> URI.merge(id) |> to_string()
+      end
+
+    do_resolve(root, schema, scope)
+  end
 
   defp resolve_with_root(root, schema = %{}, scope), do: do_resolve(root, schema, scope)
   defp resolve_with_root(root, non_schema, _scope), do: {root, non_schema}
@@ -129,10 +136,17 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_property(root, {"$ref", ref}, scope) do
     scoped_ref =
-      case ref do
-        "http://" <> _ -> ref
-        "https://" <> _ -> ref
-        _else -> (scope <> ref) |> String.replace("##", "#")
+      case URI.parse(ref) do
+        # TODO: this special case is only needed until there is proper support for URL references
+        # that point to a local schema (via scope changes)
+        %URI{host: nil, path: nil} = uri ->
+          to_string(uri)
+
+        ref_uri ->
+          case URI.parse(scope) do
+            %URI{host: nil} -> ref
+            scope_uri -> URI.merge(scope_uri, ref_uri) |> to_string()
+          end
       end
 
     {root, path} = resolve_ref!(root, scoped_ref)

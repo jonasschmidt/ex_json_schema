@@ -86,18 +86,6 @@ defmodule ExJsonSchema.SchemaTest do
                  fn -> resolve(schema) end
   end
 
-  test "changing the resolution scope" do
-    schema = %{
-      "id" => "#/foo_scope/",
-      "foo" => %{"$ref" => "bar"},
-      "foo_scope" => %{"bar" => "baz"}
-    }
-
-    resolved = resolve(schema)
-    path = get_in(resolved.schema, ["foo", "$ref"])
-    assert get_fragment!(resolved, path) == "baz"
-  end
-
   test "caching a resolved remote reference" do
     schema = %{"$ref" => "http://localhost:1234/integer.json"}
 
