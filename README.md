@@ -57,26 +57,6 @@ schema = %{
 
 Note that `Map` keys are expected to be strings, since in practice that data will always come from some JSON parser.
 
-## Custom string validation
-
-The [JSON schema spec][format-spec] states that the `format` property
-"allows values to be constrained beyond what the other tools in JSON
-Schema can do". To support this, you can configure a callback
-validator function which gets called when a `format` property is
-encountered that is not one of the builtin formats:
-
-```elixir
-config :ex_json_schema,
-  :custom_format_validator,
-  {MyModule, :my_validator}
-```
-
-The configured function is called with the arguments `(format, data)`
-and is expected to return a list of `%ExJsonSchema.Validator.Error{}`
-structs, or an empty list in case of a valid format.
-
-[format-spec]: https://json-schema.org/understanding-json-schema/reference/string.html#format
-
 ## Usage
 
 If you're only interested in whether a piece of data is valid according to the schema:
@@ -161,6 +141,21 @@ true
 ## Format support
 
 The validator supports all the formats specified by draft 4 (`date-time`, `email`, `hostname`, `ipv4`, `ipv6`), with the exception of the `uri` format which has confusing/broken requirements in the official test suite (see https://github.com/json-schema/JSON-Schema-Test-Suite/issues/77).
+
+### Custom formats
+
+The [JSON schema spec][format-spec] states that the `format` property "allows values to be constrained beyond what the other tools in JSON Schema can do". To support this, you can configure a callback validator function which gets called when a `format` property is encountered that is not one of the builtin formats:
+
+```elixir
+config :ex_json_schema,
+  :custom_format_validator,
+  {MyModule, :my_validator}
+```
+
+The configured function is called with the arguments `(format, data)` and is expected to return a list of `%ExJsonSchema.Validator.Error{}` structs, or an empty list in case of a valid format.
+
+[format-spec]: https://json-schema.org/understanding-json-schema/reference/string.html#format
+
 
 ## License
 
