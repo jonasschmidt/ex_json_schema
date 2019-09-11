@@ -522,6 +522,54 @@ defmodule ExJsonSchema.ValidatorTest do
     )
   end
 
+  test "unknown formats are ignored" do
+    assert :ok == validate(%{"format" => "custom-format"}, "asdfsadf")
+  end
+
+  defmodule MyFormatValidator do
+    def validate_format("always_error", _data) do
+      [%Error{error: %Error.Format{expected: "always_error"}, path: ""}]
+    end
+
+    def validate_format("zipcode", data) do
+      case Regex.match?(~r/^\d+$/, data) do
+        true ->
+          []
+
+        false ->
+          [%Error{error: %Error.Format{expected: "zipcode"}, path: ""}]
+      end
+    end
+  end
+
+  test "configuring a custom formatter" do
+    Application.put_env(
+      :ex_json_schema,
+      :custom_format_validator,
+      {MyFormatValidator, :validate_format}
+    )
+
+    on_exit(fn ->
+      Application.delete_env(:ex_json_schema, :custom_format_validator)
+    end)
+
+    assert_validation_errors(
+      %{"format" => "always_error"},
+      "",
+      [{"Expected to be a valid always_error.", "#"}],
+      [%Error{error: %Error.Format{expected: "always_error"}, path: "#"}]
+    )
+
+    assert :ok == validate(%{"format" => "zipcode"}, "12345")
+
+    assert_validation_errors(
+      %{"format" => "zipcode"},
+      "asdf",
+      [{"Expected to be a valid zipcode.", "#"}],
+      [%Error{error: %Error.Format{expected: "zipcode"}, path: "#"}]
+    )
+  end
+
   test "passing the formatter as an option" do
     assert :ok = validate(%{"type" => "string"}, "foo", error_formatter: Error.StringFormatter)
 
