@@ -528,17 +528,11 @@ defmodule ExJsonSchema.ValidatorTest do
 
   defmodule MyFormatValidator do
     def validate_format("always_error", _data) do
-      [%Error{error: %Error.Format{expected: "always_error"}, path: ""}]
+      false
     end
 
     def validate_format("zipcode", data) do
-      case Regex.match?(~r/^\d+$/, data) do
-        true ->
-          []
-
-        false ->
-          [%Error{error: %Error.Format{expected: "zipcode"}, path: ""}]
-      end
+      Regex.match?(~r/^\d+$/, data)
     end
   end
 

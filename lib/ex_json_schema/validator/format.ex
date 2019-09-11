@@ -35,7 +35,10 @@ defmodule ExJsonSchema.Validator.Format do
         []
 
       {:ok, {mod, fun}} ->
-        apply(mod, fun, [format, data])
+        case apply(mod, fun, [format, data]) do
+          true -> []
+          false -> [%Error{error: %Error.Format{expected: format}, path: ""}]
+        end
     end
   end
 end
