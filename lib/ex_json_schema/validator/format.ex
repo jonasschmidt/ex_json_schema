@@ -29,7 +29,16 @@ defmodule ExJsonSchema.Validator.Format do
     end
   end
 
-  defp do_validate(_, _) do
-    []
+  defp do_validate(format, data) do
+    case Application.fetch_env(:ex_json_schema, :custom_format_validator) do
+      :error ->
+        []
+
+      {:ok, {mod, fun}} ->
+        case apply(mod, fun, [format, data]) do
+          true -> []
+          false -> [%Error{error: %Error.Format{expected: format}, path: ""}]
+        end
+    end
   end
 end

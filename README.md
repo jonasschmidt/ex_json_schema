@@ -142,6 +142,21 @@ true
 
 The validator supports all the formats specified by draft 4 (`date-time`, `email`, `hostname`, `ipv4`, `ipv6`), with the exception of the `uri` format which has confusing/broken requirements in the official test suite (see https://github.com/json-schema/JSON-Schema-Test-Suite/issues/77).
 
+### Custom formats
+
+The [JSON schema spec][format-spec] states that the `format` property "allows values to be constrained beyond what the other tools in JSON Schema can do". To support this, you can configure a callback validator function which gets called when a `format` property is encountered that is not one of the builtin formats:
+
+```elixir
+config :ex_json_schema,
+  :custom_format_validator,
+  {MyModule, :my_validator}
+```
+
+The configured function is called with the arguments `(format, data)` and is expected to return either `true` or `false`, depending whether the data is valid for the given format. For compatibility with JSON schema, it is expected to return `true` when the format is unknown by your callback function.
+
+[format-spec]: https://json-schema.org/understanding-json-schema/reference/string.html#format
+
+
 ## License
 
 Released under the [MIT license](LICENSE).
