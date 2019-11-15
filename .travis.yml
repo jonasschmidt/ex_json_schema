@@ -31,14 +31,14 @@ matrix:
   include:
     - elixir: 1.9
       otp_release: 22.0
-      env: DIALZYER_TASK="dialyzer --halt-exit-status,"
+      env: DIALZYER_TASK=", dialyzer --halt-exit-status"
 env:
   global:
     - MIX_ENV=test
 before_install:
   - git submodule update --init --recursive
 script:
-  - "mix do deps.get, deps.compile, compile --warnings-as-errors, $DIALZYER_TASK coveralls.travis"
+  - "mix do deps.get, deps.compile, compile --warnings-as-errors $DIALZYER_TASK && mix coveralls.travis"
 notifications:
   email:
     - jonas.schmidt@gmx.com
