@@ -307,8 +307,8 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
-  defp validate_aspect(_, _, {"format", format}, data) do
-    Format.validate(format, data)
+  defp validate_aspect(root, _, {"format", format}, data) do
+    Format.validate(root, format, data)
   end
 
   defp validate_aspect(_, _, _, _), do: []

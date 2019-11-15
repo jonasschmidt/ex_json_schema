@@ -527,40 +527,41 @@ defmodule ExJsonSchema.ValidatorTest do
   end
 
   defmodule MyFormatValidator do
-    def validate_format("always_error", _data) do
+    def validate("always_error", _data) do
       false
     end
 
-    def validate_format("zipcode", data) do
+    def validate("zipcode", data) do
       Regex.match?(~r/^\d+$/, data)
     end
   end
 
-  test "configuring a custom formatter" do
-    Application.put_env(
-      :ex_json_schema,
-      :custom_format_validator,
-      {MyFormatValidator, :validate_format}
-    )
-
-    on_exit(fn ->
-      Application.delete_env(:ex_json_schema, :custom_format_validator)
-    end)
+  test "configuring a custom format validator" do
+    schema =
+      Schema.resolve(
+        %{
+          "properties" => %{
+            "error" => %{"format" => "always_error"},
+            "zip" => %{"format" => "zipcode"}
+          }
+        },
+        custom_format_validator: {MyFormatValidator, :validate}
+      )
 
     assert_validation_errors(
-      %{"format" => "always_error"},
-      "",
-      [{"Expected to be a valid always_error.", "#"}],
-      [%Error{error: %Error.Format{expected: "always_error"}, path: "#"}]
+      schema,
+      %{"error" => ""},
+      [{"Expected to be a valid always_error.", "#/error"}],
+      [%Error{error: %Error.Format{expected: "always_error"}, path: "#/error"}]
     )
 
     assert :ok == validate(%{"format" => "zipcode"}, "12345")
 
     assert_validation_errors(
-      %{"format" => "zipcode"},
-      "asdf",
-      [{"Expected to be a valid zipcode.", "#"}],
-      [%Error{error: %Error.Format{expected: "zipcode"}, path: "#"}]
+      schema,
+      %{"zip" => "asdf"},
+      [{"Expected to be a valid zipcode.", "#/zip"}],
+      [%Error{error: %Error.Format{expected: "zipcode"}, path: "#/zip"}]
     )
   end
 
@@ -577,7 +578,7 @@ defmodule ExJsonSchema.ValidatorTest do
   end
 
   defp assert_validation_errors(schema, data, expected_errors, expected_error_structs) do
-    {:error, errors} = validate(schema, data, error_formatter: false)
+    assert {:error, errors} = validate(schema, data, error_formatter: false)
     assert errors == expected_error_structs
     assert Error.StringFormatter.format(errors) == expected_errors
   end

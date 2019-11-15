@@ -29,10 +29,16 @@ defmodule ExJsonSchema.Schema do
   @current_draft_schema_url "http://json-schema.org/schema"
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
 
-  @spec resolve(Root.t() | ExJsonSchema.object()) :: Root.t() | no_return
-  def resolve(root = %Root{}), do: resolve_root(root)
+  @spec resolve(Root.t() | ExJsonSchema.object(), custom_format_validator: {module(), atom()}) ::
+          Root.t() | no_return
+  def resolve(schema, options \\ [])
 
-  def resolve(schema = %{}), do: resolve_root(%Root{schema: schema})
+  def resolve(root = %Root{}, options) do
+    root = %Root{root | custom_format_validator: Keyword.get(options, :custom_format_validator)}
+    resolve_root(root)
+  end
+
+  def resolve(schema = %{}, options), do: resolve(%Root{schema: schema}, options)
 
   @spec get_fragment(Root.t(), ref_path | ExJsonSchema.json_path()) ::
           {:ok, resolved} | invalid_reference_error | no_return
