@@ -35,11 +35,18 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
       "validation of URIs" => true
     },
     "optional/ecmascript-regex" => %{
-      "ECMA 262 regex non-compliance" => true
+      "ECMA 262 regex non-compliance" => true,
+      "ECMA 262 \\w matches everything but ascii letters" => true,
+      "ECMA 262 \\S matches everything but ascii whitespace" => true,
+      "ECMA 262 regex $ does not match trailing newline" => true,
+      "ECMA 262 \\D matches everything but ascii digits" => true
     },
     "ref" => %{
       "ref overrides any sibling keywords" => ["ref valid, maxItems ignored"],
-      "Recursive references between schemas" => ["valid tree", "invalid tree"]
+      "Recursive references between schemas" => ["valid tree", "invalid tree"],
+      "Location-independent identifier" => true,
+      "Location-independent identifier with base URI change in subschema" => true,
+      "Location-independent identifier with absolute URI" => true
     }
   }
 
@@ -63,8 +70,11 @@ defmodule ExJsonSchema.JsonSchemaTestSuiteTest do
               ignored_tests ->
                 unless ignored_tests && Enum.member?(ignored_tests, @test["description"]) do
                   test "[#{feature}] #{description}: #{@test["description"]}" do
-                    assert valid?(ExJsonSchema.Schema.resolve(@schema), @test["data"]) ==
-                             @test["valid"]
+                    if @test["valid"] do
+                      assert valid?(ExJsonSchema.Schema.resolve(@schema), @test["data"])
+                    else
+                      refute valid?(ExJsonSchema.Schema.resolve(@schema), @test["data"])
+                    end
                   end
                 end
             end
