@@ -19,23 +19,30 @@ defmodule ExJsonSchema.Validator.Maximum do
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
         ) :: Validator.errors()
+  def validate(%Root{version: 4}, schema, {"maximum", maximum}, data) do
+    exclusive = Map.get(schema, "exclusiveMaximum", false)
+    do_validate(maximum, exclusive, data)
+  end
+
   def validate(_, _, {"maximum", maximum}, data) do
-    do_validate(maximum, data)
+    do_validate(maximum, false, data)
   end
 
   def validate(_, _, _, _) do
     []
   end
 
-  defp do_validate(maximum, data) when is_number(data) do
-    if data <= maximum do
+  defp do_validate(maximum, exclusive, data) when is_number(data) do
+    valid = if exclusive, do: data < maximum, else: data <= maximum
+
+    if valid do
       []
     else
-      [%Error{error: %Error.Maximum{expected: maximum, exclusive?: false}, path: ""}]
+      [%Error{error: %Error.Maximum{expected: maximum, exclusive?: exclusive}, path: ""}]
     end
   end
 
-  defp do_validate(_, _) do
+  defp do_validate(_, _, _) do
     []
   end
 end
