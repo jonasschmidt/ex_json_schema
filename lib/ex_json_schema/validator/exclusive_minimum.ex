@@ -21,13 +21,8 @@ defmodule ExJsonSchema.Validator.ExclusiveMinimum do
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
         ) :: Validator.errors()
-  def validate(%{version: 4}, schema, {"exclusiveMinimum", true}, data) do
-    schema
-    |> Map.get("minimum")
-    |> do_validate(data)
-  end
-
-  def validate(_, _, {"exclusiveMinimum", minimum}, data) do
+  def validate(%Root{version: version}, _, {"exclusiveMinimum", minimum}, data)
+      when version > 4 do
     do_validate(minimum, data)
   end
 
