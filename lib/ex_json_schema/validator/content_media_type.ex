@@ -8,6 +8,7 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -17,7 +18,7 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(%{version: version}, schema, {"contentMediaType", content_media_type}, data)
       when version >= 7 do
     do_validate(schema, content_media_type, data)
@@ -33,7 +34,7 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
       []
     else
       _ ->
-        [{"Invalid base64 encoded JSON string.", []}]
+        [%Error{error: %{message: "Invalid base64 encoded JSON string."}, path: ""}]
     end
   end
 
@@ -43,7 +44,7 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
         []
 
       {:error, _} ->
-        [{"Invalid JSON string.", []}]
+        [%Error{error: %{message: "Invalid JSON string."}, path: ""}]
     end
   end
 

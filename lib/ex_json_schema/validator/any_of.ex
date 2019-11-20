@@ -10,6 +10,7 @@ defmodule ExJsonSchema.Validator.AnyOf do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -19,7 +20,7 @@ defmodule ExJsonSchema.Validator.AnyOf do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(root, _, {"anyOf", any_of}, data) do
     do_validate(root, any_of, data)
   end
@@ -29,10 +30,21 @@ defmodule ExJsonSchema.Validator.AnyOf do
   end
 
   defp do_validate(root, any_of, data) when is_list(any_of) do
-    if Enum.any?(any_of, &Validator.valid?(root, &1, data)) do
-      []
-    else
-      [{"Expected any of the schemata to match but none did.", []}]
+    invalid =
+      any_of
+      |> Enum.reduce_while([], fn schema, acc ->
+        case Validator.validation_errors(root, schema, data) do
+          [] -> {:halt, []}
+          errors -> {:cont, [errors | acc]}
+        end
+      end)
+      |> Enum.reverse()
+      |> Enum.with_index()
+      |> Validator.map_to_invalid_errors()
+
+    case Enum.empty?(invalid) do
+      true -> []
+      false -> [%Error{error: %Error.AnyOf{invalid: invalid}, path: ""}]
     end
   end
 

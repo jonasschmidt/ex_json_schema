@@ -8,6 +8,7 @@ defmodule ExJsonSchema.Validator.Minimum do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -17,7 +18,7 @@ defmodule ExJsonSchema.Validator.Minimum do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(_, _, {"minimum", minimum}, data) do
     do_validate(minimum, data)
   end
@@ -30,7 +31,7 @@ defmodule ExJsonSchema.Validator.Minimum do
     if data >= minimum do
       []
     else
-      [{"Expected the value to be >= #{minimum}", []}]
+      [%Error{error: %Error.Minimum{expected: minimum, exclusive?: false}, path: ""}]
     end
   end
 

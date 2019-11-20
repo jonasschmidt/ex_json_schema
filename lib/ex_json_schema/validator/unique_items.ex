@@ -10,6 +10,7 @@ defmodule ExJsonSchema.Validator.UniqueItems do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -19,7 +20,7 @@ defmodule ExJsonSchema.Validator.UniqueItems do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(_, _, {"uniqueItems", unique_items}, data) do
     do_validate(unique_items, data)
   end
@@ -38,7 +39,7 @@ defmodule ExJsonSchema.Validator.UniqueItems do
     if unique? do
       []
     else
-      [{"Expected items to be unique but they were not.", []}]
+      [%Error{error: %Error.UniqueItems{}, path: ""}]
     end
   end
 

@@ -10,6 +10,7 @@ defmodule ExJsonSchema.Validator.AllOf do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -19,7 +20,7 @@ defmodule ExJsonSchema.Validator.AllOf do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(root, _, {"allOf", all_of}, data) do
     do_validate(root, all_of, data)
   end
@@ -29,21 +30,16 @@ defmodule ExJsonSchema.Validator.AllOf do
   end
 
   defp do_validate(root, all_of, data) do
-    invalid_indexes =
+    invalid =
       all_of
-      |> Enum.map(&Validator.valid?(root, &1, data))
-      |> Enum.reject(& &1)
+      |> Enum.map(&Validator.validation_errors(root, &1, data))
       |> Enum.with_index()
-      |> Enum.map(fn {_k, v} -> v end)
+      |> Enum.filter(fn {errors, _index} -> !Enum.empty?(errors) end)
+      |> Validator.map_to_invalid_errors()
 
-    if Enum.empty?(invalid_indexes) do
-      []
-    else
-      [
-        {"Expected all of the schemata to match, " <>
-           "but the schemata at the following indexes did not: " <>
-           "#{Enum.join(invalid_indexes, ", ")}.", []}
-      ]
+    case Enum.empty?(invalid) do
+      true -> []
+      false -> [%Error{error: %Error.AllOf{invalid: invalid}, path: ""}]
     end
   end
 end

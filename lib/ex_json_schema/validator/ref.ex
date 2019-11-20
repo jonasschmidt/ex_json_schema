@@ -9,6 +9,7 @@ defmodule ExJsonSchema.Validator.Ref do
   alias ExJsonSchema.Schema
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -18,7 +19,7 @@ defmodule ExJsonSchema.Validator.Ref do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(root, _, {"$ref", ref}, data) do
     do_validate(root, ref, data)
   end
@@ -32,19 +33,19 @@ defmodule ExJsonSchema.Validator.Ref do
   end
 
   defp do_validate(_, false, _) do
-    [{"$ref to false is always invalid.", []}]
+    [%Error{error: %{message: "$ref to false is always invalid."}, path: ""}]
   end
 
   defp do_validate(root, path, data) when is_bitstring(path) or is_list(path) do
-    schema = Schema.get_ref_schema(root, path)
-    Validator.validate(root, schema, data)
+    schema = Schema.get_fragment!(root, path)
+    Validator.validation_errors(root, schema, data, "")
   end
 
   defp do_validate(root, ref, data) when is_map(ref) do
-    Validator.validate(root, ref, data)
+    Validator.validation_errors(root, ref, data, "")
   end
 
   defp do_validate(_, _, _) do
-    [{"$ref is invalid.", []}]
+    [%Error{error: %{message: "$ref is invalid."}, path: ""}]
   end
 end

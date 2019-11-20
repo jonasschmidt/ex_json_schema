@@ -10,6 +10,7 @@ defmodule ExJsonSchema.Validator.ExclusiveMaximum do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -19,7 +20,7 @@ defmodule ExJsonSchema.Validator.ExclusiveMaximum do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(%{version: 4}, schema, {"exclusiveMaximum", true}, data) do
     schema
     |> Map.get("maximum")
@@ -38,7 +39,7 @@ defmodule ExJsonSchema.Validator.ExclusiveMaximum do
     if data < maximum do
       []
     else
-      [{"Expected the value to be < #{maximum}", []}]
+      [%Error{error: %Error.Maximum{expected: maximum, exclusive?: true}, path: ""}]
     end
   end
 

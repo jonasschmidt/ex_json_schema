@@ -19,12 +19,8 @@ defmodule ExJsonSchema.Validator.Items do
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
         ) :: Validator.errors() | no_return
-  def validate(root, schema, {"additionalItems", _}, data) do
-    do_validate(root, schema, data)
-  end
-
   def validate(root, schema, {"items", _}, data) do
-    do_validate(root, Map.put_new(schema, "additionalItems", true), data)
+    do_validate(root, schema, data)
   end
 
   def validate(_, _, _, _) do
@@ -40,106 +36,52 @@ defmodule ExJsonSchema.Validator.Items do
   end
 
   defp do_validate(_, %{"items" => false}, _) do
-    [{"Schema does not allow items.", []}]
-  end
-
-  defp do_validate(root, %{"items" => schemata, "additionalItems" => false}, items)
-       when is_list(items) and is_list(schemata) do
-    cond do
-      Enum.count(schemata) < Enum.count(items) ->
-        Enum.map(items, fn _ ->
-          {"Schema does not allow additional items", []}
-        end)
-
-      Enum.empty?(additional_items(root, schemata, items)) ->
-        []
-
-      true ->
-        [{"Expected items to match schema but they didn't.", []}]
-    end
-  end
-
-  defp do_validate(root, %{"items" => schema = %{}, "additionalItems" => false}, items)
-       when is_list(items) do
-    additional_items =
-      items
-      |> Enum.with_index()
-      |> Enum.reject(fn {item, index} ->
-        root
-        |> validate_item(schema, item, index)
-        |> Enum.empty?()
-      end)
-
-    if Enum.empty?(additional_items) do
-      []
-    else
-      [{"Expected no additional items but had #{inspect(additional_items)}", []}]
-    end
-  end
-
-  def validate(root, %{"items" => schemata, "additionalItems" => additional_items}, items) when is_list(items) and is_list(schemata) do
-    items
-    |> Enum.with_index
-    |> Enum.flat_map(fn {item, index} ->
-      schema = Enum.at(schemata, index, additional_items_schema(additional_items))
-      validate_item(root, schema, item, index)
-    end)
+    [%Error{error: %{message: "Schema does not allow items."}, path: ""}]
   end
 
   defp do_validate(root, %{"items" => schema = %{}}, items) when is_list(items) do
     items
     |> Enum.with_index()
     |> Enum.flat_map(fn {item, index} ->
-      validate_item(root, schema, item, index)
+      Validator.validation_errors(root, schema, item, "/#{index}")
     end)
   end
 
-  defp do_validate(root, %{"items" => schema}, items) when is_list(items) and is_list(schema) do
-    items
-    |> Enum.with_index()
-    |> Enum.flat_map(fn {item, index} ->
-      validate_item(root, schema, item, index)
-    end)
+  defp do_validate(root, %{"items" => schemata, "additionalItems" => additional_items}, items)
+       when is_list(items) and is_list(schemata) do
+    validate_items(root, {schemata, additional_items}, items, {[], 0})
+    |> Enum.reverse()
+    |> List.flatten()
   end
 
-  defp do_validate(_, %{"items" => _}, _) do
-    []
+  defp validate_items(_root, {_schemata, _additional_items}, [], {errors, _index}), do: errors
+  defp validate_items(_root, {[], true}, _items, {errors, _index}), do: errors
+
+  defp validate_items(_root, {[], false}, items, {errors, index}) do
+    [
+      %Error{
+        error: %Error.AdditionalItems{additional_indices: index..(index + Enum.count(items) - 1)},
+        path: ""
+      }
+      | errors
+    ]
   end
 
-  defp do_validate(_, _, _), do: []
+  defp validate_items(root, {[], additional_items_schema}, [item | items], {errors, index}) do
+    acc =
+      {[Validator.validation_errors(root, additional_items_schema, item, "/#{index}") | errors],
+       index + 1}
 
-  defp validate_item(_, nil, _, _) do
-    [{"Schema does not allow additional items.", []}]
+    validate_items(root, {[], additional_items_schema}, items, acc)
   end
 
-  defp validate_item(_, true, _, _) do
-    []
-  end
-
-  defp validate_item(_, false, _, index) do
-    [{"Schema does not allow this value.", [index]}]
-  end
-
-  defp validate_item(root, schema, item, index) do
-    Validator.validate(root, schema, item, [index])
-  end
-
-  defp valid_item?(root, schema, item, index) do
-    root
-    |> validate_item(schema, item, index)
-    |> Enum.empty?()
-  end
-
-  defp additional_items_schema(schema = %{}), do: schema
-  defp additional_items_schema(true), do: %{}
-  defp additional_items_schema(_), do: nil
-
-  defp additional_items(root, schemata, items) do
-    items
-    |> Enum.with_index()
-    |> Enum.reject(fn {item, index} ->
-      schema = Enum.at(schemata, index)
-      schema == true || valid_item?(root, schema, item, index)
-    end)
+  defp validate_items(
+         root,
+         {[schema | schemata], additional_items},
+         [item | items],
+         {errors, index}
+       ) do
+    acc = {[Validator.validation_errors(root, schema, item, "/#{index}") | errors], index + 1}
+    validate_items(root, {schemata, additional_items}, items, acc)
   end
 end

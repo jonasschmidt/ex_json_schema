@@ -12,7 +12,8 @@ defmodule ExJsonSchema.Schema do
   end
 
   defmodule UndefinedRemoteSchemaResolverError do
-    defexception message: "trying to resolve a remote schema but no remote schema resolver function is defined"
+    defexception message:
+                   "trying to resolve a remote schema but no remote schema resolver function is defined"
   end
 
   defmodule InvalidReferenceError do
@@ -67,7 +68,9 @@ defmodule ExJsonSchema.Schema do
     decoder.(json)
   end
 
-  @spec resolve(boolean | Root.t() | ExJsonSchema.object(), custom_format_validator: {module(), atom()}) ::
+  @spec resolve(boolean | Root.t() | ExJsonSchema.object(),
+          custom_format_validator: {module(), atom()}
+        ) ::
           Root.t() | no_return
   def resolve(schema, options \\ [])
 
@@ -183,7 +186,7 @@ defmodule ExJsonSchema.Schema do
   defp schema_version(@current_draft_schema_url <> _), do: {:ok, 7}
   defp schema_version(_), do: :error
 
-  @spec assert_valid_schema(map) :: :ok | {:error, Validator.errors_with_list_paths()}
+  @spec assert_valid_schema(map) :: :ok | {:error, Validator.errors()}
   defp assert_valid_schema(schema) do
     with false <- meta04?(schema),
          false <- meta06?(schema),
@@ -195,7 +198,7 @@ defmodule ExJsonSchema.Schema do
 
       schema_module.schema()
       |> resolve()
-      |> ExJsonSchema.Validator.validate(schema)
+      |> ExJsonSchema.Validator.validate(schema, error_formatter: false)
     else
       _ ->
         :ok
@@ -318,11 +321,14 @@ defmodule ExJsonSchema.Schema do
 
   defp relative_ref_path(ref) do
     ["" | keys] = unescaped_ref_segments(ref)
-    Enum.map keys, fn key ->
+
+    Enum.map(keys, fn key ->
       case key =~ ~r/^\d+$/ do
         true ->
           String.to_integer(key)
-        false -> key
+
+        false ->
+          key
       end
     end)
   end
@@ -386,9 +392,9 @@ defmodule ExJsonSchema.Schema do
       not Map.has_key?(schema, "additionalItems")
   end
 
-  defp assert_reference_valid(path, root, _ref) do
-    get_ref_schema(root, path)
-  end
+  # defp assert_reference_valid(path, root, _ref) do
+  #   get_ref_schema(root, path)
+  # end
 
   defp unescaped_ref_segments(ref) do
     ref

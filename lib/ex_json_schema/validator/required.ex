@@ -10,6 +10,7 @@ defmodule ExJsonSchema.Validator.Required do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -19,7 +20,7 @@ defmodule ExJsonSchema.Validator.Required do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(_, _, {"required", required}, data) do
     do_validate(required, data)
   end
@@ -29,15 +30,10 @@ defmodule ExJsonSchema.Validator.Required do
   end
 
   defp do_validate(required, data = %{}) do
-    required
-    |> List.wrap()
-    |> Enum.flat_map(fn property ->
-      if Map.has_key?(data, property) do
-        []
-      else
-        [{"Required property #{property} was not present.", []}]
-      end
-    end)
+    case Enum.filter(List.wrap(required), &(!Map.has_key?(data, &1))) do
+      [] -> []
+      missing -> [%Error{error: %Error.Required{missing: missing}, path: ""}]
+    end
   end
 
   defp do_validate(_, _) do

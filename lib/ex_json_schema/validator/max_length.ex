@@ -8,6 +8,7 @@ defmodule ExJsonSchema.Validator.MaxLength do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -17,7 +18,7 @@ defmodule ExJsonSchema.Validator.MaxLength do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(_, _, {"maxLength", max_length}, data) do
     do_validate(max_length, data)
   end
@@ -32,7 +33,7 @@ defmodule ExJsonSchema.Validator.MaxLength do
     if length <= max_length do
       []
     else
-      [{"Expected value to have a maximum length of #{max_length} but was #{length}.", []}]
+      [%Error{error: %Error.MaxLength{expected: max_length, actual: length}, path: ""}]
     end
   end
 

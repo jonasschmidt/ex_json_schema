@@ -8,6 +8,7 @@ defmodule ExJsonSchema.Validator.OneOf do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -17,7 +18,7 @@ defmodule ExJsonSchema.Validator.OneOf do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(root, _, {"oneOf", one_of}, data) do
     do_validate(root, one_of, data)
   end
@@ -27,25 +28,37 @@ defmodule ExJsonSchema.Validator.OneOf do
   end
 
   defp do_validate(root, one_of, data) do
-    valid_indexes =
+    {valid_count, valid_indices, errors} =
       one_of
-      |> Enum.map(&Validator.valid?(root, &1, data))
-      |> Enum.filter(& &1)
       |> Enum.with_index()
-      |> Enum.map(fn {_k, v} -> v end)
+      |> Enum.reduce({0, [], []}, fn {schema, index}, {valid_count, valid_indices, errors} ->
+        case Validator.validation_errors(root, schema, data) do
+          [] -> {valid_count + 1, [index | valid_indices], errors}
+          e -> {valid_count, valid_indices, [{e, index} | errors]}
+        end
+      end)
 
-    cond do
-      Enum.empty?(valid_indexes) ->
-        [{"Expected exactly one of the schemata to match, but none of them did.", []}]
-
-      Enum.count(valid_indexes) == 1 ->
+    case valid_count do
+      1 ->
         []
 
-      true ->
+      0 ->
         [
-          {"Expected exactly one of the schemata to match, " <>
-             "but the schemata at the following indexes did: " <>
-             "#{Enum.join(valid_indexes, ", ")}.", []}
+          %Error{
+            error: %Error.OneOf{
+              valid_indices: [],
+              invalid: errors |> Enum.reverse() |> Validator.map_to_invalid_errors()
+            },
+            path: ""
+          }
+        ]
+
+      _ ->
+        [
+          %Error{
+            error: %Error.OneOf{valid_indices: Enum.reverse(valid_indices), invalid: []},
+            path: ""
+          }
         ]
     end
   end

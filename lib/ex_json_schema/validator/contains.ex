@@ -9,6 +9,7 @@ defmodule ExJsonSchema.Validator.Contains do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -18,7 +19,7 @@ defmodule ExJsonSchema.Validator.Contains do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(root = %{version: version}, _, {"contains", contains}, data) when version >= 6 do
     do_validate(root, contains, data)
   end
@@ -32,7 +33,7 @@ defmodule ExJsonSchema.Validator.Contains do
   end
 
   defp do_validate(_, false, [_ | _]) do
-    [{"Expected a nonempty array in data", []}]
+    [%Error{error: %{message: "Expected a nonempty array in data"}, path: ""}]
   end
 
   defp do_validate(_, _, %{}) do
@@ -40,14 +41,19 @@ defmodule ExJsonSchema.Validator.Contains do
   end
 
   defp do_validate(_, _, data) when not is_list(data) do
-    [{"Expected #{inspect(data)} to be a list.", []}]
+    [%Error{error: %{message: "Expected #{inspect(data)} to be a list."}, path: ""}]
   end
 
   defp do_validate(root, contains, data) do
-    if Enum.any?(data, &Validator.valid?(root, contains, &1)) do
+    if Enum.any?(data, &Validator.valid_fragment?(root, contains, &1)) do
       []
     else
-      [{"Expected #{inspect(data)} to be in #{inspect(contains)}.", []}]
+      [
+        %Error{
+          error: %{message: "Expected #{inspect(data)} to be in #{inspect(contains)}."},
+          path: ""
+        }
+      ]
     end
   end
 end
