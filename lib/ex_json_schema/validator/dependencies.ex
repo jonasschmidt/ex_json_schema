@@ -42,25 +42,24 @@ defmodule ExJsonSchema.Validator.Dependencies do
 
   defp validate_dependency(_, property, false, data) do
     if Map.has_key?(data, property) do
-      [{"Expected data not to have property #{property} but it did.", []}]
+      # "Expected data not to have property #{property} but it did."
+      [%Error{error: %Error.Dependencies{property: property, missing: nil}, path: ""}]
     else
       []
     end
   end
 
   defp validate_dependency(root, _, schema = %{}, data) do
-    Validator.validate(root, schema, data)
+    Validator.validation_errors(root, schema, data, "")
   end
 
   defp validate_dependency(_, property, dependencies, data) do
-    Enum.flat_map(List.wrap(dependencies), fn dependency ->
-      case Map.has_key?(data, dependency) do
-        true ->
-          []
+    case Enum.filter(List.wrap(dependencies), &(!Map.has_key?(data, &1))) do
+      [] ->
+        []
 
-        false ->
-          [%Error{error: %Error.Dependencies{property: property, missing: missing}, path: ""}]
-      end
-    end)
+      missing ->
+        [%Error{error: %Error.Dependencies{property: property, missing: missing}, path: ""}]
+    end
   end
 end

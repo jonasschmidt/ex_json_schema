@@ -10,6 +10,7 @@ defmodule ExJsonSchema.Validator.Enum do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -19,7 +20,7 @@ defmodule ExJsonSchema.Validator.Enum do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(_, _, {"enum", enum}, data) do
     do_validate(enum, data)
   end
@@ -29,10 +30,9 @@ defmodule ExJsonSchema.Validator.Enum do
   end
 
   defp do_validate(enum, data) when is_list(enum) do
-    if data in enum do
-      []
-    else
-      [{"Value #{inspect(data)} is not allowed in enum.", []}]
+    case Enum.any?(enum, &(&1 == data)) do
+      true -> []
+      false -> [%Error{error: %Error.Enum{}, path: ""}]
     end
   end
 

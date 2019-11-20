@@ -9,6 +9,7 @@ defmodule ExJsonSchema.Validator.Const do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -18,7 +19,7 @@ defmodule ExJsonSchema.Validator.Const do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(%{version: version}, _, {"const", const}, data) when version >= 6 do
     do_validate(const, data)
   end
@@ -31,7 +32,12 @@ defmodule ExJsonSchema.Validator.Const do
     if const == data do
       []
     else
-      [{"Expected data to be #{inspect(const)} but got #{inspect(data)}", []}]
+      [
+        %Error{
+          error: %{message: "Expected data to be #{inspect(const)} but got #{inspect(data)}"},
+          path: ""
+        }
+      ]
     end
   end
 end

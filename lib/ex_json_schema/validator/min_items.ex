@@ -8,6 +8,7 @@ defmodule ExJsonSchema.Validator.MinItems do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
@@ -17,7 +18,7 @@ defmodule ExJsonSchema.Validator.MinItems do
           schema :: ExJsonSchema.data(),
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   def validate(_, _, {"minItems", min_items}, data) do
     do_validate(min_items, data)
   end
@@ -32,7 +33,7 @@ defmodule ExJsonSchema.Validator.MinItems do
     if count >= min_items do
       []
     else
-      [{"Expected a minimum of #{min_items} items but got #{count}.", []}]
+      [%Error{error: %Error.MinItems{expected: min_items, actual: count}, path: ""}]
     end
   end
 

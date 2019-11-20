@@ -12,7 +12,7 @@ HTTPoison.start()
 {:ok, _} =
   :inets.start(:httpd,
     server_name: 'test 2',
-    document_root: './test/schemata',
+    document_root: './test/support/schemata',
     server_root: '.',
     port: 8000
   )

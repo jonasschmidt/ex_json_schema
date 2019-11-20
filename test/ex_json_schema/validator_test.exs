@@ -395,7 +395,7 @@ defmodule ExJsonSchema.ValidatorTest do
       %{
         "properties" => %{
           "foo" => %{"minimum" => 2},
-          "bar" => %{"minimum" => 2, "exclusiveMinimum" => true}
+          "bar" => %{"exclusiveMinimum" => 2}
         }
       },
       %{"foo" => 1, "bar" => 2},
@@ -412,7 +412,7 @@ defmodule ExJsonSchema.ValidatorTest do
       %{
         "properties" => %{
           "foo" => %{"maximum" => 2},
-          "bar" => %{"maximum" => 2, "exclusiveMaximum" => true}
+          "bar" => %{"exclusiveMaximum" => 2}
         }
       },
       %{"foo" => 3, "bar" => 2},

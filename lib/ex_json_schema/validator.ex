@@ -1,10 +1,5 @@
 defmodule ExJsonSchema.Validator do
-  alias ExJsonSchema.Validator.Dependencies
   alias ExJsonSchema.Validator.Error
-  alias ExJsonSchema.Validator.Format
-  alias ExJsonSchema.Validator.Items
-  alias ExJsonSchema.Validator.Properties
-  alias ExJsonSchema.Validator.Type
   alias ExJsonSchema.Schema
   alias ExJsonSchema.Schema.Root
 
@@ -16,7 +11,7 @@ defmodule ExJsonSchema.Validator do
               ExJsonSchema.data(),
               {String.t(), ExJsonSchema.data()},
               ExJsonSchema.data()
-            ) :: errors_with_list_paths
+            ) :: errors
 
   @validators [
     ExJsonSchema.Validator.AllOf,
@@ -126,9 +121,18 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
+  def map_to_invalid_errors(errors_with_index) do
+    errors_with_index
+    |> Enum.map(fn {errors, index} ->
+      %Error.InvalidAtIndex{errors: errors, index: index}
+    end)
+  end
+
   defp format_errors(:ok, _error_formatter), do: :ok
 
   defp format_errors({:error, errors}, error_formatter) when is_list(errors) do
     {:error, error_formatter.format(errors)}
   end
+
+  defp format_errors({:error, _} = error, _error_formatter), do: error
 end

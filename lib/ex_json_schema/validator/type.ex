@@ -33,23 +33,15 @@ defmodule ExJsonSchema.Validator.Type do
           version :: non_neg_integer,
           type :: ExJsonSchema.data(),
           data :: ExJsonSchema.data()
-        ) :: Validator.errors_with_list_paths()
+        ) :: Validator.errors()
   defp do_validate(version, type, data) do
     if valid?(version, type, data) do
       []
     else
-      type_name = type_name(type)
-
-      data_type_name =
-        data
-        |> data_type()
-        |> type_name()
-
-      [%Error.Type{expected: List.wrap(type), actual: data_type_name}, path: ""]
+      [%Error{error: %Error.Type{expected: List.wrap(type), actual: data_type(data)}, path: ""}]
     end
   end
 
-  @spec valid?(non_neg_integer, String.t() | [String.t()], ExJsonSchema.data()) :: boolean
   defp valid?(_, "number", data), do: is_number(data)
   defp valid?(_, "array", data), do: is_list(data)
   defp valid?(_, "object", data), do: is_map(data)
@@ -67,7 +59,6 @@ defmodule ExJsonSchema.Validator.Type do
     Enum.any?(type, &valid?(version, &1, data))
   end
 
-  @spec data_type(ExJsonSchema.data()) :: String.t()
   defp data_type(nil), do: "null"
   defp data_type(data) when is_binary(data), do: "string"
   defp data_type(data) when is_boolean(data), do: "boolean"
@@ -75,11 +66,5 @@ defmodule ExJsonSchema.Validator.Type do
   defp data_type(data) when is_list(data), do: "array"
   defp data_type(data) when is_map(data), do: "object"
   defp data_type(data) when is_number(data), do: "number"
-
-  @spec type_name(String.t()) :: String.t()
-  defp type_name(type) do
-    type
-    |> List.wrap()
-    |> Enum.map_join(", ", &String.capitalize/1)
-  end
+  defp data_type(_), do: "unknown"
 end
