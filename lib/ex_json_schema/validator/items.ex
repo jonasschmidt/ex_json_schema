@@ -19,8 +19,8 @@ defmodule ExJsonSchema.Validator.Items do
           property :: {String.t(), ExJsonSchema.data()},
           data :: ExJsonSchema.data()
         ) :: Validator.errors() | no_return
-  def validate(root, schema, {"items", _}, data) do
-    do_validate(root, schema, data)
+  def validate(root, schema, {"items", _}, items) when is_list(items) do
+    do_validate(root, schema, items)
   end
 
   def validate(_, _, _, _) do
