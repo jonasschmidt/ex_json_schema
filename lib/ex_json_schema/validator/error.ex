@@ -65,6 +65,10 @@ defmodule ExJsonSchema.Validator.Error do
     defstruct([])
   end
 
+  defmodule Const do
+    defstruct([:expected, :actual])
+  end
+
   defmodule Minimum do
     defstruct([:expected, :exclusive?])
   end

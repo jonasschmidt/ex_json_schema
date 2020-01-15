@@ -251,6 +251,13 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
+  defp validate_aspect(_, _, {"const", const}, data) do
+    case const == data do
+      true -> []
+      false -> [%Error{error: %Error.Const{expected: const, actual: data}, path: ""}]
+    end
+  end
+
   defp validate_aspect(_, schema, {"minimum", minimum}, data) when is_number(data) do
     exclusive? = schema["exclusiveMinimum"] || false
     fun = if exclusive?, do: &Kernel.>/2, else: &Kernel.>=/2

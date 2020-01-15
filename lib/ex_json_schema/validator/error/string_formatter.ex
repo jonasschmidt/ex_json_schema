@@ -166,4 +166,10 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
     defp format_name("ipv6"), do: "IPv6 address"
     defp format_name(expected), do: expected
   end
+
+  defimpl String.Chars, for: Error.Const do
+    def to_string(%Error.Const{expected: expected, actual: actual}) do
+      "Expected string to be #{inspect(expected)} but was #{inspect(actual)}"
+    end
+  end
 end

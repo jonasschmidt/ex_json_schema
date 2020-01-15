@@ -390,6 +390,17 @@ defmodule ExJsonSchema.ValidatorTest do
     )
   end
 
+  test "validation errors for value not equal to const" do
+    value = %{"bar" => 1}
+
+    assert_validation_errors(
+      %{"const" => "foo"},
+      value,
+      [{~s/Expected string to be "foo" but was #{inspect(value)}/, "#"}],
+      [%Error{error: %Error.Const{actual: value, expected: "foo"}, path: "#"}]
+    )
+  end
+
   test "validation errors for minimum values" do
     assert_validation_errors(
       %{
