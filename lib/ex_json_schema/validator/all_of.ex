@@ -32,7 +32,11 @@ defmodule ExJsonSchema.Validator.AllOf do
   defp do_validate(root, all_of, data) do
     invalid =
       all_of
-      |> Enum.map(&Validator.validation_errors(root, &1, data))
+      |> Enum.map(fn
+        true -> []
+        false -> [%Error{error: %{message: "false never matches"}, path: ""}]
+        schema -> Validator.validation_errors(root, schema, data)
+      end)
       |> Enum.with_index()
       |> Enum.filter(fn {errors, _index} -> !Enum.empty?(errors) end)
       |> Validator.map_to_invalid_errors()

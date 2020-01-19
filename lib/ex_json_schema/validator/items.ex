@@ -77,6 +77,25 @@ defmodule ExJsonSchema.Validator.Items do
 
   defp validate_items(
          root,
+         {[true | schemata], additional_items},
+         [_item | items],
+         {errors, index}
+       ) do
+    validate_items(root, {schemata, additional_items}, items, {[[] | errors], index + 1})
+  end
+
+  defp validate_items(
+         root,
+         {[false | schemata], additional_items},
+         [_item | items],
+         {errors, index}
+       ) do
+    error = %Error{error: %{message: "false never matches"}, path: ""}
+    validate_items(root, {schemata, additional_items}, items, {[[error] | errors], index + 1})
+  end
+
+  defp validate_items(
+         root,
          {[schema | schemata], additional_items},
          [item | items],
          {errors, index}
