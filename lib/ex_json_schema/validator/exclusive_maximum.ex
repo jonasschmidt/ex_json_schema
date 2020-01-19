@@ -31,7 +31,7 @@ defmodule ExJsonSchema.Validator.ExclusiveMaximum do
   end
 
   defp do_validate(maximum, data) when is_number(data) do
-    if data > maximum do
+    if data < maximum do
       []
     else
       [%Error{error: %Error.Maximum{expected: maximum, exclusive?: true}, path: ""}]
