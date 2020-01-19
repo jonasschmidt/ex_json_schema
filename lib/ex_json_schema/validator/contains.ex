@@ -36,15 +36,7 @@ defmodule ExJsonSchema.Validator.Contains do
     [%Error{error: %{message: "Expected a nonempty array in data"}, path: ""}]
   end
 
-  defp do_validate(_, _, %{}) do
-    []
-  end
-
-  defp do_validate(_, _, data) when not is_list(data) do
-    [%Error{error: %{message: "Expected #{inspect(data)} to be a list."}, path: ""}]
-  end
-
-  defp do_validate(root, contains, data) do
+  defp do_validate(root, contains, data) when is_list(data) do
     if Enum.any?(data, &Validator.valid_fragment?(root, contains, &1)) do
       []
     else
@@ -55,5 +47,9 @@ defmodule ExJsonSchema.Validator.Contains do
         }
       ]
     end
+  end
+
+  defp do_validate(_, _, _) do
+    []
   end
 end
