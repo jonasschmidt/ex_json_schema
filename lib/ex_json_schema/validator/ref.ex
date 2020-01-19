@@ -37,8 +37,11 @@ defmodule ExJsonSchema.Validator.Ref do
   end
 
   defp do_validate(root, path, data) when is_bitstring(path) or is_list(path) do
-    schema = Schema.get_fragment!(root, path)
-    Validator.validation_errors(root, schema, data, "")
+    case Schema.get_fragment!(root, path) do
+      true -> []
+      false -> [%Error{error: %{message: "false never matches"}, path: ""}]
+      schema -> Validator.validation_errors(root, schema, data, "")
+    end
   end
 
   defp do_validate(root, ref, data) when is_map(ref) do

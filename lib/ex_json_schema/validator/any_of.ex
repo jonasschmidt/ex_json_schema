@@ -32,11 +32,18 @@ defmodule ExJsonSchema.Validator.AnyOf do
   defp do_validate(root, any_of, data) when is_list(any_of) do
     invalid =
       any_of
-      |> Enum.reduce_while([], fn schema, acc ->
-        case Validator.validation_errors(root, schema, data) do
-          [] -> {:halt, []}
-          errors -> {:cont, [errors | acc]}
-        end
+      |> Enum.reduce_while([], fn
+        true, _acc ->
+          {:halt, []}
+
+        false, acc ->
+          {:cont, [%Error{error: %{message: "false never matches"}, path: ""} | acc]}
+
+        schema, acc ->
+          case Validator.validation_errors(root, schema, data) do
+            [] -> {:halt, []}
+            errors -> {:cont, [errors | acc]}
+          end
       end)
       |> Enum.reverse()
       |> Enum.with_index()
