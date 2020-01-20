@@ -93,7 +93,15 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
+  def validation_errors(root = %Root{}, %{"$ref" => ref}, data, path) do
+    do_validation_errors(root, %{"$ref" => ref}, data, path)
+  end
+
   def validation_errors(root = %Root{}, schema = %{}, data, path) do
+    do_validation_errors(root, schema, data, path)
+  end
+
+  def do_validation_errors(root = %Root{}, schema = %{}, data, path) do
     schema
     |> Enum.flat_map(fn property ->
       Enum.flat_map(@validators, fn validator ->
