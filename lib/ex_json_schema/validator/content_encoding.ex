@@ -28,7 +28,7 @@ defmodule ExJsonSchema.Validator.ContentEncoding do
     []
   end
 
-  defp do_validate("base64", data) do
+  defp do_validate("base64", data) when is_bitstring(data) do
     case Base.decode64(data) do
       {:ok, _} ->
         []
