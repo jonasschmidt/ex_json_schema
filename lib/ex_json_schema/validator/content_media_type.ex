@@ -28,7 +28,8 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
     []
   end
 
-  defp do_validate(%{"contentEncoding" => "base64"}, "application/json", data) do
+  defp do_validate(%{"contentEncoding" => "base64"}, "application/json", data)
+       when is_bitstring(data) do
     with {:ok, json} <- Base.decode64(data),
          {:ok, _} <- ExJsonSchema.Schema.decode_json(json) do
       []
@@ -38,7 +39,7 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
     end
   end
 
-  defp do_validate(_, "application/json", data) do
+  defp do_validate(_, "application/json", data) when is_bitstring(data) do
     case ExJsonSchema.Schema.decode_json(data) do
       {:ok, _} ->
         []
