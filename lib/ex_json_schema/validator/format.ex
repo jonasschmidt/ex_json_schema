@@ -21,7 +21,7 @@ defmodule ExJsonSchema.Validator.Format do
   def validate(%Root{}, _, _), do: []
 
   defp do_validate(%Root{}, format = "date-time", data) do
-    case DateTime.from_iso8601(data) do
+    case DateTime.from_iso8601(String.upcase(data)) do
       {:ok, _, _} -> []
       {:error, _} -> [%Error{error: %Error.Format{expected: format}, path: ""}]
     end
