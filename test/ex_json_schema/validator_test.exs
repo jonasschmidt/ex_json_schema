@@ -484,6 +484,13 @@ defmodule ExJsonSchema.ValidatorTest do
       [{"Expected to be a valid ISO 8601 date-time.", "#"}],
       [%Error{error: %Error.Format{expected: "date-time"}, path: "#"}]
     )
+
+    assert_validation_errors(
+      %{"format" => "date-time"},
+      "20200-03-22T06:28:23Z",
+      [{"Expected to be a valid ISO 8601 date-time.", "#"}],
+      [%Error{error: %Error.Format{expected: "date-time"}, path: "#"}]
+    )
   end
 
   test "validation errors for email format" do

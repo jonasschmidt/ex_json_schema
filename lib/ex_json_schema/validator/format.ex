@@ -4,8 +4,6 @@ defmodule ExJsonSchema.Validator.Format do
   alias ExJsonSchema.Schema.Root
 
   @formats %{
-    "date-time" =>
-      ~r/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])[tT](2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?([zZ]|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$/,
     "email" =>
       ~r<^[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*@(?:[A-Z0-9-]+\.)+[A-Z]{2,}$>i,
     "hostname" => ~r/^((?=[a-z0-9-]{1,63}\.)(xn--)?[a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,63}$/i,
@@ -22,8 +20,15 @@ defmodule ExJsonSchema.Validator.Format do
 
   def validate(%Root{}, _, _), do: []
 
+  defp do_validate(%Root{}, format = "date-time", data) do
+    case DateTime.from_iso8601(data) do
+      {:ok, _, _} -> []
+      {:error, _} -> [%Error{error: %Error.Format{expected: format}, path: ""}]
+    end
+  end
+
   defp do_validate(%Root{}, format, data)
-       when format in ["date-time", "email", "hostname", "ipv4", "ipv6"] do
+       when format in ["email", "hostname", "ipv4", "ipv6"] do
     case Regex.match?(@formats[format], data) do
       true -> []
       false -> [%Error{error: %Error.Format{expected: format}, path: ""}]

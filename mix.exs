@@ -5,7 +5,7 @@ defmodule ExJsonSchema.Mixfile do
     [
       app: :ex_json_schema,
       version: "0.7.4",
-      elixir: "~> 1.3",
+      elixir: "~> 1.4",
       description:
         "A JSON Schema validator with full support for the draft 4 specification and zero dependencies.",
       deps: deps(),
