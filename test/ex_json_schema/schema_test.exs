@@ -28,7 +28,7 @@ defmodule ExJsonSchema.SchemaTest do
 
   test "resolves a schema" do
     schema = %{"foo" => 1, "bar" => %{"baz" => 3}}
-    assert resolve(schema) == %ExJsonSchema.Schema.Root{refs: %{}, schema: schema}
+    assert resolve(schema) == %ExJsonSchema.Schema.Root{refs: %{}, schema: schema, version: 7}
   end
 
   test "schema is validated against its meta-schema" do
