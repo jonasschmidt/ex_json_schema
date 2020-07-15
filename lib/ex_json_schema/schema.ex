@@ -217,7 +217,18 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_with_root(root, schema, scope \\ "")
 
+  defp resolve_with_root(root, schema = %{"$id" => id}, scope) when is_binary(id) do
+    resolve_id(root, schema, scope, id)
+  end
+
   defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_binary(id) do
+    resolve_id(root, schema, scope, id)
+  end
+
+  defp resolve_with_root(root, schema = %{}, scope), do: do_resolve(root, schema, scope)
+  defp resolve_with_root(root, non_schema, _scope), do: {root, non_schema}
+
+  defp resolve_id(root, schema, scope, id) do
     scope =
       case URI.parse(scope) do
         %URI{host: nil} -> id
@@ -226,9 +237,6 @@ defmodule ExJsonSchema.Schema do
 
     do_resolve(root, schema, scope)
   end
-
-  defp resolve_with_root(root, schema = %{}, scope), do: do_resolve(root, schema, scope)
-  defp resolve_with_root(root, non_schema, _scope), do: {root, non_schema}
 
   defp do_resolve(root, schema, scope) do
     {root, schema} =

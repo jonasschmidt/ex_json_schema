@@ -5,17 +5,19 @@ defmodule ExJsonSchema.JsonSchemaDraft6TestSuiteTest do
     schema_tests_path: "test/JSON-Schema-Test-Suite/tests/draft6/",
     schema_url: "http://json-schema.org/draft-06/schema",
     ignored_tests: [
+      "Location-independent identifier: match",
+      "Location-independent identifier: mismatch",
+      "Location-independent identifier with absolute URI: match",
+      "Location-independent identifier with absolute URI: mismatch",
+      "Location-independent identifier with base URI change in subschema: match",
+      "Location-independent identifier with base URI change in subschema: mismatch",
       "Recursive references between schemas: invalid tree",
       "Recursive references between schemas: valid tree",
-      "base URI change - change folder in subschema: number is valid",
-      "base URI change - change folder in subschema: string is invalid",
-      "base URI change - change folder: number is valid",
-      "base URI change - change folder: string is invalid",
-      "base URI change: base URI change ref valid",
-      "invalid definition: invalid definition schema",
-      "remote ref, containing refs itself: remote ref invalid",
-      "root ref in remote ref: null is valid",
-      "root ref in remote ref: object is invalid",
-      "root ref in remote ref: string is valid"
+      "ECMA 262 \\S matches everything but ascii whitespace: latin-1 non-breaking-space matches (unlike e.g. Python)",
+      "ECMA 262 \\w matches everything but ascii letters: latin-1 e-acute matches (unlike e.g. Python)",
+      "ECMA 262 \\D matches everything but ascii digits: NKO DIGIT ZERO (as \\u escape) matches",
+      "ECMA 262 \\D matches everything but ascii digits: NKO DIGIT ZERO matches (unlike e.g. Python)",
+      "ECMA 262 regex non-compliance: ECMA 262 has no support for \\Z anchor from .NET",
+      "ECMA 262 regex $ does not match trailing newline: matches in Python, but should not in jsonschema"
     ]
 end

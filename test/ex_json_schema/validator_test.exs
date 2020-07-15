@@ -498,7 +498,7 @@ defmodule ExJsonSchema.ValidatorTest do
   test "validation errors for hostname format" do
     assert_validation_errors(
       %{"format" => "hostname"},
-      "foo-bar",
+      "-foo-bar-",
       [{"Expected to be a valid hostname.", "#"}],
       [%Error{error: %Error.Format{expected: "hostname"}, path: "#"}]
     )

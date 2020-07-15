@@ -20,7 +20,8 @@ defmodule ExJsonSchema.Validator.Format do
       ~r/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])[tT](2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?([zZ]|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$/,
     "email" =>
       ~r<^[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*@(?:[A-Z0-9-]+\.)+[a-z]{2,}$>i,
-    "hostname" => ~r/^((?=[a-z0-9-]{1,63}\.)(xn--)?[a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,63}$/i,
+    "hostname" =>
+      ~r/^[\pL0-9](?:[\pL0-9-]{0,61}[\pL0-9])?(?:\.[\pL0-9](?:[-0-9\pL]{0,61}[0-9\pL])?)*$/iu,
     "idn-email" =>
       ~r<^[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*@(?:[\pL0-9-]+\.)+[\pL]{2,6}$>iu,
     "idn-hostname" =>
@@ -87,11 +88,12 @@ defmodule ExJsonSchema.Validator.Format do
     end
   end
 
-  # defp do_validate("regex", data) do
-  #   validate_with_regex(data, @z_anchor, fn _data ->
-  #     "Regex does not support Z anchor"
-  #   end)
-  # end
+  defp do_validate(_, "regex", data) do
+    case Regex.compile(data) do
+      {:ok, _} -> []
+      {:error, _} -> [%Error{error: %Error.Format{expected: "regex"}, path: ""}]
+    end
+  end
 
   defp do_validate(%Root{custom_format_validator: nil}, format, data) do
     case Application.fetch_env(:ex_json_schema, :custom_format_validator) do
