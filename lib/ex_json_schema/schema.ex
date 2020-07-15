@@ -39,30 +39,6 @@ defmodule ExJsonSchema.Schema do
   @draft6_schema_url "http://json-schema.org/draft-06/schema"
   @draft7_schema_url "http://json-schema.org/draft-07/schema"
 
-  @false_value_schema %{
-    "not" => %{
-      "anyOf" => [
-        %{"type" => "object"},
-        %{"type" => "array"},
-        %{"type" => "boolean"},
-        %{"type" => "string"},
-        %{"type" => "number"},
-        %{"type" => "null"}
-      ]
-    }
-  }
-
-  @true_value_schema %{
-    "anyOf" => [
-      %{"type" => "object"},
-      %{"type" => "array"},
-      %{"type" => "boolean"},
-      %{"type" => "string"},
-      %{"type" => "number"},
-      %{"type" => "null"}
-    ]
-  }
-
   @spec decode_json(String.t()) :: {:ok, String.t()} | {:error, String.t()}
   def decode_json(json) do
     decoder =
@@ -78,12 +54,8 @@ defmodule ExJsonSchema.Schema do
           Root.t() | no_return
   def resolve(schema, options \\ [])
 
-  def resolve(false, _options) do
-    %Root{schema: @false_value_schema}
-  end
-
-  def resolve(true, _options) do
-    %Root{schema: @true_value_schema}
+  def resolve(schema, _options) when is_boolean(schema) do
+    %Root{schema: schema}
   end
 
   def resolve(root = %Root{}, options) do
@@ -91,7 +63,9 @@ defmodule ExJsonSchema.Schema do
     resolve_root(root)
   end
 
-  def resolve(schema = %{}, options), do: resolve(%Root{schema: schema}, options)
+  def resolve(schema = %{}, options) do
+    resolve(%Root{schema: schema}, options)
+  end
 
   @spec get_fragment(Root.t(), ref_path | ExJsonSchema.json_path()) ::
           {:ok, resolved} | invalid_reference_error | no_return
@@ -124,12 +98,6 @@ defmodule ExJsonSchema.Schema do
       {:error, error} ->
         raise InvalidSchemaError, message: error
 
-      true ->
-        @true_value_schema
-
-      false ->
-        @false_value_schema
-
       ref_schema ->
         ref_schema
     end
@@ -139,12 +107,6 @@ defmodule ExJsonSchema.Schema do
     case get_ref_schema_with_schema(root.refs[url], path, ref) do
       {:error, error} ->
         raise InvalidSchemaError, message: error
-
-      true ->
-        @true_value_schema
-
-      false ->
-        @false_value_schema
 
       ref_schema ->
         ref_schema
@@ -246,14 +208,6 @@ defmodule ExJsonSchema.Schema do
       end)
 
     {root, schema |> sanitize_properties_attribute |> sanitize_additional_items_attribute}
-  end
-
-  defp resolve_property(root, {"not", true}, _scope) do
-    {root, {"not", @true_value_schema}}
-  end
-
-  defp resolve_property(root, {"not", false}, _scope) do
-    {root, {"not", @false_value_schema}}
   end
 
   defp resolve_property(root, {key, value}, scope) when is_map(value) do

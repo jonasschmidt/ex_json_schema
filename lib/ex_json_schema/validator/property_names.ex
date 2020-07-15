@@ -27,15 +27,7 @@ defmodule ExJsonSchema.Validator.PropertyNames do
     []
   end
 
-  defp do_validate(_, false, data = %{}) do
-    if map_size(data) == 0 do
-      []
-    else
-      [%Error{error: %{message: "Expected data to not have any keys."}, path: ""}]
-    end
-  end
-
-  defp do_validate(root, property_names = %{}, data = %{}) do
+  defp do_validate(root, property_names, data = %{}) do
     valid? =
       Enum.all?(data, fn {name, _} ->
         Validator.valid_fragment?(root, property_names, name)

@@ -32,13 +32,6 @@ defmodule ExJsonSchema.Validator.OneOf do
       one_of
       |> Enum.with_index()
       |> Enum.reduce({0, [], []}, fn
-        {true, index}, {valid_count, valid_indices, errors} ->
-          {valid_count + 1, [index | valid_indices], errors}
-
-        {false, index}, {valid_count, valid_indices, errors} ->
-          error = %Error{error: %{message: "false never matches"}, path: ""}
-          {valid_count, valid_indices, [{error, index} | errors]}
-
         {schema, index}, {valid_count, valid_indices, errors} ->
           case Validator.validation_errors(root, schema, data) do
             [] -> {valid_count + 1, [index | valid_indices], errors}
