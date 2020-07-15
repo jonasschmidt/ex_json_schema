@@ -4,9 +4,6 @@ defmodule ExJsonSchema.JsonSchemaDraft7TestSuiteTest do
   use ExJsonSchema.Test.Support.TestSuiteTemplate,
     schema_tests_path: "test/JSON-Schema-Test-Suite/tests/draft7/",
     schema_url: "http://json-schema.org/draft-07/schema",
-    ignored_suites: [
-      "if-then-else"
-    ],
     ignored_tests: [
       "Location-independent identifier: match",
       "Location-independent identifier: mismatch",

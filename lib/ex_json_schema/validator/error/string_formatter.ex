@@ -52,6 +52,12 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
     end
   end
 
+  defimpl String.Chars, for: Error.IfThenElse do
+    def to_string(%Error.IfThenElse{branch: branch}) do
+      "Expected the schema in the #{branch} branch to match but it did not."
+    end
+  end
+
   defimpl String.Chars, for: Error.AdditionalProperties do
     def to_string(%Error.AdditionalProperties{}) do
       "Schema does not allow additional properties."

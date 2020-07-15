@@ -25,6 +25,7 @@ defmodule ExJsonSchema.Validator do
     ExJsonSchema.Validator.ExclusiveMaximum,
     ExJsonSchema.Validator.ExclusiveMinimum,
     ExJsonSchema.Validator.Format,
+    ExJsonSchema.Validator.IfThenElse,
     ExJsonSchema.Validator.Items,
     ExJsonSchema.Validator.MaxItems,
     ExJsonSchema.Validator.MaxLength,

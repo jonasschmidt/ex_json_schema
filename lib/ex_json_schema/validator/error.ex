@@ -25,6 +25,10 @@ defmodule ExJsonSchema.Validator.Error do
     defstruct([])
   end
 
+  defmodule IfThenElse do
+    defstruct([:branch, :errors])
+  end
+
   defmodule AdditionalProperties do
     defstruct([])
   end
