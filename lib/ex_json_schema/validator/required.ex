@@ -15,24 +15,18 @@ defmodule ExJsonSchema.Validator.Required do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(_, _, {"required", required}, data) do
+  def validate(_, _, {"required", required}, data, _) do
     do_validate(required, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
   defp do_validate(required, data = %{}) do
     case Enum.filter(List.wrap(required), &(!Map.has_key?(data, &1))) do
       [] -> []
-      missing -> [%Error{error: %Error.Required{missing: missing}, path: ""}]
+      missing -> [%Error{error: %Error.Required{missing: missing}}]
     end
   end
 

@@ -13,17 +13,11 @@ defmodule ExJsonSchema.Validator.MinLength do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(_, _, {"minLength", min_length}, data) do
+  def validate(_, _, {"minLength", min_length}, data, _) do
     do_validate(min_length, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -33,7 +27,7 @@ defmodule ExJsonSchema.Validator.MinLength do
     if length >= min_length do
       []
     else
-      [%Error{error: %Error.MinLength{expected: min_length, actual: length}, path: ""}]
+      [%Error{error: %Error.MinLength{expected: min_length, actual: length}}]
     end
   end
 

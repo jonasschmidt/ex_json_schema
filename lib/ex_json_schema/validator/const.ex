@@ -14,17 +14,11 @@ defmodule ExJsonSchema.Validator.Const do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(%{version: version}, _, {"const", const}, data) when version >= 6 do
+  def validate(%{version: version}, _, {"const", const}, data, _) when version >= 6 do
     do_validate(const, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -32,7 +26,7 @@ defmodule ExJsonSchema.Validator.Const do
     if const == data do
       []
     else
-      [%Error{error: %Error.Const{expected: const}, path: ""}]
+      [%Error{error: %Error.Const{expected: const}}]
     end
   end
 end

@@ -14,34 +14,40 @@ defmodule ExJsonSchema.Validator.Contains do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(root = %{version: version}, _, {"contains", contains}, data) when version >= 6 do
-    do_validate(root, contains, data)
+  def validate(root = %{version: version}, _, {"contains", contains}, data, path)
+      when version >= 6 do
+    do_validate(root, contains, data, path)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
-  defp do_validate(root, contains, data) when is_list(data) do
-    if Enum.any?(data, &Validator.valid_fragment?(root, contains, &1)) do
-      []
-    else
-      [
-        %Error{
-          error: %{message: "Expected #{inspect(data)} to be in #{inspect(contains)}."},
-          path: ""
-        }
-      ]
+  defp do_validate(_, _, [], _) do
+    [%Error{error: %Error.Contains{empty?: true, invalid: []}}]
+  end
+
+  defp do_validate(root, contains, data, path) when is_list(data) do
+    invalid =
+      data
+      |> Enum.with_index()
+      |> Enum.reduce_while([], fn
+        {data, index}, acc ->
+          case Validator.validation_errors(root, contains, data, path <> "/#{index}") do
+            [] -> {:halt, []}
+            errors -> {:cont, [{errors, index} | acc]}
+          end
+      end)
+      |> Enum.reverse()
+      |> Validator.map_to_invalid_errors()
+
+    case Enum.empty?(invalid) do
+      true -> []
+      false -> [%Error{error: %Error.Contains{empty?: false, invalid: invalid}}]
     end
   end
 
-  defp do_validate(_, _, _) do
+  defp do_validate(_, _, _, _) do
     []
   end
 end

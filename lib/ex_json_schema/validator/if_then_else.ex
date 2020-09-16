@@ -13,18 +13,12 @@ defmodule ExJsonSchema.Validator.IfThenElse do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(%Root{version: version} = root, schema, {"if", if_schema}, data)
+  def validate(%Root{version: version} = root, schema, {"if", if_schema}, data, _)
       when version >= 7 do
     validate_with_if(root, schema, if_schema, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -63,7 +57,7 @@ defmodule ExJsonSchema.Validator.IfThenElse do
   defp validation_errors(root, schema, data, branch) do
     case Validator.validation_errors(root, schema, data) do
       [] -> []
-      errors -> [%Error{error: %Error.IfThenElse{branch: branch, errors: errors}, path: ""}]
+      errors -> [%Error{error: %Error.IfThenElse{branch: branch, errors: errors}}]
     end
   end
 end

@@ -75,11 +75,17 @@ defmodule ExJsonSchema.ValidatorTest do
 
   test "validation errors for not matching all of the schemata" do
     assert_validation_errors(
-      %{"allOf" => [%{"type" => "number"}, %{"type" => "string"}, %{"type" => "integer"}]},
-      "foo",
+      %{
+        "properties" => %{
+          "foo" => %{
+            "allOf" => [%{"type" => "number"}, %{"type" => "string"}, %{"type" => "integer"}]
+          }
+        }
+      },
+      %{"foo" => "foo"},
       [
         {"Expected all of the schemata to match, but the schemata at the following indexes did not: 0, 2.",
-         "#"}
+         "#/foo"}
       ],
       [
         %Error{
@@ -87,19 +93,25 @@ defmodule ExJsonSchema.ValidatorTest do
             invalid: [
               %Error.InvalidAtIndex{
                 errors: [
-                  %Error{error: %Error.Type{expected: ["number"], actual: "string"}, path: "#"}
+                  %Error{
+                    error: %Error.Type{expected: ["number"], actual: "string"},
+                    path: "#/foo"
+                  }
                 ],
                 index: 0
               },
               %Error.InvalidAtIndex{
                 errors: [
-                  %Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#"}
+                  %Error{
+                    error: %Error.Type{expected: ["integer"], actual: "string"},
+                    path: "#/foo"
+                  }
                 ],
                 index: 2
               }
             ]
           },
-          path: "#"
+          path: "#/foo"
         }
       ]
     )
@@ -107,28 +119,36 @@ defmodule ExJsonSchema.ValidatorTest do
 
   test "validation errors for not matching any of the schemata" do
     assert_validation_errors(
-      %{"anyOf" => [%{"type" => "number"}, %{"type" => "integer"}]},
-      "foo",
-      [{"Expected any of the schemata to match but none did.", "#"}],
+      %{
+        "properties" => %{"foo" => %{"anyOf" => [%{"type" => "number"}, %{"type" => "integer"}]}}
+      },
+      %{"foo" => "foo"},
+      [{"Expected any of the schemata to match but none did.", "#/foo"}],
       [
         %Error{
           error: %Error.AnyOf{
             invalid: [
               %Error.InvalidAtIndex{
                 errors: [
-                  %Error{error: %Error.Type{expected: ["number"], actual: "string"}, path: "#"}
+                  %Error{
+                    error: %Error.Type{expected: ["number"], actual: "string"},
+                    path: "#/foo"
+                  }
                 ],
                 index: 0
               },
               %Error.InvalidAtIndex{
                 errors: [
-                  %Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#"}
+                  %Error{
+                    error: %Error.Type{expected: ["integer"], actual: "string"},
+                    path: "#/foo"
+                  }
                 ],
                 index: 1
               }
             ]
           },
-          path: "#"
+          path: "#/foo"
         }
       ]
     )
@@ -150,12 +170,12 @@ defmodule ExJsonSchema.ValidatorTest do
 
   test "validation errors for matching none of the schemata when exactly one should be matched" do
     assert_validation_errors(
-      %{"oneOf" => [%{"type" => "number"}, %{"type" => "integer"}]},
-      "foo",
+      %{"items" => %{"oneOf" => [%{"type" => "number"}, %{"type" => "integer"}]}},
+      ["foo"],
       [
         {
           "Expected exactly one of the schemata to match, but none of them did.",
-          "#"
+          "#/0"
         }
       ],
       [
@@ -165,19 +185,19 @@ defmodule ExJsonSchema.ValidatorTest do
             invalid: [
               %Error.InvalidAtIndex{
                 errors: [
-                  %Error{error: %Error.Type{expected: ["number"], actual: "string"}, path: "#"}
+                  %Error{error: %Error.Type{expected: ["number"], actual: "string"}, path: "#/0"}
                 ],
                 index: 0
               },
               %Error.InvalidAtIndex{
                 errors: [
-                  %Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#"}
+                  %Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#/0"}
                 ],
                 index: 1
               }
             ]
           },
-          path: "#"
+          path: "#/0"
         }
       ]
     )
@@ -466,6 +486,59 @@ defmodule ExJsonSchema.ValidatorTest do
       "bar",
       [{"Expected data to be \"foo\".", "#"}],
       [%Error{error: %Error.Const{expected: "foo"}, path: "#"}]
+    )
+  end
+
+  test "validation errors for contains" do
+    assert_validation_errors(
+      %{"properties" => %{"foo" => %{"contains" => %{"type" => "number"}}}},
+      %{"foo" => ["foo", %{}]},
+      [{"Expected any of the items to match the schema but none did.", "#/foo"}],
+      [
+        %Error{
+          error: %Error.Contains{
+            empty?: false,
+            invalid: [
+              %Error.InvalidAtIndex{
+                errors: [
+                  %Error{
+                    error: %Error.Type{expected: ["number"], actual: "string"},
+                    path: "#/foo/0"
+                  }
+                ],
+                index: 0
+              },
+              %Error.InvalidAtIndex{
+                errors: [
+                  %Error{
+                    error: %Error.Type{expected: ["number"], actual: "object"},
+                    path: "#/foo/1"
+                  }
+                ],
+                index: 1
+              }
+            ]
+          },
+          path: "#/foo"
+        }
+      ]
+    )
+  end
+
+  test "validation errors for contains and empty list" do
+    assert_validation_errors(
+      %{"properties" => %{"foo" => %{"contains" => %{"type" => "number"}}}},
+      %{"foo" => []},
+      [{"Expected any of the items to match the schema but none did.", "#/foo"}],
+      [
+        %Error{
+          error: %Error.Contains{
+            empty?: true,
+            invalid: []
+          },
+          path: "#/foo"
+        }
+      ]
     )
   end
 

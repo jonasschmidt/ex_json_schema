@@ -15,18 +15,12 @@ defmodule ExJsonSchema.Validator.ExclusiveMinimum do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(%Root{version: version}, _, {"exclusiveMinimum", minimum}, data)
+  def validate(%Root{version: version}, _, {"exclusiveMinimum", minimum}, data, _)
       when version > 4 do
     do_validate(minimum, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -38,7 +32,7 @@ defmodule ExJsonSchema.Validator.ExclusiveMinimum do
     if data > minimum do
       []
     else
-      [%Error{error: %Error.Minimum{expected: minimum, exclusive?: true}, path: ""}]
+      [%Error{error: %Error.Minimum{expected: minimum, exclusive?: true}}]
     end
   end
 

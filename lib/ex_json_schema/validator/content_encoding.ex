@@ -13,18 +13,12 @@ defmodule ExJsonSchema.Validator.ContentEncoding do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(%{version: version}, _, {"contentEncoding", content_encoding}, data)
+  def validate(%{version: version}, _, {"contentEncoding", content_encoding}, data, _)
       when version >= 7 do
     do_validate(content_encoding, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -34,7 +28,7 @@ defmodule ExJsonSchema.Validator.ContentEncoding do
         []
 
       :error ->
-        [%Error{error: %{message: "Invalid base64 string."}, path: ""}]
+        [%Error{error: %{message: "Invalid base64 string."}}]
     end
   end
 

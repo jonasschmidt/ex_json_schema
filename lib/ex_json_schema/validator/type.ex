@@ -15,17 +15,11 @@ defmodule ExJsonSchema.Validator.Type do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(%{version: version}, _, {"type", type}, data) do
+  def validate(%{version: version}, _, {"type", type}, data, _) do
     do_validate(version, type, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -38,7 +32,7 @@ defmodule ExJsonSchema.Validator.Type do
     if valid?(version, type, data) do
       []
     else
-      [%Error{error: %Error.Type{expected: List.wrap(type), actual: data_type(data)}, path: ""}]
+      [%Error{error: %Error.Type{expected: List.wrap(type), actual: data_type(data)}}]
     end
   end
 

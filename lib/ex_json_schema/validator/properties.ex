@@ -13,71 +13,67 @@ defmodule ExJsonSchema.Validator.Properties do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors() | no_return
-  def validate(root, schema, {"properties", _}, properties = %{}) do
-    do_validate(root, schema, properties)
+  def validate(root, schema, {"properties", _}, properties = %{}, path) do
+    do_validate(root, schema, properties, path)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
-  defp do_validate(root, schema, properties) do
-    validated_known_properties = validate_known_properties(root, schema, properties)
+  defp do_validate(root, schema, properties, path) do
+    validated_known_properties = validate_known_properties(root, schema, properties, path)
 
     validation_errors(validated_known_properties) ++
       validate_additional_properties(
         root,
         schema["additionalProperties"],
-        unvalidated_properties(properties, validated_known_properties)
+        unvalidated_properties(properties, validated_known_properties),
+        path
       )
   end
 
-  defp validate_known_properties(root, schema, properties) do
-    validate_named_properties(root, schema["properties"], properties) ++
-      validate_pattern_properties(root, schema["patternProperties"], properties)
+  defp validate_known_properties(root, schema, properties, path) do
+    validate_named_properties(root, schema["properties"], properties, path) ++
+      validate_pattern_properties(root, schema["patternProperties"], properties, path)
   end
 
-  defp validate_named_properties(root, schema, properties) do
+  defp validate_named_properties(root, schema, properties, path) do
     schema
     |> Enum.filter(&Map.has_key?(properties, elem(&1, 0)))
     |> Enum.map(fn
       {name, property_schema} ->
-        {name, Validator.validation_errors(root, property_schema, properties[name], "/#{name}")}
+        {name,
+         Validator.validation_errors(root, property_schema, properties[name], path <> "/#{name}")}
     end)
   end
 
-  defp validate_pattern_properties(_, nil, _), do: []
+  defp validate_pattern_properties(_, nil, _, _), do: []
 
-  defp validate_pattern_properties(root, schema, properties) do
-    Enum.flat_map(schema, &validate_pattern_property(root, &1, properties))
+  defp validate_pattern_properties(root, schema, properties, path) do
+    Enum.flat_map(schema, &validate_pattern_property(root, &1, properties, path))
   end
 
-  defp validate_pattern_property(root, {pattern, schema}, properties) do
+  defp validate_pattern_property(root, {pattern, schema}, properties, path) do
     properties_matching(properties, pattern)
     |> Enum.map(fn {name, property} ->
-      {name, Validator.validation_errors(root, schema, property, "/#{name}")}
+      {name, Validator.validation_errors(root, schema, property, path <> "/#{name}")}
     end)
   end
 
-  defp validate_additional_properties(root, schema, properties) when is_map(schema) do
+  defp validate_additional_properties(root, schema, properties, path) when is_map(schema) do
     Enum.flat_map(properties, fn {name, property} ->
-      Validator.validation_errors(root, schema, property, "/#{name}")
+      Validator.validation_errors(root, schema, property, path <> "/#{name}")
     end)
   end
 
-  defp validate_additional_properties(_, false, properties) when map_size(properties) > 0 do
+  defp validate_additional_properties(_, false, properties, path) when map_size(properties) > 0 do
     Enum.map(properties, fn {name, _} ->
-      %Error{error: %Error.AdditionalProperties{}, path: "/#{name}"}
+      %Error{error: %Error.AdditionalProperties{}, path: path <> "/#{name}"}
     end)
   end
 
-  defp validate_additional_properties(_, _, _), do: []
+  defp validate_additional_properties(_, _, _, _), do: []
 
   defp validation_errors(validated_properties) do
     validated_properties |> Keyword.values() |> List.flatten()

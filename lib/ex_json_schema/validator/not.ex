@@ -13,23 +13,17 @@ defmodule ExJsonSchema.Validator.Not do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(root, _, {"not", not_schema}, data) do
+  def validate(root, _, {"not", not_schema}, data, _) do
     do_validate(root, not_schema, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
   defp do_validate(root, not_schema, data) do
     case Validator.valid_fragment?(root, not_schema, data) do
-      true -> [%Error{error: %Error.Not{}, path: ""}]
+      true -> [%Error{error: %Error.Not{}}]
       false -> []
     end
   end

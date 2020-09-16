@@ -13,17 +13,11 @@ defmodule ExJsonSchema.Validator.MultipleOf do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(_, _, {"multipleOf", multiple_of}, data) do
+  def validate(_, _, {"multipleOf", multiple_of}, data, _) do
     do_validate(multiple_of, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -33,7 +27,7 @@ defmodule ExJsonSchema.Validator.MultipleOf do
 
   defp do_validate(0, _) do
     # "Expected multipleOf to be > 1."
-    [%Error{error: %Error.MultipleOf{expected: 0}, path: ""}]
+    [%Error{error: %Error.MultipleOf{expected: 0}}]
   end
 
   defp do_validate(_, data) when not is_number(data) do
@@ -44,7 +38,7 @@ defmodule ExJsonSchema.Validator.MultipleOf do
     if Float.ceil(data / multiple_of) == Float.floor(data / multiple_of) do
       []
     else
-      [%Error{error: %Error.MultipleOf{expected: multiple_of}, path: ""}]
+      [%Error{error: %Error.MultipleOf{expected: multiple_of}}]
     end
   end
 

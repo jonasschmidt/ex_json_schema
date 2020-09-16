@@ -40,6 +40,12 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
     end
   end
 
+  defimpl String.Chars, for: Error.Contains do
+    def to_string(%Error.Contains{}) do
+      "Expected any of the items to match the schema but none did."
+    end
+  end
+
   defimpl String.Chars, for: Error.Dependencies do
     def to_string(%Error.Dependencies{property: property, missing: [missing]}) do
       "Property #{property} depends on property #{missing} to be present but it was not."

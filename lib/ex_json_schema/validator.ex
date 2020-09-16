@@ -114,10 +114,13 @@ defmodule ExJsonSchema.Validator do
     schema
     |> Enum.flat_map(fn property ->
       Enum.flat_map(@validators, fn validator ->
-        validator.validate(root, schema, property, data)
+        validator.validate(root, schema, property, data, path)
       end)
     end)
-    |> Enum.map(fn %Error{path: p} = error -> %{error | path: path <> p} end)
+    |> Enum.map(fn
+      %Error{path: nil} = error -> %{error | path: path}
+      error -> error
+    end)
   end
 
   @spec valid?(Root.t() | ExJsonSchema.object(), ExJsonSchema.data()) :: boolean | no_return

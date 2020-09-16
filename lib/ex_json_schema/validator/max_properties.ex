@@ -13,17 +13,11 @@ defmodule ExJsonSchema.Validator.MaxProperties do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(_, _, {"maxProperties", max_properties}, data) do
+  def validate(_, _, {"maxProperties", max_properties}, data, _) do
     do_validate(max_properties, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -31,12 +25,7 @@ defmodule ExJsonSchema.Validator.MaxProperties do
     if map_size(data) <= max_properties do
       []
     else
-      [
-        %Error{
-          error: %Error.MaxProperties{expected: max_properties, actual: map_size(data)},
-          path: ""
-        }
-      ]
+      [%Error{error: %Error.MaxProperties{expected: max_properties, actual: map_size(data)}}]
     end
   end
 

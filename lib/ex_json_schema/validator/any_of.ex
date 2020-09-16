@@ -15,41 +15,35 @@ defmodule ExJsonSchema.Validator.AnyOf do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(root, _, {"anyOf", any_of}, data) do
-    do_validate(root, any_of, data)
+  def validate(root, _, {"anyOf", any_of}, data, path) do
+    do_validate(root, any_of, data, path)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
-  defp do_validate(root, any_of, data) when is_list(any_of) do
+  defp do_validate(root, any_of, data, path) when is_list(any_of) do
     invalid =
       any_of
+      |> Enum.with_index()
       |> Enum.reduce_while([], fn
-        schema, acc ->
-          case Validator.validation_errors(root, schema, data) do
+        {schema, index}, acc ->
+          case Validator.validation_errors(root, schema, data, path) do
             [] -> {:halt, []}
-            errors -> {:cont, [errors | acc]}
+            errors -> {:cont, [{errors, index} | acc]}
           end
       end)
       |> Enum.reverse()
-      |> Enum.with_index()
       |> Validator.map_to_invalid_errors()
 
     case Enum.empty?(invalid) do
       true -> []
-      false -> [%Error{error: %Error.AnyOf{invalid: invalid}, path: ""}]
+      false -> [%Error{error: %Error.AnyOf{invalid: invalid}}]
     end
   end
 
-  defp do_validate(_, _, _) do
+  defp do_validate(_, _, _, _) do
     []
   end
 end

@@ -13,17 +13,11 @@ defmodule ExJsonSchema.Validator.PropertyNames do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(root, _, {"propertyNames", property_names}, data) do
+  def validate(root, _, {"propertyNames", property_names}, data, _) do
     do_validate(root, property_names, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -36,12 +30,7 @@ defmodule ExJsonSchema.Validator.PropertyNames do
     if valid? do
       []
     else
-      [
-        %Error{
-          error: %{message: "Expected data keys to match propertyNames but they don't."},
-          path: ""
-        }
-      ]
+      [%Error{error: %{message: "Expected data keys to match propertyNames but they don't."}}]
     end
   end
 

@@ -13,17 +13,11 @@ defmodule ExJsonSchema.Validator.MaxItems do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(_, _, {"maxItems", max_items}, data) do
+  def validate(_, _, {"maxItems", max_items}, data, _) do
     do_validate(max_items, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -33,7 +27,7 @@ defmodule ExJsonSchema.Validator.MaxItems do
     if count <= max_items do
       []
     else
-      [%Error{error: %Error.MaxItems{expected: max_items, actual: count}, path: ""}]
+      [%Error{error: %Error.MaxItems{expected: max_items, actual: count}}]
     end
   end
 

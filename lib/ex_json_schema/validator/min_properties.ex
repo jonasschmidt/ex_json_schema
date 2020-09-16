@@ -13,17 +13,11 @@ defmodule ExJsonSchema.Validator.MinProperties do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(_, _, {"minProperties", min_properties}, data) do
+  def validate(_, _, {"minProperties", min_properties}, data, _) do
     do_validate(min_properties, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -31,12 +25,7 @@ defmodule ExJsonSchema.Validator.MinProperties do
     if map_size(data) >= min_properties do
       []
     else
-      [
-        %Error{
-          error: %Error.MinProperties{expected: min_properties, actual: map_size(data)},
-          path: ""
-        }
-      ]
+      [%Error{error: %Error.MinProperties{expected: min_properties, actual: map_size(data)}}]
     end
   end
 

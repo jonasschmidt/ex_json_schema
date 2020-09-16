@@ -21,6 +21,10 @@ defmodule ExJsonSchema.Validator.Error do
     defstruct([:expected])
   end
 
+  defmodule Contains do
+    defstruct([:empty?, :invalid])
+  end
+
   defmodule Dependencies do
     defstruct([:property, :missing])
   end

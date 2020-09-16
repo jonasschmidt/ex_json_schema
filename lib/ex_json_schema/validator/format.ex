@@ -42,20 +42,15 @@ defmodule ExJsonSchema.Validator.Format do
     "uri-template" =>
       ~r<^(?:(?:[^\x00-\x20"'\<\>%\\^`{|}]|%[0-9a-f]{2})|\{[+\#./;?&=,!@|]?(?:[a-z0-9_]|%[0-9a-f]{2})+(?::[1-9][0-9]{0,3}|\*)?(?:,(?:[a-z0-9_]|%[0-9a-f]{2})+(?::[1-9][0-9]{0,3}|\*)?)*\})*$>i
   }
+
   # @z_anchor ~r/[^\\]\\Z/
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(root, _, {"format", format}, data) do
+  def validate(root, _, {"format", format}, data, _) do
     do_validate(root, format, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -84,14 +79,14 @@ defmodule ExJsonSchema.Validator.Format do
             ] do
     case Regex.match?(@formats[format], data) do
       true -> []
-      false -> [%Error{error: %Error.Format{expected: format}, path: ""}]
+      false -> [%Error{error: %Error.Format{expected: format}}]
     end
   end
 
   defp do_validate(_, "regex", data) do
     case Regex.compile(data) do
       {:ok, _} -> []
-      {:error, _} -> [%Error{error: %Error.Format{expected: "regex"}, path: ""}]
+      {:error, _} -> [%Error{error: %Error.Format{expected: "regex"}}]
     end
   end
 
@@ -109,7 +104,7 @@ defmodule ExJsonSchema.Validator.Format do
   defp validate_with_custom_validator({mod, fun}, format, data) do
     case apply(mod, fun, [format, data]) do
       true -> []
-      false -> [%Error{error: %Error.Format{expected: format}, path: ""}]
+      false -> [%Error{error: %Error.Format{expected: format}}]
     end
   end
 end

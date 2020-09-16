@@ -13,22 +13,16 @@ defmodule ExJsonSchema.Validator.Minimum do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(%Root{version: 4}, schema, {"minimum", minimum}, data) do
+  def validate(%Root{version: 4}, schema, {"minimum", minimum}, data, _) do
     exclusive = Map.get(schema, "exclusiveMinimum", false)
     do_validate(minimum, exclusive, data)
   end
 
-  def validate(_, _, {"minimum", minimum}, data) do
+  def validate(_, _, {"minimum", minimum}, data, _) do
     do_validate(minimum, false, data)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
@@ -38,7 +32,7 @@ defmodule ExJsonSchema.Validator.Minimum do
     if valid do
       []
     else
-      [%Error{error: %Error.Minimum{expected: minimum, exclusive?: exclusive}, path: ""}]
+      [%Error{error: %Error.Minimum{expected: minimum, exclusive?: exclusive}}]
     end
   end
 

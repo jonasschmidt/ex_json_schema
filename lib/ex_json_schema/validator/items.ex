@@ -13,94 +13,106 @@ defmodule ExJsonSchema.Validator.Items do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors() | no_return
-  def validate(root, schema, {"items", _}, items) when is_list(items) do
-    do_validate(root, schema, items)
+  def validate(root, schema, {"items", _}, items, path) when is_list(items) do
+    do_validate(root, schema, items, path)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
-  defp do_validate(_, %{"items" => true}, _) do
+  defp do_validate(_, %{"items" => true}, _, _) do
     []
   end
 
-  defp do_validate(_, %{"items" => false}, []) do
+  defp do_validate(_, %{"items" => false}, [], _) do
     []
   end
 
-  defp do_validate(_, %{"items" => false}, _) do
-    [%Error{error: %{message: "Schema does not allow items."}, path: ""}]
+  defp do_validate(_, %{"items" => false}, _, _) do
+    [%Error{error: %{message: "Schema does not allow items."}}]
   end
 
-  defp do_validate(root, %{"items" => schema = %{}}, items) when is_list(items) do
+  defp do_validate(root, %{"items" => schema = %{}}, items, path) when is_list(items) do
     items
     |> Enum.with_index()
     |> Enum.flat_map(fn {item, index} ->
-      Validator.validation_errors(root, schema, item, "/#{index}")
+      Validator.validation_errors(root, schema, item, path <> "/#{index}")
     end)
   end
 
-  defp do_validate(root, %{"items" => schemata, "additionalItems" => additional_items}, items)
+  defp do_validate(
+         root,
+         %{"items" => schemata, "additionalItems" => additional_items},
+         items,
+         path
+       )
        when is_list(items) and is_list(schemata) do
-    validate_items(root, {schemata, additional_items}, items, {[], 0})
+    validate_items(root, {schemata, additional_items}, items, {[], 0}, path)
     |> Enum.reverse()
     |> List.flatten()
   end
 
-  defp validate_items(_root, {_schemata, _additional_items}, [], {errors, _index}), do: errors
-  defp validate_items(_root, {[], true}, _items, {errors, _index}), do: errors
+  defp validate_items(_root, {_schemata, _additional_items}, [], {errors, _index}, _), do: errors
+  defp validate_items(_root, {[], true}, _items, {errors, _index}, _), do: errors
 
-  defp validate_items(_root, {[], false}, items, {errors, index}) do
+  defp validate_items(_root, {[], false}, items, {errors, index}, _) do
     [
       %Error{
-        error: %Error.AdditionalItems{additional_indices: index..(index + Enum.count(items) - 1)},
-        path: ""
+        error: %Error.AdditionalItems{additional_indices: index..(index + Enum.count(items) - 1)}
       }
       | errors
     ]
   end
 
-  defp validate_items(root, {[], additional_items_schema}, [item | items], {errors, index}) do
+  defp validate_items(root, {[], additional_items_schema}, [item | items], {errors, index}, path) do
     acc =
-      {[Validator.validation_errors(root, additional_items_schema, item, "/#{index}") | errors],
-       index + 1}
+      {[
+         Validator.validation_errors(root, additional_items_schema, item, path <> "/#{index}")
+         | errors
+       ], index + 1}
 
-    validate_items(root, {[], additional_items_schema}, items, acc)
+    validate_items(root, {[], additional_items_schema}, items, acc, path)
   end
 
   defp validate_items(
          root,
          {[true | schemata], additional_items},
          [_item | items],
-         {errors, index}
+         {errors, index},
+         path
        ) do
-    validate_items(root, {schemata, additional_items}, items, {[[] | errors], index + 1})
+    validate_items(root, {schemata, additional_items}, items, {[[] | errors], index + 1}, path)
   end
 
   defp validate_items(
          root,
          {[false | schemata], additional_items},
          [_item | items],
-         {errors, index}
+         {errors, index},
+         path
        ) do
-    error = %Error{error: %{message: "false never matches"}, path: ""}
-    validate_items(root, {schemata, additional_items}, items, {[[error] | errors], index + 1})
+    error = %Error{error: %{message: "false never matches"}}
+
+    validate_items(
+      root,
+      {schemata, additional_items},
+      items,
+      {[[error] | errors], index + 1},
+      path
+    )
   end
 
   defp validate_items(
          root,
          {[schema | schemata], additional_items},
          [item | items],
-         {errors, index}
+         {errors, index},
+         path
        ) do
-    acc = {[Validator.validation_errors(root, schema, item, "/#{index}") | errors], index + 1}
-    validate_items(root, {schemata, additional_items}, items, acc)
+    acc =
+      {[Validator.validation_errors(root, schema, item, path <> "/#{index}") | errors], index + 1}
+
+    validate_items(root, {schemata, additional_items}, items, acc, path)
   end
 end

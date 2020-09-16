@@ -15,31 +15,27 @@ defmodule ExJsonSchema.Validator.AllOf do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  @spec validate(
-          root :: Root.t(),
-          schema :: ExJsonSchema.data(),
-          property :: {String.t(), ExJsonSchema.data()},
-          data :: ExJsonSchema.data()
-        ) :: Validator.errors()
-  def validate(root, _, {"allOf", all_of}, data) do
-    do_validate(root, all_of, data)
+  def validate(root, _, {"allOf", all_of}, data, path) do
+    do_validate(root, all_of, data, path)
   end
 
-  def validate(_, _, _, _) do
+  def validate(_, _, _, _, _) do
     []
   end
 
-  defp do_validate(root, all_of, data) do
+  defp do_validate(root, all_of, data, path) do
     invalid =
       all_of
-      |> Enum.map(fn schema -> Validator.validation_errors(root, schema, data) end)
       |> Enum.with_index()
+      |> Enum.map(fn {schema, index} ->
+        {Validator.validation_errors(root, schema, data, path), index}
+      end)
       |> Enum.filter(fn {errors, _index} -> !Enum.empty?(errors) end)
       |> Validator.map_to_invalid_errors()
 
     case Enum.empty?(invalid) do
       true -> []
-      false -> [%Error{error: %Error.AllOf{invalid: invalid}, path: ""}]
+      false -> [%Error{error: %Error.AllOf{invalid: invalid}}]
     end
   end
 end
