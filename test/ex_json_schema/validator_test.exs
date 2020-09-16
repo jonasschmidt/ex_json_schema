@@ -460,6 +460,15 @@ defmodule ExJsonSchema.ValidatorTest do
     )
   end
 
+  test "validation errors for const" do
+    assert_validation_errors(
+      %{"const" => "foo"},
+      "bar",
+      [{"Expected data to be \"foo\".", "#"}],
+      [%Error{error: %Error.Const{expected: "foo"}, path: "#"}]
+    )
+  end
+
   test "validation errors for nested objects" do
     assert_validation_errors(
       %{
