@@ -1,5 +1,4 @@
 defmodule ExJsonSchema.Validator.Dependencies do
-  alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Validator.Error
 

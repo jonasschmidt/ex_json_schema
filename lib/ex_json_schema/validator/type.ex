@@ -8,7 +8,6 @@ defmodule ExJsonSchema.Validator.Type do
   https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-6.1.1
   """
 
-  alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Validator.Error
 

@@ -6,8 +6,6 @@ defmodule ExJsonSchema.Validator.MaxItems do
 
   """
 
-  alias ExJsonSchema.Schema.Root
-  alias ExJsonSchema.Validator
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator

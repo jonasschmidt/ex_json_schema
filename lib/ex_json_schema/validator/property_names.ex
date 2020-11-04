@@ -6,7 +6,6 @@ defmodule ExJsonSchema.Validator.PropertyNames do
 
   """
 
-  alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Validator.Error
 

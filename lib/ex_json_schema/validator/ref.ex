@@ -7,9 +7,7 @@ defmodule ExJsonSchema.Validator.Ref do
   """
 
   alias ExJsonSchema.Schema
-  alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
-  alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
