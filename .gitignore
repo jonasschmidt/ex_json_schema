@@ -27,5 +27,6 @@ ex_json_schema-*.tar
 
 # Misc
 mix.lock
+*.plt
 
 .DS_Store
