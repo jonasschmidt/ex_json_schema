@@ -345,6 +345,28 @@ defmodule ExJsonSchema.ValidatorTest do
     )
   end
 
+  test "validation errors for items when none are allowed" do
+    assert_validation_errors(
+      %{
+        "properties" => %{
+          "foo" => %{"items" => %{"properties" => %{"bar" => %{"items" => false}}}}
+        }
+      },
+      %{"foo" => [%{"bar" => ["foo"]}, %{"bar" => []}]},
+      [{"Items are not allowed.", "#/foo/0/bar"}],
+      [%Error{error: %Error.ItemsNotAllowed{}, path: "#/foo/0/bar"}]
+    )
+  end
+
+  test "validation errors for items with false schema" do
+    assert_validation_errors(
+      %{"items" => [false, %{"type" => "string"}, false]},
+      ["foo", "foo", "foo"],
+      [{"False schema never matches.", "#/0"}, {"False schema never matches.", "#/2"}],
+      [%Error{error: %Error.False{}, path: "#/0"}, %Error{error: %Error.False{}, path: "#/2"}]
+    )
+  end
+
   test "validation errors for an invalid item with a list of item schemata and an invalid additional item" do
     assert_validation_errors(
       %{
@@ -535,6 +557,73 @@ defmodule ExJsonSchema.ValidatorTest do
           error: %Error.Contains{
             empty?: true,
             invalid: []
+          },
+          path: "#/foo"
+        }
+      ]
+    )
+  end
+
+  test "validation errors for content encoding" do
+    assert_validation_errors(
+      %{"contentEncoding" => "base64"},
+      "foo",
+      [{"Expected the content to be base64-encoded.", "#"}],
+      [%Error{error: %Error.ContentEncoding{expected: "base64"}, path: "#"}]
+    )
+  end
+
+  test "validation errors for content media type" do
+    assert_validation_errors(
+      %{"contentEncoding" => "base64", "contentMediaType" => "application/json"},
+      Base.encode64("foo"),
+      [{"Expected the content to be of media type application/json.", "#"}],
+      [
+        %Error{
+          error: %Error.ContentMediaType{expected: "application/json", encoding_valid?: true},
+          path: "#"
+        }
+      ]
+    )
+
+    assert_validation_errors(
+      %{"contentEncoding" => "something", "contentMediaType" => "application/json"},
+      Base.encode64("foo"),
+      [{"The content encoding does not match the media type.", "#"}],
+      [
+        %Error{
+          error: %Error.ContentMediaType{expected: "application/json", encoding_valid?: false},
+          path: "#"
+        }
+      ]
+    )
+  end
+
+  test "validation errors for property names" do
+    assert_validation_errors(
+      %{"properties" => %{"foo" => %{"propertyNames" => %{"minLength" => 3, "maxLength" => 5}}}},
+      %{"foo" => %{"f" => true, "foo" => true, "barbaz" => true}},
+      [
+        {"Expected the property names to be valid but the following were not: barbaz, f.",
+         "#/foo"}
+      ],
+      [
+        %Error{
+          error: %Error.PropertyNames{
+            invalid: %{
+              "f" => [
+                %Error{
+                  error: %Error.MinLength{expected: 3, actual: 1},
+                  path: "#/foo/f"
+                }
+              ],
+              "barbaz" => [
+                %Error{
+                  error: %Error.MaxLength{expected: 5, actual: 6},
+                  path: "#/foo/barbaz"
+                }
+              ]
+            }
           },
           path: "#/foo"
         }

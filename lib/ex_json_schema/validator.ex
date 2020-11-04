@@ -10,7 +10,8 @@ defmodule ExJsonSchema.Validator do
               Root.t(),
               ExJsonSchema.data(),
               {String.t(), ExJsonSchema.data()},
-              ExJsonSchema.data()
+              ExJsonSchema.data(),
+              ExJsonSchema.json_path()
             ) :: errors
 
   @validators [

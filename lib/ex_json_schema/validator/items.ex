@@ -30,7 +30,7 @@ defmodule ExJsonSchema.Validator.Items do
   end
 
   defp do_validate(_, %{"items" => false}, _, _) do
-    [%Error{error: %{message: "Schema does not allow items."}}]
+    [%Error{error: %Error.ItemsNotAllowed{}}]
   end
 
   defp do_validate(root, %{"items" => schema = %{}}, items, path) when is_list(items) do
@@ -73,34 +73,6 @@ defmodule ExJsonSchema.Validator.Items do
        ], index + 1}
 
     validate_items(root, {[], additional_items_schema}, items, acc, path)
-  end
-
-  defp validate_items(
-         root,
-         {[true | schemata], additional_items},
-         [_item | items],
-         {errors, index},
-         path
-       ) do
-    validate_items(root, {schemata, additional_items}, items, {[[] | errors], index + 1}, path)
-  end
-
-  defp validate_items(
-         root,
-         {[false | schemata], additional_items},
-         [_item | items],
-         {errors, index},
-         path
-       ) do
-    error = %Error{error: %{message: "false never matches"}}
-
-    validate_items(
-      root,
-      {schemata, additional_items},
-      items,
-      {[[error] | errors], index + 1},
-      path
-    )
   end
 
   defp validate_items(

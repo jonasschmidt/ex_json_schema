@@ -46,6 +46,22 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
     end
   end
 
+  defimpl String.Chars, for: Error.ContentEncoding do
+    def to_string(%Error.ContentEncoding{expected: expected}) do
+      "Expected the content to be #{expected}-encoded."
+    end
+  end
+
+  defimpl String.Chars, for: Error.ContentMediaType do
+    def to_string(%Error.ContentMediaType{encoding_valid?: false}) do
+      "The content encoding does not match the media type."
+    end
+
+    def to_string(%Error.ContentMediaType{expected: expected, encoding_valid?: true}) do
+      "Expected the content to be of media type #{expected}."
+    end
+  end
+
   defimpl String.Chars, for: Error.Dependencies do
     def to_string(%Error.Dependencies{property: property, missing: [missing]}) do
       "Property #{property} depends on property #{missing} to be present but it was not."
@@ -59,6 +75,12 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
   defimpl String.Chars, for: Error.Enum do
     def to_string(%Error.Enum{}) do
       "Value is not allowed in enum."
+    end
+  end
+
+  defimpl String.Chars, for: Error.False do
+    def to_string(%Error.False{}) do
+      "False schema never matches."
     end
   end
 
@@ -76,6 +98,12 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
   defimpl String.Chars, for: Error.IfThenElse do
     def to_string(%Error.IfThenElse{branch: branch}) do
       "Expected the schema in the #{branch} branch to match but it did not."
+    end
+  end
+
+  defimpl String.Chars, for: Error.ItemsNotAllowed do
+    def to_string(%Error.ItemsNotAllowed{}) do
+      "Items are not allowed."
     end
   end
 
@@ -153,6 +181,14 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
   defimpl String.Chars, for: Error.Pattern do
     def to_string(%Error.Pattern{expected: expected}) do
       "Does not match pattern #{inspect(expected)}."
+    end
+  end
+
+  defimpl String.Chars, for: Error.PropertyNames do
+    def to_string(%Error.PropertyNames{invalid: invalid}) do
+      "Expected the property names to be valid but the following were not: #{
+        invalid |> Map.keys() |> Enum.sort() |> Enum.join(", ")
+      }."
     end
   end
 

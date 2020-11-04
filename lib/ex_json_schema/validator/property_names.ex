@@ -13,28 +13,33 @@ defmodule ExJsonSchema.Validator.PropertyNames do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  def validate(root, _, {"propertyNames", property_names}, data, _) do
-    do_validate(root, property_names, data)
+  def validate(root, _, {"propertyNames", property_names}, data, path) do
+    do_validate(root, property_names, data, path)
   end
 
   def validate(_, _, _, _, _) do
     []
   end
 
-  defp do_validate(root, property_names, data = %{}) do
-    valid? =
-      Enum.all?(data, fn {name, _} ->
-        Validator.valid_fragment?(root, property_names, name)
+  defp do_validate(root, property_names, data = %{}, path) do
+    invalid =
+      data
+      |> Enum.flat_map(fn {name, _} ->
+        case Validator.validation_errors(root, property_names, name, path <> "/#{name}") do
+          [] -> []
+          errors -> [{name, errors}]
+        end
       end)
+      |> Enum.into(%{})
 
-    if valid? do
+    if map_size(invalid) == 0 do
       []
     else
-      [%Error{error: %{message: "Expected data keys to match propertyNames but they don't."}}]
+      [%Error{error: %Error.PropertyNames{invalid: invalid}}]
     end
   end
 
-  defp do_validate(_, _, _) do
+  defp do_validate(_, _, _, _) do
     []
   end
 end

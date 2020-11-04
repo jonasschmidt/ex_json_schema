@@ -30,8 +30,4 @@ defmodule ExJsonSchema.Validator.Ref do
   defp do_validate(root, ref, data, path) when is_map(ref) do
     Validator.validation_errors(root, ref, data, path)
   end
-
-  defp do_validate(_, _, _) do
-    [%Error{error: %{message: "$ref is invalid."}}]
-  end
 end

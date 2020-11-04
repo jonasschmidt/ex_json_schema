@@ -25,6 +25,14 @@ defmodule ExJsonSchema.Validator.Error do
     defstruct([:empty?, :invalid])
   end
 
+  defmodule ContentEncoding do
+    defstruct([:expected])
+  end
+
+  defmodule ContentMediaType do
+    defstruct([:expected, :encoding_valid?])
+  end
+
   defmodule Dependencies do
     defstruct([:property, :missing])
   end
@@ -47,6 +55,10 @@ defmodule ExJsonSchema.Validator.Error do
 
   defmodule InvalidAtIndex do
     defstruct([:index, :errors])
+  end
+
+  defmodule ItemsNotAllowed do
+    defstruct([])
   end
 
   defmodule MaxItems do
@@ -95,6 +107,10 @@ defmodule ExJsonSchema.Validator.Error do
 
   defmodule Pattern do
     defstruct([:expected])
+  end
+
+  defmodule PropertyNames do
+    defstruct([:invalid])
   end
 
   defmodule Required do

@@ -29,7 +29,11 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
       []
     else
       _ ->
-        [%Error{error: %{message: "Invalid base64 encoded JSON string."}}]
+        [
+          %Error{
+            error: %Error.ContentMediaType{expected: "application/json", encoding_valid?: true}
+          }
+        ]
     end
   end
 
@@ -39,7 +43,11 @@ defmodule ExJsonSchema.Validator.ContentMediaType do
         []
 
       {:error, _} ->
-        [%Error{error: %{message: "Invalid JSON string."}}]
+        [
+          %Error{
+            error: %Error.ContentMediaType{expected: "application/json", encoding_valid?: false}
+          }
+        ]
     end
   end
 
