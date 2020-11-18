@@ -114,22 +114,13 @@ defmodule ExJsonSchema.Schema do
   end
 
   @spec resolve_root(boolean | Root.t()) :: Root.t() | no_return
-  defp resolve_root(root) do
+  defp resolve_root(%Root{schema: root_schema} = root) do
     schema_version =
-      root.schema
+      root_schema
       |> Map.get("$schema", @current_draft_schema_url <> "#")
-      |> schema_version()
+      |> schema_version!()
 
-    schema_version =
-      case schema_version do
-        {:ok, version} ->
-          version
-
-        :error ->
-          raise UnsupportedSchemaVersionError
-      end
-
-    case assert_valid_schema(root.schema) do
+    case assert_valid_schema(root_schema) do
       :ok ->
         :ok
 
@@ -138,19 +129,24 @@ defmodule ExJsonSchema.Schema do
           message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
     end
 
-    {root, schema} = resolve_with_root(root, root.schema)
+    {root, schema} = resolve_with_root(root, root_schema)
 
-    root
-    |> Map.put(:version, schema_version)
-    |> Map.put(:schema, schema)
+    %Root{root | schema: schema, version: schema_version}
   end
 
-  @spec schema_version(String.t()) :: {:ok, non_neg_integer} | :error
-  defp schema_version(@draft4_schema_url <> _), do: {:ok, 4}
-  defp schema_version(@draft6_schema_url <> _), do: {:ok, 6}
-  defp schema_version(@draft7_schema_url <> _), do: {:ok, 7}
-  defp schema_version(@current_draft_schema_url <> _), do: {:ok, 7}
-  defp schema_version(_), do: :error
+  defp schema_version!(schema_url) do
+    case schema_module(schema_url, :error) do
+      :error -> raise(UnsupportedSchemaVersionError)
+      module -> module.version()
+    end
+  end
+
+  defp schema_module(schema_url, default \\ Draft7)
+  defp schema_module(@draft4_schema_url <> _, _), do: Draft4
+  defp schema_module(@draft6_schema_url <> _, _), do: Draft6
+  defp schema_module(@draft7_schema_url <> _, _), do: Draft7
+  defp schema_module(@current_draft_schema_url <> _, _), do: Draft7
+  defp schema_module(_, default), do: default
 
   @spec assert_valid_schema(map) :: :ok | {:error, Validator.errors()}
   defp assert_valid_schema(schema) do
@@ -160,22 +156,15 @@ defmodule ExJsonSchema.Schema do
       schema_module =
         schema
         |> Map.get("$schema", @current_draft_schema_url <> "#")
-        |> choose_meta_schema_validation_module()
+        |> schema_module()
 
       schema_module.schema()
       |> resolve()
       |> ExJsonSchema.Validator.validate(schema, error_formatter: false)
     else
-      _ ->
-        :ok
+      _ -> :ok
     end
   end
-
-  @spec choose_meta_schema_validation_module(String.t()) :: module
-  defp choose_meta_schema_validation_module(@draft4_schema_url <> _), do: Draft4
-  defp choose_meta_schema_validation_module(@draft6_schema_url <> _), do: Draft6
-  defp choose_meta_schema_validation_module(@draft7_schema_url <> _), do: Draft7
-  defp choose_meta_schema_validation_module(_), do: Draft7
 
   defp resolve_with_root(root, schema, scope \\ "")
 
@@ -309,7 +298,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   @spec remote_schema(String.t()) :: ExJsonSchema.object()
-  defp remote_schema(@current_draft_schema_url <> _), do: Draft4.schema()
+  defp remote_schema(@current_draft_schema_url <> _), do: Draft7.schema()
   defp remote_schema(@draft4_schema_url <> _), do: Draft4.schema()
   defp remote_schema(@draft6_schema_url <> _), do: Draft6.schema()
   defp remote_schema(@draft7_schema_url <> _), do: Draft7.schema()

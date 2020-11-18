@@ -156,4 +156,7 @@ defmodule ExJsonSchema.Schema.Draft6 do
 
   @spec schema() :: ExJsonSchema.data()
   def schema, do: @schema
+
+  @spec version() :: integer()
+  def version, do: 6
 end

@@ -96,4 +96,7 @@ defmodule ExJsonSchema.Schema.Draft4 do
 
   @spec schema() :: ExJsonSchema.object()
   def schema, do: @schema
+
+  @spec version() :: integer()
+  def version, do: 4
 end

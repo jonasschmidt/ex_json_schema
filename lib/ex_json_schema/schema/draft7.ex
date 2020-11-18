@@ -170,4 +170,7 @@ defmodule ExJsonSchema.Schema.Draft7 do
 
   @spec schema() :: ExJsonSchema.data()
   def schema, do: @schema
+
+  @spec version() :: integer()
+  def version, do: 7
 end
