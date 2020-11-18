@@ -196,7 +196,7 @@ defmodule ExJsonSchema.Schema do
         {root, Map.put(schema, k, v)}
       end)
 
-    {root, schema |> sanitize_properties_attribute |> sanitize_additional_items_attribute}
+    {root, schema |> sanitize_attributes()}
   end
 
   defp resolve_property(root, {key, value}, scope) when is_map(value) do
@@ -327,6 +327,13 @@ defmodule ExJsonSchema.Schema do
       fn _url -> raise UndefinedRemoteSchemaResolverError end
   end
 
+  defp sanitize_attributes(schema) do
+    schema
+    |> sanitize_properties_attribute()
+    |> sanitize_additional_items_attribute()
+    |> sanitize_content_encoding_attribute()
+  end
+
   defp sanitize_properties_attribute(schema) do
     if needs_properties_attribute?(schema), do: Map.put(schema, "properties", %{}), else: schema
   end
@@ -342,14 +349,18 @@ defmodule ExJsonSchema.Schema do
       else: schema
   end
 
+  defp sanitize_content_encoding_attribute(schema) do
+    if Map.has_key?(schema, "contentMediaType") and not Map.has_key?(schema, "contentEncoding") do
+      schema |> Map.put("contentEncoding", nil)
+    else
+      schema
+    end
+  end
+
   defp needs_additional_items_attribute?(schema) do
     Map.has_key?(schema, "items") and is_list(schema["items"]) and
       not Map.has_key?(schema, "additionalItems")
   end
-
-  # defp assert_reference_valid(path, root, _ref) do
-  #   get_ref_schema(root, path)
-  # end
 
   defp unescaped_ref_segments(ref) do
     ref

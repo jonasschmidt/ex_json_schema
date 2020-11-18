@@ -53,11 +53,7 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
   end
 
   defimpl String.Chars, for: Error.ContentMediaType do
-    def to_string(%Error.ContentMediaType{encoding_valid?: false}) do
-      "The content encoding does not match the media type."
-    end
-
-    def to_string(%Error.ContentMediaType{expected: expected, encoding_valid?: true}) do
+    def to_string(%Error.ContentMediaType{expected: expected}) do
       "Expected the content to be of media type #{expected}."
     end
   end

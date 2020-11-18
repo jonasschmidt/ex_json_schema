@@ -30,7 +30,7 @@ defmodule ExJsonSchema.Validator.Error do
   end
 
   defmodule ContentMediaType do
-    defstruct([:expected, :encoding_valid?])
+    defstruct([:expected])
   end
 
   defmodule Dependencies do

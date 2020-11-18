@@ -580,7 +580,7 @@ defmodule ExJsonSchema.ValidatorTest do
       [{"Expected the content to be of media type application/json.", "#"}],
       [
         %Error{
-          error: %Error.ContentMediaType{expected: "application/json", encoding_valid?: true},
+          error: %Error.ContentMediaType{expected: "application/json"},
           path: "#"
         }
       ]
@@ -588,11 +588,11 @@ defmodule ExJsonSchema.ValidatorTest do
 
     assert_validation_errors(
       %{"contentEncoding" => "something", "contentMediaType" => "application/json"},
-      Base.encode64("foo"),
-      [{"The content encoding does not match the media type.", "#"}],
+      "{:}",
+      [{"Expected the content to be of media type application/json.", "#"}],
       [
         %Error{
-          error: %Error.ContentMediaType{expected: "application/json", encoding_valid?: false},
+          error: %Error.ContentMediaType{expected: "application/json"},
           path: "#"
         }
       ]

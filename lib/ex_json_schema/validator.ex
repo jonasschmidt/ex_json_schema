@@ -128,8 +128,10 @@ defmodule ExJsonSchema.Validator do
   defp validator_for("anyOf"), do: ExJsonSchema.Validator.AnyOf
   defp validator_for("const"), do: ExJsonSchema.Validator.Const
   defp validator_for("contains"), do: ExJsonSchema.Validator.Contains
-  defp validator_for("contentEncoding"), do: ExJsonSchema.Validator.ContentEncoding
-  defp validator_for("contentMediaType"), do: ExJsonSchema.Validator.ContentMediaType
+
+  defp validator_for("contentEncoding"),
+    do: ExJsonSchema.Validator.ContentEncodingContentMediaType
+
   defp validator_for("dependencies"), do: ExJsonSchema.Validator.Dependencies
   defp validator_for("enum"), do: ExJsonSchema.Validator.Enum
   defp validator_for("exclusiveMaximum"), do: ExJsonSchema.Validator.ExclusiveMaximum
