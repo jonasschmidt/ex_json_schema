@@ -1,6 +1,12 @@
-# Elixir JSON Schema validator
+# Elixir JSON Schema Validator
 
-[![Build Status](https://travis-ci.org/jonasschmidt/ex_json_schema.svg?branch=master)](https://travis-ci.org/jonasschmidt/ex_json_schema) [![Coverage Status](https://coveralls.io/repos/jonasschmidt/ex_json_schema/badge.svg?branch=travis-elixir-version&service=github)](https://coveralls.io/github/jonasschmidt/ex_json_schema?branch=travis-elixir-version) [![Hex.pm](http://img.shields.io/hexpm/v/ex_json_schema.svg)](https://hex.pm/packages/ex_json_schema) [![Hex.pm](http://img.shields.io/hexpm/l/ex_json_schema.svg)](LICENSE)
+[![Build Status](https://travis-ci.org/jonasschmidt/ex_json_schema.svg?branch=master)](https://travis-ci.org/jonasschmidt/ex_json_schema)
+[![Coverage Status](https://coveralls.io/repos/jonasschmidt/ex_json_schema/badge.svg?branch=travis-elixir-version&service=github)](https://coveralls.io/github/jonasschmidt/ex_json_schema?branch=travis-elixir-version)
+[![Module Version](https://img.shields.io/hexpm/v/ex_json_schema.svg)](https://hex.pm/packages/ex_json_schema)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/ex_json_schema/)
+[![Total Download](https://img.shields.io/hexpm/dt/ex_json_schema.svg)](https://hex.pm/packages/ex_json_schema)
+[![License](https://img.shields.io/hexpm/l/ex_json_schema.svg)](https://github.com/jonasschmidt/ex_json_schema/blob/master/LICENSE)
+[![Last Updated](https://img.shields.io/github/last-commit/jonasschmidt/ex_json_schema.svg)](https://github.com/jonasschmidt/ex_json_schema/commits/master)
 
 A JSON Schema validator with full support for the draft 4 specification and zero dependencies. Passes the official [JSON Schema Test Suite](https://github.com/json-schema/JSON-Schema-Test-Suite).
 
@@ -10,7 +16,9 @@ Add the project to your Mix dependencies in `mix.exs`:
 
 ```elixir
 defp deps do
-  [{:ex_json_schema, "~> 0.7.3"}]
+  [
+    {:ex_json_schema, "~> 0.7.4"}
+  ]
 end
 ```
 
@@ -164,10 +172,11 @@ The configured function is called with the arguments `(format, data)` and is exp
 
 [format-spec]: https://json-schema.org/understanding-json-schema/reference/string.html#format
 
-
 ## License
 
-Released under the [MIT license](LICENSE).
+Copyright (c) 2015 Jonas Schmidt
+
+Released under the [MIT license](https://github.com/jonasschmidt/ex_json_schema/blob/master/LICENSE).
 
 ## TODO
 
