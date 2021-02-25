@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/hexpm/l/ex_json_schema.svg)](https://github.com/jonasschmidt/ex_json_schema/blob/master/LICENSE)
 [![Last Updated](https://img.shields.io/github/last-commit/jonasschmidt/ex_json_schema.svg)](https://github.com/jonasschmidt/ex_json_schema/commits/master)
 
-A JSON Schema validator with full support for the draft 4 specification and zero dependencies. Passes the official [JSON Schema Test Suite](https://github.com/json-schema/JSON-Schema-Test-Suite).
+A JSON Schema validator with support for the draft 4, draft 6 and draft 7 specifications and zero dependencies. Passes the official [JSON Schema Test Suite](https://github.com/json-schema/JSON-Schema-Test-Suite).
 
 ## Installation
 
@@ -17,7 +17,7 @@ Add the project to your Mix dependencies in `mix.exs`:
 ```elixir
 defp deps do
   [
-    {:ex_json_schema, "~> 0.7.4"}
+    {:ex_json_schema, "~> 0.8.0-rc1"}
   ]
 end
 ```
