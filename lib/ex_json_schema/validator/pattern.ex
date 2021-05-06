@@ -28,7 +28,7 @@ defmodule ExJsonSchema.Validator.Pattern do
     if matches? do
       []
     else
-      [%Error{error: %Error.Pattern{expected: pattern}}]
+      [%Error{error: %Error.Pattern{expected: pattern}, fragment: pattern}]
     end
   end
 

@@ -23,7 +23,12 @@ defmodule ExJsonSchema.Validator.MinProperties do
     if map_size(data) >= min_properties do
       []
     else
-      [%Error{error: %Error.MinProperties{expected: min_properties, actual: map_size(data)}}]
+      [
+        %Error{
+          error: %Error.MinProperties{expected: min_properties, actual: map_size(data)},
+          fragment: min_properties
+        }
+      ]
     end
   end
 

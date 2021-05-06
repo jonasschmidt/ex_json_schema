@@ -25,7 +25,7 @@ defmodule ExJsonSchema.Validator.MinItems do
     if count >= min_items do
       []
     else
-      [%Error{error: %Error.MinItems{expected: min_items, actual: count}}]
+      [%Error{error: %Error.MinItems{expected: min_items, actual: count}, fragment: min_items}]
     end
   end
 

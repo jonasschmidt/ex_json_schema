@@ -25,7 +25,12 @@ defmodule ExJsonSchema.Validator.MinLength do
     if length >= min_length do
       []
     else
-      [%Error{error: %Error.MinLength{expected: min_length, actual: length}}]
+      [
+        %Error{
+          error: %Error.MinLength{expected: min_length, actual: length},
+          fragment: min_length
+        }
+      ]
     end
   end
 

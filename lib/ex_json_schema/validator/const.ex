@@ -24,7 +24,7 @@ defmodule ExJsonSchema.Validator.Const do
     if const == data do
       []
     else
-      [%Error{error: %Error.Const{expected: const}}]
+      [%Error{error: %Error.Const{expected: const}, fragment: const}]
     end
   end
 end

@@ -22,8 +22,8 @@ defmodule ExJsonSchema.Validator.Contains do
     []
   end
 
-  defp do_validate(_, _, [], _) do
-    [%Error{error: %Error.Contains{empty?: true, invalid: []}}]
+  defp do_validate(_, contains, [], _) do
+    [%Error{error: %Error.Contains{empty?: true, invalid: []}, fragment: contains}]
   end
 
   defp do_validate(root, contains, data, path) when is_list(data) do
@@ -41,8 +41,11 @@ defmodule ExJsonSchema.Validator.Contains do
       |> Validator.map_to_invalid_errors()
 
     case Enum.empty?(invalid) do
-      true -> []
-      false -> [%Error{error: %Error.Contains{empty?: false, invalid: invalid}}]
+      true ->
+        []
+
+      false ->
+        [%Error{error: %Error.Contains{empty?: false, invalid: invalid}, fragment: contains}]
     end
   end
 

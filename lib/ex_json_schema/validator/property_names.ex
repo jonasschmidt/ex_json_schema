@@ -34,7 +34,7 @@ defmodule ExJsonSchema.Validator.PropertyNames do
     if map_size(invalid) == 0 do
       []
     else
-      [%Error{error: %Error.PropertyNames{invalid: invalid}}]
+      [%Error{error: %Error.PropertyNames{invalid: invalid}, fragment: property_names}]
     end
   end
 

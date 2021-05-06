@@ -25,7 +25,7 @@ defmodule ExJsonSchema.Validator.MaxItems do
     if count <= max_items do
       []
     else
-      [%Error{error: %Error.MaxItems{expected: max_items, actual: count}}]
+      [%Error{error: %Error.MaxItems{expected: max_items, actual: count}, fragment: max_items}]
     end
   end
 

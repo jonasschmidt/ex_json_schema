@@ -34,7 +34,7 @@ defmodule ExJsonSchema.Validator.AllOf do
 
     case Enum.empty?(invalid) do
       true -> []
-      false -> [%Error{error: %Error.AllOf{invalid: invalid}}]
+      false -> [%Error{error: %Error.AllOf{invalid: invalid}, fragment: all_of}]
     end
   end
 end

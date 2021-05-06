@@ -38,7 +38,7 @@ defmodule ExJsonSchema.Validator.AnyOf do
 
     case Enum.empty?(invalid) do
       true -> []
-      false -> [%Error{error: %Error.AnyOf{invalid: invalid}}]
+      false -> [%Error{error: %Error.AnyOf{invalid: invalid}, fragment: any_of}]
     end
   end
 

@@ -45,7 +45,12 @@ defmodule ExJsonSchema.Validator.Dependencies do
         []
 
       missing ->
-        [%Error{error: %Error.Dependencies{property: property, missing: missing}}]
+        [
+          %Error{
+            error: %Error.Dependencies{property: property, missing: missing},
+            fragment: dependencies
+          }
+        ]
     end
   end
 end

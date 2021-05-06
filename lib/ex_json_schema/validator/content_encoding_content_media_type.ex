@@ -21,10 +21,13 @@ defmodule ExJsonSchema.Validator.ContentEncodingContentMediaType do
     []
   end
 
-  defp validate_content_encoding("base64", data) when is_bitstring(data) do
+  defp validate_content_encoding("base64" = encoding, data) when is_bitstring(data) do
     case Base.decode64(data) do
-      {:ok, decoded_data} -> {[], decoded_data}
-      :error -> {[%Error{error: %Error.ContentEncoding{expected: "base64"}}], data}
+      {:ok, decoded_data} ->
+        {[], decoded_data}
+
+      :error ->
+        {[%Error{error: %Error.ContentEncoding{expected: "base64"}, fragment: encoding}], data}
     end
   end
 
@@ -32,14 +35,24 @@ defmodule ExJsonSchema.Validator.ContentEncodingContentMediaType do
     {[], data}
   end
 
-  defp validate_content_media_type(%{"contentMediaType" => "application/json"}, data, errors)
+  defp validate_content_media_type(
+         %{"contentMediaType" => "application/json" = content_media_type},
+         data,
+         errors
+       )
        when is_bitstring(data) do
     case ExJsonSchema.Schema.decode_json(data) do
       {:ok, _} ->
         errors
 
       {:error, _} ->
-        errors ++ [%Error{error: %Error.ContentMediaType{expected: "application/json"}}]
+        errors ++
+          [
+            %Error{
+              error: %Error.ContentMediaType{expected: "application/json"},
+              fragment: content_media_type
+            }
+          ]
     end
   end
 

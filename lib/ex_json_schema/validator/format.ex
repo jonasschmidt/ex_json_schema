@@ -78,14 +78,14 @@ defmodule ExJsonSchema.Validator.Format do
             ] do
     case Regex.match?(@formats[format], data) do
       true -> []
-      false -> [%Error{error: %Error.Format{expected: format}}]
+      false -> [%Error{error: %Error.Format{expected: format}, fragment: format}]
     end
   end
 
-  defp do_validate(_, "regex", data) do
+  defp do_validate(_, "regex" = format, data) do
     case Regex.compile(data) do
       {:ok, _} -> []
-      {:error, _} -> [%Error{error: %Error.Format{expected: "regex"}}]
+      {:error, _} -> [%Error{error: %Error.Format{expected: "regex"}, fragment: format}]
     end
   end
 
@@ -103,7 +103,7 @@ defmodule ExJsonSchema.Validator.Format do
   defp validate_with_custom_validator({mod, fun}, format, data) do
     case apply(mod, fun, [format, data]) do
       true -> []
-      false -> [%Error{error: %Error.Format{expected: format}}]
+      false -> [%Error{error: %Error.Format{expected: format}, fragment: format}]
     end
   end
 end

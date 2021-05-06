@@ -68,7 +68,7 @@ defmodule ExJsonSchema.Validator.Properties do
 
   defp validate_additional_properties(_, false, properties, path) when map_size(properties) > 0 do
     Enum.map(properties, fn {name, _} ->
-      %Error{error: %Error.AdditionalProperties{}, path: path <> "/#{name}"}
+      %Error{error: %Error.AdditionalProperties{}, fragment: false, path: path <> "/#{name}"}
     end)
   end
 

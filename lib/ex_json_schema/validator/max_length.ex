@@ -25,7 +25,12 @@ defmodule ExJsonSchema.Validator.MaxLength do
     if length <= max_length do
       []
     else
-      [%Error{error: %Error.MaxLength{expected: max_length, actual: length}}]
+      [
+        %Error{
+          error: %Error.MaxLength{expected: max_length, actual: length},
+          fragment: max_length
+        }
+      ]
     end
   end
 

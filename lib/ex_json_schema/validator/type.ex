@@ -31,7 +31,12 @@ defmodule ExJsonSchema.Validator.Type do
     if valid?(version, type, data) do
       []
     else
-      [%Error{error: %Error.Type{expected: List.wrap(type), actual: data_type(data)}}]
+      [
+        %Error{
+          error: %Error.Type{expected: List.wrap(type), actual: data_type(data)},
+          fragment: type
+        }
+      ]
     end
   end
 

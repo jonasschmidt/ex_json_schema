@@ -24,7 +24,7 @@ defmodule ExJsonSchema.Validator.Required do
   defp do_validate(required, data = %{}) do
     case Enum.filter(List.wrap(required), &(!Map.has_key?(data, &1))) do
       [] -> []
-      missing -> [%Error{error: %Error.Required{missing: missing}}]
+      missing -> [%Error{error: %Error.Required{missing: missing}, fragment: required}]
     end
   end
 

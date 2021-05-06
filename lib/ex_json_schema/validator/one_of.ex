@@ -42,12 +42,18 @@ defmodule ExJsonSchema.Validator.OneOf do
             error: %Error.OneOf{
               valid_indices: [],
               invalid: errors |> Enum.reverse() |> Validator.map_to_invalid_errors()
-            }
+            },
+            fragment: one_of
           }
         ]
 
       _ ->
-        [%Error{error: %Error.OneOf{valid_indices: Enum.reverse(valid_indices), invalid: []}}]
+        [
+          %Error{
+            error: %Error.OneOf{valid_indices: Enum.reverse(valid_indices), invalid: []},
+            fragment: one_of
+          }
+        ]
     end
   end
 end

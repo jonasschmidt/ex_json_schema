@@ -31,7 +31,7 @@ defmodule ExJsonSchema.Validator.UniqueItems do
     if unique? do
       []
     else
-      [%Error{error: %Error.UniqueItems{}}]
+      [%Error{error: %Error.UniqueItems{}, fragment: true}]
     end
   end
 

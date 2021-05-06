@@ -27,7 +27,7 @@ defmodule ExJsonSchema.Validator.ExclusiveMaximum do
     if data < maximum do
       []
     else
-      [%Error{error: %Error.Maximum{expected: maximum, exclusive?: true}}]
+      [%Error{error: %Error.Maximum{expected: maximum, exclusive?: true}, fragment: maximum}]
     end
   end
 

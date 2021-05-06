@@ -56,8 +56,11 @@ defmodule ExJsonSchema.Validator.IfThenElse do
 
   defp validation_errors(root, schema, data, branch) do
     case Validator.validation_errors(root, schema, data) do
-      [] -> []
-      errors -> [%Error{error: %Error.IfThenElse{branch: branch, errors: errors}}]
+      [] ->
+        []
+
+      errors ->
+        [%Error{error: %Error.IfThenElse{branch: branch, errors: errors}, fragment: schema}]
     end
   end
 end

@@ -31,7 +31,7 @@ defmodule ExJsonSchema.Validator.Minimum do
     if valid do
       []
     else
-      [%Error{error: %Error.Minimum{expected: minimum, exclusive?: exclusive}}]
+      [%Error{error: %Error.Minimum{expected: minimum, exclusive?: exclusive}, fragment: minimum}]
     end
   end
 

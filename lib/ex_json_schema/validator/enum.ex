@@ -24,7 +24,7 @@ defmodule ExJsonSchema.Validator.Enum do
   defp do_validate(enum, data) when is_list(enum) do
     case Enum.any?(enum, &(&1 == data)) do
       true -> []
-      false -> [%Error{error: %Error.Enum{}}]
+      false -> [%Error{error: %Error.Enum{}, fragment: enum}]
     end
   end
 

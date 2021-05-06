@@ -29,7 +29,7 @@ defmodule ExJsonSchema.Validator.Items do
   end
 
   defp do_validate(_, %{"items" => false}, _, _) do
-    [%Error{error: %Error.ItemsNotAllowed{}}]
+    [%Error{error: %Error.ItemsNotAllowed{}, fragment: false}]
   end
 
   defp do_validate(root, %{"items" => schema = %{}}, items, path) when is_list(items) do
@@ -58,7 +58,8 @@ defmodule ExJsonSchema.Validator.Items do
   defp validate_items(_root, {[], false}, items, {errors, index}, _) do
     [
       %Error{
-        error: %Error.AdditionalItems{additional_indices: index..(index + Enum.count(items) - 1)}
+        error: %Error.AdditionalItems{additional_indices: index..(index + Enum.count(items) - 1)},
+        fragment: false
       }
       | errors
     ]

@@ -23,7 +23,12 @@ defmodule ExJsonSchema.Validator.MaxProperties do
     if map_size(data) <= max_properties do
       []
     else
-      [%Error{error: %Error.MaxProperties{expected: max_properties, actual: map_size(data)}}]
+      [
+        %Error{
+          error: %Error.MaxProperties{expected: max_properties, actual: map_size(data)},
+          fragment: max_properties
+        }
+      ]
     end
   end
 

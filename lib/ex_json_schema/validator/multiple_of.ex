@@ -23,9 +23,9 @@ defmodule ExJsonSchema.Validator.MultipleOf do
     []
   end
 
-  defp do_validate(0, _) do
+  defp do_validate(0 = multiple_of, _) do
     # "Expected multipleOf to be > 1."
-    [%Error{error: %Error.MultipleOf{expected: 0}}]
+    [%Error{error: %Error.MultipleOf{expected: 0}, fragment: multiple_of}]
   end
 
   defp do_validate(_, data) when not is_number(data) do
@@ -36,7 +36,7 @@ defmodule ExJsonSchema.Validator.MultipleOf do
     if Float.ceil(data / multiple_of) == Float.floor(data / multiple_of) do
       []
     else
-      [%Error{error: %Error.MultipleOf{expected: multiple_of}}]
+      [%Error{error: %Error.MultipleOf{expected: multiple_of}, fragment: multiple_of}]
     end
   end
 

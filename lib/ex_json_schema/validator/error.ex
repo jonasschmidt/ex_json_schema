@@ -1,5 +1,5 @@
 defmodule ExJsonSchema.Validator.Error do
-  defstruct [:error, :path]
+  defstruct [:error, :fragment, :path]
 
   defmodule AdditionalItems do
     defstruct([:additional_indices])
