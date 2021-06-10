@@ -14,9 +14,6 @@ defmodule ExJsonSchema.Validator.Format do
   @behaviour ExJsonSchema.Validator
 
   @formats %{
-    "date" => ~r/^(\d\d\d\d)-(\d\d)-(\d\d)$/,
-    "date-time" =>
-      ~r/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])[tT](2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?([zZ]|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$/,
     "email" =>
       ~r<^[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*@(?:[A-Z0-9-]+\.)+[a-z]{2,}$>i,
     "hostname" =>
@@ -57,10 +54,25 @@ defmodule ExJsonSchema.Validator.Format do
     []
   end
 
+  defp do_validate(_, "date" = format, data) do
+    case Date.from_iso8601(data) do
+      {:ok, %Date{}} -> []
+      _ -> [%Error{error: %Error.Format{expected: format}}]
+    end
+  end
+
+  defp do_validate(_, "date-time" = format, data) do
+    data
+    |> String.upcase()
+    |> DateTime.from_iso8601()
+    |> case do
+      {:ok, %DateTime{}, _} -> []
+      _ -> [%Error{error: %Error.Format{expected: format}}]
+    end
+  end
+
   defp do_validate(_, format, data)
        when format in [
-              "date",
-              "date-time",
               "email",
               "idn-email",
               "idn-hostname",
