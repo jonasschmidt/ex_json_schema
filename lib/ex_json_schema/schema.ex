@@ -4,7 +4,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defmodule InvalidSchemaError do
-    defexception message: "invalid schema"
+    defexception message: "invalid schema", errors: []
   end
 
   defmodule MissingJsonDecoderError do
@@ -75,7 +75,8 @@ defmodule ExJsonSchema.Schema do
 
       {:error, errors} ->
         raise InvalidSchemaError,
-          message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
+          message: "schema did not pass validation against its meta-schema: #{inspect(errors)}",
+          errors: errors
     end
 
     {root, schema} = resolve_with_root(root, schema)
