@@ -4,7 +4,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defmodule InvalidSchemaError do
-    defexception message: "invalid schema"
+    defexception message: "invalid schema", errors: []
   end
 
   defmodule MissingJsonDecoderError do
@@ -65,6 +65,23 @@ defmodule ExJsonSchema.Schema do
 
   def resolve(schema = %{}, options) do
     resolve(%Root{schema: schema}, options)
+  end
+
+  def resolve_with_schema(schema, schema_module) when is_map(schema) and is_atom(schema_module) do
+    root = %Root{schema: schema}
+    case assert_valid_schema(schema, schema_module) do
+      :ok ->
+        :ok
+
+      {:error, errors} ->
+        raise InvalidSchemaError,
+          message: "schema did not pass validation against its meta-schema: #{inspect(errors)}",
+          errors: errors
+    end
+
+    {root, schema} = resolve_with_root(root, schema)
+
+    %Root{root | schema: schema, version: "#{inspect(schema_module)}"}
   end
 
   @spec get_fragment(Root.t(), ref_path | ExJsonSchema.json_path()) ::
@@ -149,14 +166,18 @@ defmodule ExJsonSchema.Schema do
   defp schema_module(_, default), do: default
 
   @spec assert_valid_schema(map) :: :ok | {:error, Validator.errors()}
-  defp assert_valid_schema(schema) do
+  defp assert_valid_schema(schema, override_module \\ nil) do
     with false <- meta04?(schema),
          false <- meta06?(schema),
          false <- meta07?(schema) do
       schema_module =
+      if override_module do
+        override_module
+      else
         schema
         |> Map.get("$schema", @current_draft_schema_url <> "#")
         |> schema_module()
+      end
 
       schema_module.schema()
       |> resolve()
