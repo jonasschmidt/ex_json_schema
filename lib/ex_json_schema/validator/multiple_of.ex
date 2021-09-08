@@ -9,6 +9,7 @@ defmodule ExJsonSchema.Validator.MultipleOf do
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
+  @zero Decimal.new(0)
 
   @impl ExJsonSchema.Validator
   def validate(_, _, {"multipleOf", multiple_of}, data, _) do
@@ -19,28 +20,27 @@ defmodule ExJsonSchema.Validator.MultipleOf do
     []
   end
 
-  defp do_validate(_, 0) do
-    []
-  end
-
-  defp do_validate(0, _) do
-    # "Expected multipleOf to be > 1."
-    [%Error{error: %Error.MultipleOf{expected: 0}}]
-  end
-
-  defp do_validate(_, data) when not is_number(data) do
-    []
-  end
-
   defp do_validate(multiple_of, data) when is_number(multiple_of) and is_number(data) do
-    if Float.ceil(data / multiple_of) == Float.floor(data / multiple_of) do
-      []
-    else
-      [%Error{error: %Error.MultipleOf{expected: multiple_of}}]
+    dec_multiple_of = dec(multiple_of)
+    dec_data = dec(data)
+
+    cond do
+      dec_multiple_of == @zero -> [%Error{error: %Error.MultipleOf{expected: 0}}]
+      dec_data == @zero -> []
+      Decimal.integer?(Decimal.div(dec_data, dec_multiple_of)) -> []
+      true -> [%Error{error: %Error.MultipleOf{expected: multiple_of}}]
     end
   end
 
   defp do_validate(_, _) do
     []
+  end
+
+  defp dec(number) do
+    if is_float(number) do
+      Decimal.from_float(number)
+    else
+      Decimal.new(number)
+    end
   end
 end

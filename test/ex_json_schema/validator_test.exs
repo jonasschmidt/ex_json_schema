@@ -473,6 +473,25 @@ defmodule ExJsonSchema.ValidatorTest do
       [{"Expected value to be a multiple of 2.", "#"}],
       [%Error{error: %Error.MultipleOf{expected: 2}, path: "#"}]
     )
+
+    assert_validation_errors(
+      %{"multipleOf" => 0.1},
+      123.45,
+      [{"Expected value to be a multiple of 0.1.", "#"}],
+      [%Error{error: %Error.MultipleOf{expected: 0.1}, path: "#"}]
+    )
+
+    assert valid?(%{"multipleOf" => 5}, 0)
+  end
+
+  test "multiple of validator division by 0" do
+    assert ExJsonSchema.Validator.MultipleOf.validate(nil, nil, {"multipleOf", 0}, 5, nil) ==
+             [%Error{error: %Error.MultipleOf{expected: 0}}]
+  end
+
+  test "multiple of precision" do
+    assert valid?(%{"multipleOf" => 0.01}, 147.41)
+    assert valid?(%{"multipleOf" => 0.01}, 147.42)
   end
 
   test "validation errors for minimum length" do
