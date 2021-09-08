@@ -1,7 +1,7 @@
 # Elixir JSON Schema Validator
 
-[![Build Status](https://travis-ci.org/jonasschmidt/ex_json_schema.svg?branch=master)](https://travis-ci.org/jonasschmidt/ex_json_schema)
-[![Coverage Status](https://coveralls.io/repos/jonasschmidt/ex_json_schema/badge.svg?branch=travis-elixir-version&service=github)](https://coveralls.io/github/jonasschmidt/ex_json_schema?branch=travis-elixir-version)
+[![Build Status](https://app.travis-ci.com/jonasschmidt/ex_json_schema.svg?branch=master)](https://app.travis-ci.com/github/jonasschmidt/ex_json_schema)
+[![Coverage Status](https://coveralls.io/repos/github/jonasschmidt/ex_json_schema/badge.svg?branch=master)](https://coveralls.io/github/jonasschmidt/ex_json_schema?branch=master)
 [![Module Version](https://img.shields.io/hexpm/v/ex_json_schema.svg)](https://hex.pm/packages/ex_json_schema)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/ex_json_schema/)
 [![Total Download](https://img.shields.io/hexpm/dt/ex_json_schema.svg)](https://hex.pm/packages/ex_json_schema)
