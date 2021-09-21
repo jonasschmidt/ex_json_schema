@@ -1,9 +1,10 @@
-defmodule ExComponentSchema.JsonSchemaDraft7TestSuiteTest do
+defmodule ExComponentSchema.JsonSchemaDraftLenraTestSuiteTest do
   use ExUnit.Case, async: true
 
   use ExComponentSchema.Test.Support.TestSuiteTemplate,
-    schema_tests_path: "test/JSON-Schema-Test-Suite/tests/draft7/",
-    schema_url: "http://json-schema.org/draft-07/schema",
+    schema_tests_path: "test/API-component-Test-Suite/tests/",
+    schema_url:
+      "https://raw.githubusercontent.com/lenra-io/ex_component_schema/beta/priv/static/draft-lenra.json",
     ignored_tests: [
       "Location-independent identifier: match",
       "Location-independent identifier: mismatch",

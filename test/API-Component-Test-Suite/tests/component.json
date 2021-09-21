@@ -1,0 +1,120 @@
+[
+    {
+        "description": "component",
+        "schema": {
+            "type": "component",
+            "properties": {
+                "type": {
+                    "enum": [
+                        "machin"
+                    ]
+                },
+                "onPressed": {
+                    "$ref": "#/$defs/listener"
+                },
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "type": "component"
+                    }
+                }
+            },
+            "required": [
+                "type",
+                "onPressed"
+            ],
+            "additionalProperties": false,
+            "$defs": {
+                "listener": {
+                    "type": "listener",
+                    "properties": {
+                        "action": {
+                            "type": "string"
+                        },
+                        "props": {
+                            "type": "object"
+                        }
+                    },
+                    "required": [
+                        "action"
+                    ]
+                }
+            }
+        },
+        "tests": [
+            {
+                "description": "valid",
+                "data": {
+                    "type": "machin",
+                    "onPressed": {
+                        "action": "myAction",
+                        "props": {
+                            "my": "data"
+                        }
+                    }
+                },
+                "valid": true
+            },
+            {
+                "description": "valid, additional properties on listener allowed",
+                "data": {
+                    "type": "machin",
+                    "onPressed": {
+                        "action": "myAction",
+                        "props": {
+                            "my": "data"
+                        },
+                        "foo": "bar"
+                    }
+                },
+                "valid": true
+            },
+            {
+                "description": "invalid, additional properties on component not allowed",
+                "data": {
+                    "type": "machin",
+                    "onPressed": {
+                        "action": "myAction",
+                        "props": {
+                            "my": "data"
+                        }
+                    },
+                    "foo": "bar"
+                },
+                "valid": false
+            },
+            {
+                "description": "invalid, bad component name",
+                "data": {
+                    "type": "foo",
+                    "onPressed": {
+                        "action": "myAction",
+                        "props": {
+                            "my": "data"
+                        }
+                    }
+                },
+                "valid": false
+            },
+            {
+                "description": "invalid, action is required in listener",
+                "data": {
+                    "type": "machin",
+                    "onPressed": {
+                        "props": {
+                            "my": "data"
+                        }
+                    }
+                },
+                "valid": false
+            },
+            {
+                "description": "invalid, onPressed must be defined",
+                "data": {
+                    "type": "machin"
+                },
+                "valid": false
+            }
+        ]
+    }
+]

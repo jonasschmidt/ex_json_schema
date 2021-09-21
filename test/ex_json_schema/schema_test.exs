@@ -1,7 +1,7 @@
-defmodule ExJsonSchema.SchemaTest do
+defmodule ExComponentSchema.SchemaTest do
   use ExUnit.Case, async: true
 
-  import ExJsonSchema.Schema, only: [resolve: 1, get_fragment: 2, get_fragment!: 2]
+  import ExComponentSchema.Schema, only: [resolve: 1, get_fragment: 2, get_fragment!: 2]
 
   test "fails when trying to resolve something that is not a schema" do
     assert_raise FunctionClauseError, fn -> resolve("foo") end
@@ -17,25 +17,30 @@ defmodule ExJsonSchema.SchemaTest do
     assert is_map(resolve(current_schema)) == true
     assert is_map(resolve(draft4_schema)) == true
 
-    assert_raise ExJsonSchema.Schema.UnsupportedSchemaVersionError, fn ->
+    assert_raise ExComponentSchema.Schema.UnsupportedSchemaVersionError, fn ->
       resolve(draft3_schema)
     end
 
-    assert_raise ExJsonSchema.Schema.UnsupportedSchemaVersionError, fn ->
+    assert_raise ExComponentSchema.Schema.UnsupportedSchemaVersionError, fn ->
       resolve(unknown_schema)
     end
   end
 
   test "resolves a schema" do
     schema = %{"foo" => 1, "bar" => %{"baz" => 3}}
-    assert resolve(schema) == %ExJsonSchema.Schema.Root{refs: %{}, schema: schema, version: 7}
+
+    assert resolve(schema) == %ExComponentSchema.Schema.Root{
+             refs: %{},
+             schema: schema,
+             version: 7
+           }
   end
 
   test "schema is validated against its meta-schema" do
     schema = %{"properties" => "foo"}
 
-    assert_raise ExJsonSchema.Schema.InvalidSchemaError,
-                 ~s(schema did not pass validation against its meta-schema: [%ExJsonSchema.Validator.Error{error: %ExJsonSchema.Validator.Error.Type{actual: "string", expected: ["object"]}, path: "#/properties"}]),
+    assert_raise ExComponentSchema.Schema.InvalidSchemaError,
+                 ~s(schema did not pass validation against its meta-schema: [%ExComponentSchema.Validator.Error{error: %ExComponentSchema.Validator.Error.Type{actual: "string", expected: ["object"]}, path: "#/properties"}]),
                  fn -> resolve(schema) end
   end
 
@@ -65,7 +70,7 @@ defmodule ExJsonSchema.SchemaTest do
   test "catches references with an invalid property in the path" do
     schema = %{"$ref" => "#/foo"}
 
-    assert_raise ExJsonSchema.Schema.InvalidReferenceError, "invalid reference #/foo", fn ->
+    assert_raise ExComponentSchema.Schema.InvalidReferenceError, "invalid reference #/foo", fn ->
       resolve(schema)
     end
   end
@@ -73,7 +78,7 @@ defmodule ExJsonSchema.SchemaTest do
   test "catches references with an invalid index in the path" do
     schema = %{"$ref" => "http://json-schema.org/schema#/1"}
 
-    assert_raise ExJsonSchema.Schema.InvalidReferenceError,
+    assert_raise ExComponentSchema.Schema.InvalidReferenceError,
                  "invalid reference http://json-schema.org/schema#/1",
                  fn -> resolve(schema) end
   end
@@ -81,7 +86,7 @@ defmodule ExJsonSchema.SchemaTest do
   test "catches invalid references" do
     schema = %{"$ref" => "#definitions/foo"}
 
-    assert_raise ExJsonSchema.Schema.InvalidReferenceError,
+    assert_raise ExComponentSchema.Schema.InvalidReferenceError,
                  "invalid reference #definitions/foo",
                  fn -> resolve(schema) end
   end
@@ -105,7 +110,7 @@ defmodule ExJsonSchema.SchemaTest do
   test "using a previously cached remote schema" do
     url = "http://localhost:1234/integer.json"
     refs = Map.put(%{}, url, %{"type" => "boolean"})
-    schema = %ExJsonSchema.Schema.Root{refs: refs, schema: %{"$ref" => url}}
+    schema = %ExComponentSchema.Schema.Root{refs: refs, schema: %{"$ref" => url}}
     resolved = resolve(schema)
     path = resolved.schema["$ref"]
     assert get_fragment!(resolved, path) == %{"type" => "boolean"}
@@ -115,7 +120,7 @@ defmodule ExJsonSchema.SchemaTest do
     schema = resolve(%{"foo" => 1, "bar" => %{"baz" => 3}})
     assert {:error, :invalid_reference} == get_fragment(schema, "#/baz")
 
-    assert_raise ExJsonSchema.Schema.InvalidReferenceError, "invalid reference #/baz", fn ->
+    assert_raise ExComponentSchema.Schema.InvalidReferenceError, "invalid reference #/baz", fn ->
       get_fragment!(schema, "#/baz")
     end
   end

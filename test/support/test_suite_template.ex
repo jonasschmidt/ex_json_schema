@@ -1,9 +1,9 @@
-defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
+defmodule ExComponentSchema.Test.Support.TestSuiteTemplate do
   use ExUnit.CaseTemplate
 
   using opts do
     quote bind_quoted: [opts: opts] do
-      alias ExJsonSchema.Test.Support.TestHelpers
+      alias ExComponentSchema.Test.Support.TestHelpers
 
       @schema_tests_path opts[:schema_tests_path]
       @schema_url opts[:schema_url]
@@ -38,23 +38,27 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
               "base URI change - change folder in subschema: number is valid"
             ]
             if "#{description}: #{@test["description"]}" in @active and
-                 not (name in @ignored_tests) do
+                 name not in @ignored_tests do
               @tag :only
             end
 
             @tag String.to_atom("json_schema_" <> name)
             test "[#{name}] #{description}: #{@test["description"]}" do
-              valid? =
+              validated =
                 try do
                   @schema
-                  |> ExJsonSchema.Schema.resolve()
-                  |> ExJsonSchema.Validator.valid?(@test["data"])
+                  |> ExComponentSchema.Schema.resolve()
+                  |> ExComponentSchema.Validator.validate(@test["data"])
                 rescue
-                  e in ExJsonSchema.Schema.InvalidSchemaError ->
-                    false
+                  e in ExComponentSchema.Schema.InvalidSchemaError ->
+                    {:error, e}
                 end
 
-              assert(valid? == @test["valid"])
+              if @test["valid"] do
+                assert :ok = validated
+              else
+                assert {:error, _} = validated
+              end
             end
           end)
         end)
