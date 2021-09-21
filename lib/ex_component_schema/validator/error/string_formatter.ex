@@ -67,6 +67,11 @@ defmodule ExComponentSchema.Validator.Error.StringFormatter do
   end
 
   defimpl String.Chars, for: Error.Enum do
+    def to_string(%Error.Enum{enum: [item], actual: actual})
+        when is_bitstring(actual) and is_bitstring(item) do
+      "#{actual} is invalid. Should have been #{item}"
+    end
+
     def to_string(%Error.Enum{}) do
       "Value is not allowed in enum."
     end

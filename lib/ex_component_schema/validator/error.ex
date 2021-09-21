@@ -40,7 +40,7 @@ defmodule ExComponentSchema.Validator.Error do
   end
 
   defmodule Enum do
-    defstruct([])
+    defstruct([:enum, :actual])
   end
 
   defmodule False do

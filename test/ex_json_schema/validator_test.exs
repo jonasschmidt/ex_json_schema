@@ -428,7 +428,7 @@ defmodule ExComponentSchema.ValidatorTest do
       %{"enum" => ["foo", "bar"]},
       %{"baz" => 1},
       [{"Value is not allowed in enum.", "#"}],
-      [%Error{error: %Error.Enum{}, path: "#"}]
+      [%Error{error: %Error.Enum{actual: %{"baz" => 1}, enum: ["foo", "bar"]}, path: "#"}]
     )
   end
 
