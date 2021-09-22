@@ -15,10 +15,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "12"
+          node-version: "14"
       - name: Setup node deps
-        run: npm i conventional-changelog-conventionalcommits @semantic-release/exec @semantic-release/git -D
+        run: npm i conventional-changelog-conventionalcommits@4 @semantic-release/exec @semantic-release/git -D
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+        run: npx semantic-release@8
