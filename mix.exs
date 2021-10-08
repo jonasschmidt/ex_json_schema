@@ -2,7 +2,7 @@ defmodule ExJsonSchema.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/jonasschmidt/ex_json_schema"
-  @version "0.8.1"
+  @version "0.9.0"
 
   def project do
     [
@@ -33,6 +33,7 @@ defmodule ExJsonSchema.Mixfile do
 
   defp deps do
     [
+      {:decimal, "~> 2.0"},
       {:dialyxir, "~> 0.5", only: [:test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
