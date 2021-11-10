@@ -669,7 +669,6 @@ defmodule ExJsonSchema.ValidatorTest do
 
   test "format validation succeeds for a naive datetime" do
     assert :ok == validate(%{"format" => "date-time"}, "2012-12-12 12:12:12")
-    )
   end
 
   test "validation errors for date-time format" do
