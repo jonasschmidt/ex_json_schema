@@ -61,12 +61,23 @@ defmodule ExJsonSchema.Validator.Format do
     end
   end
 
-  defp do_validate(_, "date-time" = format, data) do
+  defp do_validate(root, "date-time" = format, data) do
     data
     |> String.upcase()
     |> DateTime.from_iso8601()
     |> case do
       {:ok, %DateTime{}, _} -> []
+      {:error, :missing_offset} -> do_validate(root, "naive-datetime", data)
+      _ -> [%Error{error: %Error.Format{expected: format}}]
+    end
+  end
+
+  defp do_validate(_, "naive-date-time" = format, data) do
+    data
+    |> String.upcase()
+    |> NaiveDateTime.from_iso8601()
+    |> case do
+      {:ok, %NaiveDateTime{}, _} -> []
       _ -> [%Error{error: %Error.Format{expected: format}}]
     end
   end
