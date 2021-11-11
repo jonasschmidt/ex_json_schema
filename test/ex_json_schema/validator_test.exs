@@ -667,7 +667,7 @@ defmodule ExJsonSchema.ValidatorTest do
     assert :ok == validate(%{"format" => "date-time"}, false)
   end
 
-  test "format validation succeeds for datetime with tz offset" do
+  test "format validation succeeds for datetime without tz offset" do
     assert :ok == validate(%{"format" => "date-time"}, "2012-12-12 12:12:12")
   end
 
