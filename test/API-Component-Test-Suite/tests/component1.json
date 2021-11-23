@@ -1,0 +1,64 @@
+[
+    {
+        "description": "component",
+        "schema": {
+            "type": "component",
+            "properties": {
+                "type": {
+                    "enum": [
+                        "machin"
+                    ]
+                },
+                "text": {
+                    "type": "string"
+                },
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "type": "component",
+                        "properties": {
+                            "type": {
+                                "enum": [
+                                    "truc"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "required": [
+                "type",
+                "text"
+            ],
+            "additionalProperties": false
+        },
+        "tests": [
+            {
+                "description": "valid, type for a children",
+                "data": {
+                    "type": "machin",
+                    "text": "truc",
+                    "children": [
+                        {
+                            "type": "truc"
+                        }
+                    ]
+                },
+                "valid": true
+            },
+            {
+                "description": "invalid, type for a children",
+                "data": {
+                    "type": "machin",
+                    "text": "truc",
+                    "children": [
+                        {
+                            "type": "machin"
+                        }
+                    ]
+                },
+                "valid": false
+            }
+        ]
+    }
+]
