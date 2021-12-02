@@ -64,9 +64,9 @@ defmodule ExJsonSchema.Validator.Format do
   defp do_validate(_, "date-time" = format, data) do
     data
     |> String.upcase()
-    |> DateTime.from_iso8601()
+    |> NaiveDateTime.from_iso8601()
     |> case do
-      {:ok, %DateTime{}, _} -> []
+      {:ok, %NaiveDateTime{}} -> []
       _ -> [%Error{error: %Error.Format{expected: format}}]
     end
   end
