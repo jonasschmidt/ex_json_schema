@@ -10,6 +10,7 @@ defmodule ExJsonSchema.Validator.Format do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator.Error
+  alias ExJsonSchema.Validator.Pattern
 
   @behaviour ExJsonSchema.Validator
 
@@ -95,7 +96,10 @@ defmodule ExJsonSchema.Validator.Format do
   end
 
   defp do_validate(_, "regex", data) do
-    case Regex.compile(data) do
+    # Fix for \\u apearing in regexes
+    data = Pattern.convert_regex(data)
+
+    case Regex.compile(data, [:unicode]) do
       {:ok, _} -> []
       {:error, _} -> [%Error{error: %Error.Format{expected: "regex"}}]
     end

@@ -22,7 +22,8 @@ defmodule ExJsonSchema.Validator.Pattern do
   defp do_validate(pattern, data) when is_bitstring(data) do
     matches? =
       pattern
-      |> Regex.compile!()
+      |> convert_regex()
+      |> Regex.compile!([:unicode])
       |> Regex.match?(data)
 
     if matches? do
@@ -34,5 +35,11 @@ defmodule ExJsonSchema.Validator.Pattern do
 
   defp do_validate(_, _) do
     []
+  end
+
+  def convert_regex(r) do
+    r
+    # Converts \\u to \x{}
+    |> String.replace(~r/\\u([A-F0-9]{2,4})/, "\\x\{\\g{1}\}")
   end
 end

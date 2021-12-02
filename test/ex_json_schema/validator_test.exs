@@ -521,6 +521,29 @@ defmodule ExJsonSchema.ValidatorTest do
     )
   end
 
+  test "validation errors for a bad regex" do
+    assert_validation_errors(
+      %{"format" => "regex", "type" => "string"},
+      "(.*",
+      [{"Expected to be a valid regex.", "#"}],
+      [%Error{error: %Error.Format{expected: "regex"}, path: "#"}]
+    )
+  end
+
+  test "validation with a regex with unicode characters" do
+    assert valid?(
+             %{"format" => "regex", "type" => "string"},
+             "\\u00AAF2"
+           )
+  end
+
+  test "validation with a pattern with unicode characters" do
+    assert valid?(
+             %{"pattern" => "\\u00AAF2"},
+             "\u00AAF2"
+           )
+  end
+
   test "validation errors for const" do
     assert_validation_errors(
       %{"const" => "foo"},
