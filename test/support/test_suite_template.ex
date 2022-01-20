@@ -21,12 +21,12 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
 
         name
         |> TestHelpers.load_schema_test(@schema_tests_path)
-        |> Enum.each(fn fixture ->
-          %{"description" => description, "schema" => schema, "tests" => tests} = fixture
-
+        |> Enum.uniq_by(& &1["description"])
+        |> Enum.each(fn %{"description" => description, "schema" => schema, "tests" => tests} ->
           @schema if is_map(schema), do: Map.put_new(schema, "$schema", @schema_url), else: schema
 
-          Enum.each(tests, fn t ->
+          tests
+          |> Enum.each(fn t ->
             @test t
 
             if name in @ignored_suites or
@@ -35,14 +35,14 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
             end
 
             @active [
-              "base URI change - change folder in subschema: number is valid"
+              "refs with relative uris and defs"
             ]
-            if "#{description}: #{@test["description"]}" in @active and
-                 not (name in @ignored_tests) do
+            if description in @active and
+                 name not in @ignored_tests do
               @tag :only
             end
 
-            @tag String.to_atom("json_schema_" <> name)
+            @tag String.to_atom(name)
             test "[#{name}] #{description}: #{@test["description"]}" do
               valid? =
                 try do
