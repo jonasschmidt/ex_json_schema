@@ -1,7 +1,6 @@
 defmodule ExJsonSchema.Schema.Root do
   defstruct schema: %{},
             refs: %{},
-            definitions: %{},
             location: :root,
             version: nil,
             custom_format_validator: nil
@@ -10,7 +9,6 @@ defmodule ExJsonSchema.Schema.Root do
           schema: ExJsonSchema.Schema.resolved(),
           refs: %{String.t() => ExJsonSchema.Schema.resolved()},
           location: :root | String.t(),
-          definitions: %{String.t() => ExJsonSchema.Schema.resolved()},
           version: non_neg_integer | nil,
           custom_format_validator: {module(), atom()} | nil
         }

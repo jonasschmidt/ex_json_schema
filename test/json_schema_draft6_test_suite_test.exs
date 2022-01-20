@@ -4,20 +4,17 @@ defmodule ExJsonSchema.JsonSchemaDraft6TestSuiteTest do
   use ExJsonSchema.Test.Support.TestSuiteTemplate,
     schema_tests_path: "test/JSON-Schema-Test-Suite/tests/draft6/",
     schema_url: "http://json-schema.org/draft-06/schema",
+    ignored_suites: [
+      "optional/non-bmp-regex",
+      "optional/ecmascript-regex",
+      # TODO: check this one
+      "optional/format/ipv6",
+      "optional/float-overflow"
+    ],
     ignored_tests: [
-      "Location-independent identifier: match",
-      "Location-independent identifier: mismatch",
-      "Location-independent identifier with absolute URI: match",
-      "Location-independent identifier with absolute URI: mismatch",
-      "Location-independent identifier with base URI change in subschema: match",
-      "Location-independent identifier with base URI change in subschema: mismatch",
-      "Recursive references between schemas: invalid tree",
-      "Recursive references between schemas: valid tree",
-      "ECMA 262 \\S matches everything but ascii whitespace: latin-1 non-breaking-space matches (unlike e.g. Python)",
-      "ECMA 262 \\w matches everything but ascii letters: latin-1 e-acute matches (unlike e.g. Python)",
-      "ECMA 262 \\D matches everything but ascii digits: NKO DIGIT ZERO (as \\u escape) matches",
-      "ECMA 262 \\D matches everything but ascii digits: NKO DIGIT ZERO matches (unlike e.g. Python)",
-      "ECMA 262 regex non-compliance: ECMA 262 has no support for \\Z anchor from .NET",
-      "ECMA 262 regex $ does not match trailing newline: matches in Python, but should not in jsonschema"
+      "validation of IP addresses: leading zeroes should be rejected, as they are treated as octals",
+      "validation of date-time strings: a valid date-time with a leap second, UTC",
+      "validation of date-time strings: a valid date-time with a leap second, with minus offset",
+      "validation of URIs: an invalid URI with comma in scheme"
     ]
 end
