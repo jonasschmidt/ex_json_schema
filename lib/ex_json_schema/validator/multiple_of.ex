@@ -27,9 +27,11 @@ defmodule ExJsonSchema.Validator.MultipleOf do
     cond do
       dec_multiple_of == @zero -> [%Error{error: %Error.MultipleOf{expected: 0}}]
       dec_data == @zero -> []
-      Decimal.integer?(Decimal.div(dec_data, dec_multiple_of)) -> []
+      Decimal.equal?(Decimal.rem(dec_data, dec_multiple_of), Decimal.new(0)) -> []
       true -> [%Error{error: %Error.MultipleOf{expected: multiple_of}}]
     end
+  rescue
+    Decimal.Error -> [%Error{error: %Error.MultipleOf{expected: multiple_of}}]
   end
 
   defp do_validate(_, _) do

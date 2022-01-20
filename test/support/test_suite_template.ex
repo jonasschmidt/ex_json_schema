@@ -21,12 +21,12 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
 
         name
         |> TestHelpers.load_schema_test(@schema_tests_path)
-        |> Enum.each(fn fixture ->
-          %{"description" => description, "schema" => schema, "tests" => tests} = fixture
-
+        |> Enum.uniq_by(& &1["description"])
+        |> Enum.each(fn %{"description" => description, "schema" => schema, "tests" => tests} ->
           @schema if is_map(schema), do: Map.put_new(schema, "$schema", @schema_url), else: schema
 
-          Enum.each(tests, fn t ->
+          tests
+          |> Enum.each(fn t ->
             @test t
 
             if name in @ignored_suites or
