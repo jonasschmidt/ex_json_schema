@@ -216,4 +216,67 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
       "Expected items to be unique but they were not."
     end
   end
+
+  # Override the implementations if detailed errors are configured
+  if Application.compile_env(:ex_json_schema, :detailed_errors, false) do
+    def nest_errors(%{invalid: invalid}) do
+      error_messages =
+        Enum.map_join(invalid, "\n", fn invalid ->
+          "#{invalid.index}: " <>
+            Enum.map_join(invalid.errors, "\n", fn %Error{error: error} -> to_string(error) end)
+        end)
+        |> String.split("\n")
+        |> Enum.join("\n  ")
+
+      """
+      The following errors were found:
+        #{error_messages}
+      """
+    end
+
+    defimpl String.Chars, for: Error.AllOf do
+      def to_string(%Error.AllOf{invalid: invalid} = error) do
+        """
+        Expected all of the schemata to match, but the schemata at the following indexes did not: #{Enum.map_join(invalid, ", ", & &1.index)}.
+
+        #{ExJsonSchema.Validator.Error.StringFormatter.nest_errors(error)}
+        """
+      end
+    end
+
+    defimpl String.Chars, for: Error.AnyOf do
+      def to_string(%Error.AnyOf{invalid: invalid} = error) do
+        """
+        Expected any of the schemata to match but none did.
+
+        #{ExJsonSchema.Validator.Error.StringFormatter.nest_errors(error)}
+        """
+      end
+    end
+
+    defimpl String.Chars, for: Error.Contains do
+      def to_string(%Error.Contains{}) do
+        """
+        Expected any of the items to match the schema but none did.
+
+        #{ExJsonSchema.Validator.Error.StringFormatter.nest_errors(error)}
+        """
+      end
+    end
+
+    defimpl String.Chars, for: Error.OneOf do
+      def to_string(%Error.OneOf{valid_indices: valid_indices, invalid: invalid}) do
+        if length(valid_indices) > 1 do
+          "Expected exactly one of the schemata to match, but the schemata at the following indexes did: " <>
+            Enum.join(valid_indices, ", ") <> "."
+        else
+          """
+          Expected exactly one of the schemata to match, but none of them did.
+
+          #{ExJsonSchema.Validator.Error.StringFormatter.nest_errors(error)}
+          """
+        end
+      end
+    end
+  end
 end
