@@ -225,8 +225,7 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
           "#{invalid.index}: " <>
             Enum.map_join(invalid.errors, "\n", fn %Error{error: error} -> to_string(error) end)
         end)
-        |> String.split("\n")
-        |> Enum.join("\n  ")
+        |> String.replace("\n", "\n  ")
 
       """
       The following errors were found:
