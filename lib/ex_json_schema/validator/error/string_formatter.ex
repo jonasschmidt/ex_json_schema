@@ -207,6 +207,7 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
     The following errors were found:
       #{error_messages}
     """
+    |> String.trim()
   end
 
   def detailed?() do
