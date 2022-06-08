@@ -8,274 +8,249 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
     end)
   end
 
-  defimpl String.Chars, for: Error.AdditionalItems do
-    def to_string(%Error.AdditionalItems{}) do
-      "Schema does not allow additional items."
+  def message(error) do
+    message(error, detailed?())
+  end
+
+  def message(%Error.AdditionalItems{}, _) do
+    "Schema does not allow additional items."
+  end
+
+  def message(%Error.AdditionalProperties{}, _) do
+    "Schema does not allow additional properties."
+  end
+
+  def message(%Error.AllOf{invalid: invalid}, false) do
+    "Expected all of the schemata to match, but the schemata at the following indexes did not: #{Enum.map_join(invalid, ", ", & &1.index)}."
+  end
+
+  def message(%Error.AllOf{} = error, true) do
+    """
+    #{message(error, false)}
+
+    #{nest_errors(error)}
+    """
+  end
+
+  def message(%Error.AnyOf{}, false) do
+    "Expected any of the schemata to match but none did."
+  end
+
+  def message(%Error.AnyOf{} = error, true) do
+    """
+    #{message(error, false)}
+
+    #{nest_errors(error)}
+    """
+  end
+
+  def message(%Error.Const{expected: expected}, _) do
+    "Expected data to be #{inspect(expected)}."
+  end
+
+  def message(%Error.Contains{}, false) do
+    "Expected any of the items to match the schema but none did."
+  end
+
+  def message(%Error.Contains{} = error, true) do
+    """
+    #{message(error, false)}
+
+    #{nest_errors(error)}
+    """
+  end
+
+  def message(%Error.ContentEncoding{expected: expected}, _) do
+    "Expected the content to be #{expected}-encoded."
+  end
+
+  def message(%Error.ContentMediaType{expected: expected}, _) do
+    "Expected the content to be of media type #{expected}."
+  end
+
+  def message(%Error.Dependencies{property: property, missing: [missing]}, _) do
+    "Property #{property} depends on property #{missing} to be present but it was not."
+  end
+
+  def message(%Error.Dependencies{property: property, missing: missing}, _) do
+    "Property #{property} depends on properties #{Enum.join(missing, ", ")} to be present but they were not."
+  end
+
+  def message(%Error.Enum{}, _) do
+    "Value is not allowed in enum."
+  end
+
+  def message(%Error.False{}, _) do
+    "False schema never matches."
+  end
+
+  def message(%Error.Format{expected: expected}, _) do
+    "Expected to be a valid #{format_name(expected)}."
+  end
+
+  def message(%Error.IfThenElse{branch: branch}, _) do
+    "Expected the schema in the #{branch} branch to match but it did not."
+  end
+
+  def message(%Error.ItemsNotAllowed{}, _) do
+    "Items are not allowed."
+  end
+
+  def message(%Error.MaxItems{expected: expected, actual: actual}, _) do
+    "Expected a maximum of #{expected} items but got #{actual}."
+  end
+
+  def message(%Error.MaxLength{expected: expected, actual: actual}, _) do
+    "Expected value to have a maximum length of #{expected} but was #{actual}."
+  end
+
+  def message(%Error.MaxProperties{expected: expected, actual: actual}, _) do
+    "Expected a maximum of #{expected} properties but got #{actual}"
+  end
+
+  def message(%Error.Maximum{expected: expected, exclusive?: exclusive?}, _) do
+    "Expected the value to be #{if exclusive?, do: "<", else: "<="} #{expected}"
+  end
+
+  def message(%Error.MinItems{expected: expected, actual: actual}, _) do
+    "Expected a minimum of #{expected} items but got #{actual}."
+  end
+
+  def message(%Error.MinLength{expected: expected, actual: actual}, _) do
+    "Expected value to have a minimum length of #{expected} but was #{actual}."
+  end
+
+  def message(%Error.MinProperties{expected: expected, actual: actual}, _) do
+    "Expected a minimum of #{expected} properties but got #{actual}"
+  end
+
+  def message(%Error.Minimum{expected: expected, exclusive?: exclusive?}, _) do
+    "Expected the value to be #{if exclusive?, do: ">", else: ">="} #{expected}"
+  end
+
+  def message(%Error.MultipleOf{expected: expected}, _) do
+    "Expected value to be a multiple of #{expected}."
+  end
+
+  def message(%Error.Not{}, _) do
+    "Expected schema not to match but it did."
+  end
+
+  def message(%Error.OneOf{valid_indices: valid_indices}, false) do
+    if length(valid_indices) > 1 do
+      "Expected exactly one of the schemata to match, but the schemata at the following indexes did: " <>
+        Enum.join(valid_indices, ", ") <> "."
+    else
+      "Expected exactly one of the schemata to match, but none of them did."
     end
   end
 
-  defimpl String.Chars, for: Error.AdditionalProperties do
-    def to_string(%Error.AdditionalProperties{}) do
-      "Schema does not allow additional properties."
-    end
-  end
+  def message(%Error.OneOf{valid_indices: valid_indices} = error, true) do
+    message = message(error)
 
-  defimpl String.Chars, for: Error.AllOf do
-    def to_string(%Error.AllOf{invalid: invalid}) do
-      "Expected all of the schemata to match, but the schemata at the following indexes did not: #{
-        Enum.map_join(invalid, ", ", & &1.index)
-      }."
-    end
-  end
-
-  defimpl String.Chars, for: Error.AnyOf do
-    def to_string(%Error.AnyOf{}) do
-      "Expected any of the schemata to match but none did."
-    end
-  end
-
-  defimpl String.Chars, for: Error.Const do
-    def to_string(%Error.Const{expected: expected}) do
-      "Expected data to be #{inspect(expected)}."
-    end
-  end
-
-  defimpl String.Chars, for: Error.Contains do
-    def to_string(%Error.Contains{}) do
-      "Expected any of the items to match the schema but none did."
-    end
-  end
-
-  defimpl String.Chars, for: Error.ContentEncoding do
-    def to_string(%Error.ContentEncoding{expected: expected}) do
-      "Expected the content to be #{expected}-encoded."
-    end
-  end
-
-  defimpl String.Chars, for: Error.ContentMediaType do
-    def to_string(%Error.ContentMediaType{expected: expected}) do
-      "Expected the content to be of media type #{expected}."
-    end
-  end
-
-  defimpl String.Chars, for: Error.Dependencies do
-    def to_string(%Error.Dependencies{property: property, missing: [missing]}) do
-      "Property #{property} depends on property #{missing} to be present but it was not."
-    end
-
-    def to_string(%Error.Dependencies{property: property, missing: missing}) do
-      "Property #{property} depends on properties #{Enum.join(missing, ", ")} to be present but they were not."
-    end
-  end
-
-  defimpl String.Chars, for: Error.Enum do
-    def to_string(%Error.Enum{}) do
-      "Value is not allowed in enum."
-    end
-  end
-
-  defimpl String.Chars, for: Error.False do
-    def to_string(%Error.False{}) do
-      "False schema never matches."
-    end
-  end
-
-  defimpl String.Chars, for: Error.Format do
-    def to_string(%Error.Format{expected: expected}) do
-      "Expected to be a valid #{format_name(expected)}."
-    end
-
-    defp format_name("date-time"), do: "ISO 8601 date-time"
-    defp format_name("ipv4"), do: "IPv4 address"
-    defp format_name("ipv6"), do: "IPv6 address"
-    defp format_name(expected), do: expected
-  end
-
-  defimpl String.Chars, for: Error.IfThenElse do
-    def to_string(%Error.IfThenElse{branch: branch}) do
-      "Expected the schema in the #{branch} branch to match but it did not."
-    end
-  end
-
-  defimpl String.Chars, for: Error.ItemsNotAllowed do
-    def to_string(%Error.ItemsNotAllowed{}) do
-      "Items are not allowed."
-    end
-  end
-
-  defimpl String.Chars, for: Error.MaxItems do
-    def to_string(%Error.MaxItems{expected: expected, actual: actual}) do
-      "Expected a maximum of #{expected} items but got #{actual}."
-    end
-  end
-
-  defimpl String.Chars, for: Error.MaxLength do
-    def to_string(%Error.MaxLength{expected: expected, actual: actual}) do
-      "Expected value to have a maximum length of #{expected} but was #{actual}."
-    end
-  end
-
-  defimpl String.Chars, for: Error.MaxProperties do
-    def to_string(%Error.MaxProperties{expected: expected, actual: actual}) do
-      "Expected a maximum of #{expected} properties but got #{actual}"
-    end
-  end
-
-  defimpl String.Chars, for: Error.Maximum do
-    def to_string(%Error.Maximum{expected: expected, exclusive?: exclusive?}) do
-      "Expected the value to be #{if exclusive?, do: "<", else: "<="} #{expected}"
-    end
-  end
-
-  defimpl String.Chars, for: Error.MinItems do
-    def to_string(%Error.MinItems{expected: expected, actual: actual}) do
-      "Expected a minimum of #{expected} items but got #{actual}."
-    end
-  end
-
-  defimpl String.Chars, for: Error.MinLength do
-    def to_string(%Error.MinLength{expected: expected, actual: actual}) do
-      "Expected value to have a minimum length of #{expected} but was #{actual}."
-    end
-  end
-
-  defimpl String.Chars, for: Error.MinProperties do
-    def to_string(%Error.MinProperties{expected: expected, actual: actual}) do
-      "Expected a minimum of #{expected} properties but got #{actual}"
-    end
-  end
-
-  defimpl String.Chars, for: Error.Minimum do
-    def to_string(%Error.Minimum{expected: expected, exclusive?: exclusive?}) do
-      "Expected the value to be #{if exclusive?, do: ">", else: ">="} #{expected}"
-    end
-  end
-
-  defimpl String.Chars, for: Error.MultipleOf do
-    def to_string(%Error.MultipleOf{expected: expected}) do
-      "Expected value to be a multiple of #{expected}."
-    end
-  end
-
-  defimpl String.Chars, for: Error.Not do
-    def to_string(%Error.Not{}) do
-      "Expected schema not to match but it did."
-    end
-  end
-
-  defimpl String.Chars, for: Error.OneOf do
-    def to_string(%Error.OneOf{valid_indices: valid_indices}) do
-      if length(valid_indices) > 1 do
-        "Expected exactly one of the schemata to match, but the schemata at the following indexes did: " <>
-          Enum.join(valid_indices, ", ") <> "."
-      else
-        "Expected exactly one of the schemata to match, but none of them did."
-      end
-    end
-  end
-
-  defimpl String.Chars, for: Error.Pattern do
-    def to_string(%Error.Pattern{expected: expected}) do
-      "Does not match pattern #{inspect(expected)}."
-    end
-  end
-
-  defimpl String.Chars, for: Error.PropertyNames do
-    def to_string(%Error.PropertyNames{invalid: invalid}) do
-      "Expected the property names to be valid but the following were not: #{
-        invalid |> Map.keys() |> Enum.sort() |> Enum.join(", ")
-      }."
-    end
-  end
-
-  defimpl String.Chars, for: Error.Required do
-    def to_string(%Error.Required{missing: [missing]}) do
-      "Required property #{missing} was not present."
-    end
-
-    def to_string(%Error.Required{missing: missing}) do
-      "Required properties #{Enum.join(missing, ", ")} were not present."
-    end
-  end
-
-  defimpl String.Chars, for: Error.Type do
-    def to_string(%Error.Type{expected: expected, actual: actual}) do
-      "Type mismatch. Expected #{type_names(expected)} but got #{type_names(actual)}."
-    end
-
-    defp type_names(types) do
-      types
-      |> List.wrap()
-      |> Enum.map(&String.capitalize/1)
-      |> Enum.join(", ")
-    end
-  end
-
-  defimpl String.Chars, for: Error.UniqueItems do
-    def to_string(%Error.UniqueItems{}) do
-      "Expected items to be unique but they were not."
-    end
-  end
-
-  # Override the implementations if detailed errors are configured
-  if Application.compile_env(:ex_json_schema, :detailed_errors, false) do
-    def nest_errors(%{invalid: invalid}) do
-      error_messages =
-        Enum.map_join(invalid, "\n", fn invalid ->
-          "#{invalid.index}: " <>
-            Enum.map_join(invalid.errors, "\n", fn %Error{error: error} -> to_string(error) end)
-        end)
-        |> String.replace("\n", "\n  ")
-
+    if length(valid_indices) > 1 do
+      message
+    else
       """
-      The following errors were found:
-        #{error_messages}
+      #{message}
+
+      #{nest_errors(error)}
       """
     end
+  end
 
-    defimpl String.Chars, for: Error.AllOf do
-      def to_string(%Error.AllOf{invalid: invalid} = error) do
-        """
-        Expected all of the schemata to match, but the schemata at the following indexes did not: #{Enum.map_join(invalid, ", ", & &1.index)}.
+  def message(%Error.Pattern{expected: expected}, _) do
+    "Does not match pattern #{inspect(expected)}."
+  end
 
-        #{ExJsonSchema.Validator.Error.StringFormatter.nest_errors(error)}
-        """
-      end
-    end
+  def message(%Error.PropertyNames{invalid: invalid}, _) do
+    "Expected the property names to be valid but the following were not: #{invalid |> Map.keys() |> Enum.sort() |> Enum.join(", ")}."
+  end
 
-    defimpl String.Chars, for: Error.AnyOf do
-      def to_string(%Error.AnyOf{invalid: invalid} = error) do
-        """
-        Expected any of the schemata to match but none did.
+  def message(%Error.Required{missing: [missing]}, _) do
+    "Required property #{missing} was not present."
+  end
 
-        #{ExJsonSchema.Validator.Error.StringFormatter.nest_errors(error)}
-        """
-      end
-    end
+  def message(%Error.Required{missing: missing}, _) do
+    "Required properties #{Enum.join(missing, ", ")} were not present."
+  end
 
-    defimpl String.Chars, for: Error.Contains do
-      def to_string(%Error.Contains{}) do
-        """
-        Expected any of the items to match the schema but none did.
+  def message(%Error.Type{expected: expected, actual: actual}, _) do
+    "Type mismatch. Expected #{type_names(expected)} but got #{type_names(actual)}."
+  end
 
-        #{ExJsonSchema.Validator.Error.StringFormatter.nest_errors(error)}
-        """
-      end
-    end
+  def message(%Error.UniqueItems{}, _) do
+    "Expected items to be unique but they were not."
+  end
 
-    defimpl String.Chars, for: Error.OneOf do
-      def to_string(%Error.OneOf{valid_indices: valid_indices, invalid: invalid}) do
-        if length(valid_indices) > 1 do
-          "Expected exactly one of the schemata to match, but the schemata at the following indexes did: " <>
-            Enum.join(valid_indices, ", ") <> "."
-        else
-          """
-          Expected exactly one of the schemata to match, but none of them did.
+  defp format_name("date-time"), do: "ISO 8601 date-time"
+  defp format_name("ipv4"), do: "IPv4 address"
+  defp format_name("ipv6"), do: "IPv6 address"
+  defp format_name(expected), do: expected
 
-          #{ExJsonSchema.Validator.Error.StringFormatter.nest_errors(error)}
-          """
-        end
-      end
+  defp type_names(types) do
+    types
+    |> List.wrap()
+    |> Enum.map(&String.capitalize/1)
+    |> Enum.join(", ")
+  end
+
+  defp nest_errors(%{invalid: invalid}) do
+    error_messages =
+      Enum.map_join(invalid, "\n", fn invalid ->
+        "#{invalid.index}: " <>
+          Enum.map_join(invalid.errors, "\n", fn %Error{error: error} -> to_string(error) end)
+      end)
+      |> String.replace("\n", "\n  ")
+
+    """
+    The following errors were found:
+      #{error_messages}
+    """
+  end
+
+  def detailed?() do
+    Application.get_env(:ex_json_schema, :detailed_errors, false)
+  end
+
+  @error_types [
+    Error.AdditionalItems,
+    Error.AdditionalProperties,
+    Error.AllOf,
+    Error.AnyOf,
+    Error.Const,
+    Error.Contains,
+    Error.ContentEncoding,
+    Error.ContentMediaType,
+    Error.Dependencies,
+    Error.Enum,
+    Error.False,
+    Error.Format,
+    Error.IfThenElse,
+    Error.InvalidAtIndex,
+    Error.ItemsNotAllowed,
+    Error.MaxItems,
+    Error.MaxLength,
+    Error.MaxProperties,
+    Error.Maximum,
+    Error.MinItems,
+    Error.MinLength,
+    Error.MinProperties,
+    Error.Minimum,
+    Error.MultipleOf,
+    Error.Not,
+    Error.OneOf,
+    Error.Pattern,
+    Error.PropertyNames,
+    Error.Required,
+    Error.Type,
+    Error.UniqueItems
+  ]
+
+  for error_type <- @error_types do
+    defimpl String.Chars, for: error_type do
+      def to_string(error),
+        do: ExJsonSchema.Validator.Error.StringFormatter.message(error)
     end
   end
 end
