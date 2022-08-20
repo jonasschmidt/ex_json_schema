@@ -38,7 +38,7 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
               "base URI change - change folder in subschema: number is valid"
             ]
             if "#{description}: #{@test["description"]}" in @active and
-                 not (name in @ignored_tests) do
+                 name not in @ignored_tests do
               @tag :only
             end
 
