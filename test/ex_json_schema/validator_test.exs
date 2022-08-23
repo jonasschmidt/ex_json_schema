@@ -84,8 +84,7 @@ defmodule ExJsonSchema.ValidatorTest do
       },
       %{"foo" => "foo"},
       [
-        {"Expected all of the schemata to match, but the schemata at the following indexes did not: 0, 2.",
-         "#/foo"}
+        {"Expected all of the schemata to match, but the schemata at the following indexes did not: 0, 2.", "#/foo"}
       ],
       [
         %Error{
@@ -623,8 +622,7 @@ defmodule ExJsonSchema.ValidatorTest do
       %{"properties" => %{"foo" => %{"propertyNames" => %{"minLength" => 3, "maxLength" => 5}}}},
       %{"foo" => %{"f" => true, "foo" => true, "barbaz" => true}},
       [
-        {"Expected the property names to be valid but the following were not: barbaz, f.",
-         "#/foo"}
+        {"Expected the property names to be valid but the following were not: barbaz, f.", "#/foo"}
       ],
       [
         %Error{
@@ -767,8 +765,7 @@ defmodule ExJsonSchema.ValidatorTest do
   end
 
   test "using the string formatter by default" do
-    assert {:error, [{"Type mismatch. Expected String but got Integer.", "#"}]} =
-             validate(%{"type" => "string"}, 666)
+    assert {:error, [{"Type mismatch. Expected String but got Integer.", "#"}]} = validate(%{"type" => "string"}, 666)
   end
 
   defp assert_validation_errors(schema, data, expected_errors, expected_error_structs) do

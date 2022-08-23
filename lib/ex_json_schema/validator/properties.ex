@@ -42,8 +42,7 @@ defmodule ExJsonSchema.Validator.Properties do
     |> Enum.filter(&Map.has_key?(properties, elem(&1, 0)))
     |> Enum.map(fn
       {name, property_schema} ->
-        {name,
-         Validator.validation_errors(root, property_schema, properties[name], path <> "/#{name}")}
+        {name, Validator.validation_errors(root, property_schema, properties[name], path <> "/#{name}")}
     end)
   end
 

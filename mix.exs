@@ -35,10 +35,10 @@ defmodule ExJsonSchema.Mixfile do
     [
       {:decimal, "~> 2.0"},
       {:dialyxir, "~> 1.2", only: [:test], runtime: false},
-      {:ex_doc, ">= 0.28.5", only: :dev, runtime: false},
-      {:excoveralls, "~> 0.14.6", only: :test},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.14", only: :test},
       {:httpoison, "~> 1.8", only: :test},
-      {:mix_test_watch, "~> 0.7.0", only: [:dev, :test]},
+      {:mix_test_watch, "~> 0.7", only: [:dev, :test]},
       {:poison, "~> 5.0", only: :test}
     ]
   end

@@ -12,8 +12,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   defmodule UndefinedRemoteSchemaResolverError do
-    defexception message:
-                   "trying to resolve a remote schema but no remote schema resolver function is defined"
+    defexception message: "trying to resolve a remote schema but no remote schema resolver function is defined"
   end
 
   defmodule InvalidReferenceError do
