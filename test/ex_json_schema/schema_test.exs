@@ -136,7 +136,11 @@ defmodule ExJsonSchema.SchemaTest do
       })
 
     assert get_fragment!(schema, "#/properties/foo") == %{
-             "$ref" => ["http://localhost:1234/subschema.json", "foo"]
+             "$ref" => %ExJsonSchema.Schema.Ref{
+               location: "http://localhost:1234/subschema.json",
+               fragment: ["foo"],
+               fragment_pointer?: true
+             }
            }
   end
 
@@ -144,7 +148,11 @@ defmodule ExJsonSchema.SchemaTest do
     schema = resolve(%{"$ref" => "http://localhost:1234/subschema.json#/foo"})
 
     assert get_fragment!(schema, "http://localhost:1234/subschema.json#/foo") == %{
-             "$ref" => ["http://localhost:1234/subsubschema.json", "foo"]
+             "$ref" => %ExJsonSchema.Schema.Ref{
+               location: "http://localhost:1234/subsubschema.json",
+               fragment: ["foo"],
+               fragment_pointer?: true
+             }
            }
   end
 end
