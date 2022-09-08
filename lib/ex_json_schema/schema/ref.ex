@@ -16,11 +16,29 @@ defmodule ExJsonSchema.Schema.Ref do
     local?(ref) || Map.has_key?(refs, url) || Map.has_key?(refs, to_string(ref))
   end
 
+  # TODO: this can probably be simplified a bit, plus `authority` is deprecated and replaced by host in future versions
+  def merge_scope(scope_1, scope_2) do
+    case {URI.parse(scope_1), URI.parse(scope_2)} do
+      {%URI{authority: nil, path: "/" <> _} = uri_1, uri_2} ->
+        uri = %URI{uri_1 | authority: "dummy"} |> URI.merge(uri_2)
+        %URI{uri | authority: nil} |> to_string()
+
+      {%URI{authority: nil}, %URI{path: path}} when is_binary(path) ->
+        scope_2
+
+      {%URI{authority: nil} = uri_1, _} ->
+        to_string(%URI{uri_1 | fragment: nil}) <> scope_2
+
+      {uri_1, _} ->
+        uri_1 |> URI.merge(scope_2) |> to_string()
+    end
+  end
+
   def from_string(ref, root) do
     from_uri(URI.parse(ref), root)
   end
 
-  defp from_uri(%URI{host: nil, path: nil, fragment: fragment}, %Root{location: location}) do
+  defp from_uri(%URI{authority: nil, path: nil, fragment: fragment}, %Root{location: location}) do
     %__MODULE__{location: location} |> parse_fragment(fragment)
   end
 
