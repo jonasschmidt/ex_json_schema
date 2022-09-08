@@ -61,10 +61,6 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
-  def validation_errors(root = %Root{}, %{"$ref" => ref}, data, path) do
-    do_validation_errors(root, %{"$ref" => ref}, data, path)
-  end
-
   def validation_errors(%Root{}, true, _data, _path) do
     []
   end

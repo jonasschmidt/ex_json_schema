@@ -22,6 +22,7 @@ defmodule ExJsonSchema.Schema do
   alias ExJsonSchema.Schema.Draft4
   alias ExJsonSchema.Schema.Draft6
   alias ExJsonSchema.Schema.Draft7
+  alias ExJsonSchema.Schema.Draft201909
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Schema.Ref
@@ -33,6 +34,7 @@ defmodule ExJsonSchema.Schema do
   @draft4_schema_url "http://json-schema.org/draft-04/schema"
   @draft6_schema_url "http://json-schema.org/draft-06/schema"
   @draft7_schema_url "http://json-schema.org/draft-07/schema"
+  @draft201909_schema_url "https://json-schema.org/draft/2019-09/schema"
 
   @ignored_properties ["const", "default", "enum", "examples"]
 
@@ -166,6 +168,7 @@ defmodule ExJsonSchema.Schema do
   defp schema_module(@draft4_schema_url <> _, _), do: Draft4
   defp schema_module(@draft6_schema_url <> _, _), do: Draft6
   defp schema_module(@draft7_schema_url <> _, _), do: Draft7
+  defp schema_module(@draft201909_schema_url <> _, _), do: Draft201909
   defp schema_module(@current_draft_schema_url <> _, _), do: Draft7
   defp schema_module(_, default), do: default
 
@@ -173,7 +176,8 @@ defmodule ExJsonSchema.Schema do
   defp assert_valid_schema(schema) do
     with false <- meta04?(schema),
          false <- meta06?(schema),
-         false <- meta07?(schema) do
+         false <- meta07?(schema),
+         false <- meta201909?(schema) do
       schema_module =
         schema
         |> Map.get("$schema", @current_draft_schema_url <> "#")
@@ -187,30 +191,43 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  defp resolve_with_root(root, %{"$ref" => ref}, scope) when is_binary(ref) do
+  defp resolve_with_root(%Root{version: version} = root, %{"$ref" => ref}, scope)
+       when version < 201_909 and is_binary(ref) do
     do_resolve(root, %{"$ref" => ref}, scope)
   end
 
+  # TODO: clean up $id and $anchor resolving logic
+  defp resolve_with_root(root, schema = %{"$id" => id, "$anchor" => anchor}, scope)
+       when is_binary(id) and is_binary(anchor) do
+    {root, schema} = resolve_with_id(root, schema, scope, [id, "#" <> anchor])
+    {root, schema}
+  end
+
   defp resolve_with_root(root, schema = %{"$id" => id}, scope) when is_binary(id) do
-    resolve_with_id(root, schema, scope, id)
+    resolve_with_id(root, schema, scope, [id])
   end
 
   defp resolve_with_root(root, schema = %{"id" => id}, scope) when is_binary(id) do
-    resolve_with_id(root, schema, scope, id)
+    resolve_with_id(root, schema, scope, [id])
+  end
+
+  defp resolve_with_root(root, schema = %{"$anchor" => anchor}, scope) when is_binary(anchor) do
+    resolve_with_id(root, schema, scope, ["#" <> anchor])
   end
 
   defp resolve_with_root(root, schema = %{}, scope), do: do_resolve(root, schema, scope)
   defp resolve_with_root(root, non_schema, _scope), do: {root, non_schema}
 
-  defp resolve_with_id(root, schema, scope, id) do
-    scope =
-      case URI.parse(scope) do
-        %URI{host: nil} = uri -> to_string(%URI{uri | fragment: nil}) <> id
-        uri -> uri |> URI.merge(id) |> to_string()
-      end
+  defp resolve_with_id(root, schema, scope, ids) do
+    {root, schema, _} =
+      ids
+      |> Enum.reduce({root, schema, scope}, fn id, {root, schema, scope} ->
+        scope = scope |> Ref.merge_scope(id)
+        {root, schema} = do_resolve(root, schema, scope)
+        {root_with_ref(root, scope, schema), schema, scope}
+      end)
 
-    {root, schema} = do_resolve(root, schema, scope)
-    {root_with_ref(root, scope, schema), schema}
+    {root, schema}
   end
 
   defp do_resolve(root, schema, scope) do
@@ -239,16 +256,8 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp resolve_property(root, {"$ref", ref}, scope) when is_binary(ref) do
-    ref_uri = URI.parse(ref)
-
-    scoped_ref =
-      case URI.parse(scope) do
-        %URI{host: nil} -> ref_uri
-        scope_uri -> URI.merge(scope_uri, ref_uri)
-      end
-      |> to_string()
-
-    {root, {"$ref", Ref.from_string(scoped_ref, root)}}
+    scoped_ref = scope |> Ref.merge_scope(ref) |> Ref.from_string(root)
+    {root, {"$ref", scoped_ref}}
   end
 
   defp resolve_property(root, tuple, _) when is_tuple(tuple), do: {root, tuple}
@@ -263,6 +272,7 @@ defmodule ExJsonSchema.Schema do
   defp remote_schema(@draft4_schema_url <> _), do: Draft4.schema()
   defp remote_schema(@draft6_schema_url <> _), do: Draft6.schema()
   defp remote_schema(@draft7_schema_url <> _), do: Draft7.schema()
+  defp remote_schema(@draft201909_schema_url <> _), do: Draft201909.schema()
   defp remote_schema(url) when is_bitstring(url), do: fetch_remote_schema(url)
 
   defp resolve_remote_schema(root, url, remote_schema) do
@@ -332,6 +342,9 @@ defmodule ExJsonSchema.Schema do
 
   defp meta07?(%{"$schema" => @draft7_schema_url <> _}), do: true
   defp meta07?(_), do: false
+
+  defp meta201909?(%{"$schema" => @draft201909_schema_url <> _}), do: true
+  defp meta201909?(_), do: false
 
   defp do_get_fragment(nil, _, _ref), do: {:error, :invalid_reference}
   defp do_get_fragment(schema, [], _), do: {:ok, schema}
