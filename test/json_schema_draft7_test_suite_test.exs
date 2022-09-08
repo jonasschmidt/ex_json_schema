@@ -11,7 +11,9 @@ defmodule ExJsonSchema.JsonSchemaDraft7TestSuiteTest do
       "optional/format/idn-hostname",
       # TODO: check this one
       "optional/format/ipv6",
-      "optional/float-overflow"
+      "optional/float-overflow",
+      # TODO: remove this once we have 2019-09 support
+      "optional/cross-draft"
     ],
     ignored_tests: [
       "validation of IP addresses: leading zeroes should be rejected, as they are treated as octals",
