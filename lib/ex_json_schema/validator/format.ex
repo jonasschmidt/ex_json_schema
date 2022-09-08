@@ -18,7 +18,7 @@ defmodule ExJsonSchema.Validator.Format do
     "hostname" => ~r/^[\pL0-9](?:[\pL0-9-]{0,61}[\pL0-9])?(?:\.[\pL0-9](?:[-0-9\pL]{0,61}[0-9\pL])?)*$/iu,
     "idn-email" => ~r<^[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*@(?:[\pL0-9-]+\.)+[\pL]{2,6}$>iu,
     "idn-hostname" => ~r/^[\pL0-9](?:[\pL0-9-]{0,61}[\pL0-9])?(?:\.[\pL0-9](?:[-0-9\pL]{0,61}[0-9\pL])?)*$/iu,
-    "ipv4" => ~r/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
+    "ipv4" => ~r/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/,
     "ipv6" =>
       ~r/^(?:(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}|(?=(?:[A-F0-9]{0,4}:){0,7}[A-F0-9]{0,4}$)(([0-9A-F]{1,4}:){1,7}|:)((:[0-9A-F]{1,4}){1,7}|:)|(?:[A-F0-9]{1,4}:){7}:|:(:[A-F0-9]{1,4}){7})$/i,
     "iri-reference" =>
@@ -112,10 +112,12 @@ defmodule ExJsonSchema.Validator.Format do
   end
 
   defp validate_with_custom_validator(validator, format, data) do
-    result = case validator do
-      {mod, fun} -> apply(mod, fun, [format, data])
-      fun when is_function(fun, 2) -> fun.(format, data)
-    end
+    result =
+      case validator do
+        {mod, fun} -> apply(mod, fun, [format, data])
+        fun when is_function(fun, 2) -> fun.(format, data)
+      end
+
     case result do
       true -> []
       false -> [%Error{error: %Error.Format{expected: format}}]

@@ -1,5 +1,11 @@
 defmodule ExJsonSchema.Schema.Ref do
-  defstruct location: nil, fragment: nil, fragment_pointer?: false
+  defstruct location: nil, fragment: [], fragment_pointer?: false
+
+  @type t :: %ExJsonSchema.Schema.Ref{
+          location: String.t() | nil,
+          fragment: [String.t()],
+          fragment_pointer?: boolean()
+        }
 
   alias ExJsonSchema.Schema.Root
 

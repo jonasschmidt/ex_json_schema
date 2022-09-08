@@ -26,8 +26,7 @@ defmodule ExJsonSchema.Schema do
   alias ExJsonSchema.Validator
   alias ExJsonSchema.Schema.Ref
 
-  @type ref_path :: [:root | String.t()]
-  @type resolved :: ExJsonSchema.data() | %{String.t() => (Root.t() -> {Root.t(), resolved}) | ref_path} | true | false
+  @type resolved :: ExJsonSchema.data()
   @type invalid_reference_error :: {:error, :invalid_reference}
 
   @current_draft_schema_url "http://json-schema.org/schema"
@@ -60,7 +59,7 @@ defmodule ExJsonSchema.Schema do
     resolve(%Root{schema: schema}, options)
   end
 
-  @spec get_fragment(Root.t(), ref_path | ExJsonSchema.json_path()) ::
+  @spec get_fragment(Root.t(), Ref.t() | ExJsonSchema.json_path()) ::
           {:ok, resolved} | invalid_reference_error | no_return
   def get_fragment(root = %Root{}, ref) when is_binary(ref) do
     get_fragment(root, Ref.from_string(ref, root))
@@ -77,7 +76,7 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  @spec get_fragment!(Root.t(), ref_path | ExJsonSchema.json_path()) :: resolved | no_return
+  @spec get_fragment!(Root.t(), Ref.t() | ExJsonSchema.json_path()) :: resolved | no_return
   def get_fragment!(root, ref) do
     case get_fragment(root, ref) do
       {:ok, schema} -> schema
@@ -85,7 +84,7 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  @spec get_ref_schema(Root.t(), [:root | String.t()]) :: ExJsonSchema.data() | no_return
+  @spec get_ref_schema(Root.t(), Ref.t()) :: ExJsonSchema.data() | no_return
   def get_ref_schema(%Root{schema: schema}, %Ref{location: :root, fragment: fragment} = ref) do
     case get_ref_schema_with_schema(schema, fragment, ref) do
       {:error, error} ->
@@ -107,7 +106,7 @@ defmodule ExJsonSchema.Schema do
   end
 
   @spec resolve_root(boolean | Root.t()) :: Root.t() | no_return
-  defp resolve_root(%Root{schema: root_schema} = root) do
+  defp resolve_root(%Root{schema: root_schema} = root, scope \\ "") do
     schema_version =
       root_schema
       |> Map.get("$schema", @current_draft_schema_url <> "#")
@@ -123,7 +122,7 @@ defmodule ExJsonSchema.Schema do
     end
 
     root = %Root{root | version: schema_version}
-    {root, schema} = resolve_with_root(root, root_schema)
+    {root, schema} = resolve_with_root(root, root_schema, scope)
 
     %Root{root | schema: schema}
     |> resolve_refs(schema)
@@ -186,8 +185,6 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  defp resolve_with_root(root, schema, scope \\ "")
-
   defp resolve_with_root(root, %{"$ref" => ref}, scope) when is_binary(ref) do
     do_resolve(root, %{"$ref" => ref}, scope)
   end
@@ -206,7 +203,7 @@ defmodule ExJsonSchema.Schema do
   defp resolve_with_id(root, schema, scope, id) do
     scope =
       case URI.parse(scope) do
-        %URI{host: nil} -> id
+        %URI{host: nil} = uri -> to_string(%URI{uri | fragment: nil}) <> id
         uri -> uri |> URI.merge(id) |> to_string()
       end
 
@@ -268,7 +265,7 @@ defmodule ExJsonSchema.Schema do
 
   defp resolve_remote_schema(root, url, remote_schema) do
     root = root_with_ref(root, url, remote_schema)
-    %Root{schema: schema, refs: refs} = resolve_root(%Root{root | schema: remote_schema, location: url})
+    %Root{schema: schema, refs: refs} = resolve_root(%Root{root | schema: remote_schema, location: url}, url)
 
     %Root{root | refs: refs}
     |> root_with_ref(url, schema)
