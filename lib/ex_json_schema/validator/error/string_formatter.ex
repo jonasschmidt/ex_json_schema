@@ -22,9 +22,7 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
 
   defimpl String.Chars, for: Error.AllOf do
     def to_string(%Error.AllOf{invalid: invalid}) do
-      "Expected all of the schemata to match, but the schemata at the following indexes did not: #{
-        Enum.map_join(invalid, ", ", & &1.index)
-      }."
+      "Expected all of the schemata to match, but the schemata at the following indexes did not: #{Enum.map_join(invalid, ", ", & &1.index)}."
     end
   end
 
@@ -182,9 +180,7 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
 
   defimpl String.Chars, for: Error.PropertyNames do
     def to_string(%Error.PropertyNames{invalid: invalid}) do
-      "Expected the property names to be valid but the following were not: #{
-        invalid |> Map.keys() |> Enum.sort() |> Enum.join(", ")
-      }."
+      "Expected the property names to be valid but the following were not: #{invalid |> Map.keys() |> Enum.sort() |> Enum.join(", ")}."
     end
   end
 

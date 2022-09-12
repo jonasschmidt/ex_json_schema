@@ -34,12 +34,12 @@ defmodule ExJsonSchema.Mixfile do
   defp deps do
     [
       {:decimal, "~> 2.0"},
-      {:dialyxir, "~> 0.5", only: [:test], runtime: false},
+      {:dialyxir, "~> 1.2", only: [:test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:excoveralls, "~> 0.10", only: :test},
-      {:httpoison, "~> 0.8", only: :test},
-      {:mix_test_watch, "~> 0.2.6", only: [:dev, :test]},
-      {:poison, "~> 1.5", only: :test}
+      {:excoveralls, "~> 0.14", only: :test},
+      {:httpoison, "~> 1.8", only: :test},
+      {:mix_test_watch, "~> 0.7", only: [:dev, :test]},
+      {:poison, "~> 5.0", only: :test}
     ]
   end
 

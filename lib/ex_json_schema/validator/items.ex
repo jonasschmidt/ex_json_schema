@@ -81,8 +81,7 @@ defmodule ExJsonSchema.Validator.Items do
          {errors, index},
          path
        ) do
-    acc =
-      {[Validator.validation_errors(root, schema, item, path <> "/#{index}") | errors], index + 1}
+    acc = {[Validator.validation_errors(root, schema, item, path <> "/#{index}") | errors], index + 1}
 
     validate_items(root, {schemata, additional_items}, items, acc, path)
   end
