@@ -79,6 +79,8 @@ defmodule ExJsonSchema.Validator do
 
   def do_validation_errors(root = %Root{}, schema = %{}, data, path) do
     schema
+    # TODO
+    # |> Map.put_new("nullable", false)
     |> Enum.flat_map(fn {propertyName, _} = property ->
       case validator_for(propertyName) do
         nil -> []
@@ -156,6 +158,7 @@ defmodule ExJsonSchema.Validator do
   defp validator_for("$ref"), do: ExJsonSchema.Validator.Ref
   defp validator_for("required"), do: ExJsonSchema.Validator.Required
   defp validator_for("type"), do: ExJsonSchema.Validator.Type
+  defp validator_for("nullable"), do: ExJsonSchema.Validator.Nullable
   defp validator_for("uniqueItems"), do: ExJsonSchema.Validator.UniqueItems
   defp validator_for(_), do: nil
 end

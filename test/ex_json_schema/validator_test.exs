@@ -764,8 +764,17 @@ defmodule ExJsonSchema.ValidatorTest do
              validate(%{"type" => "string"}, 666, error_formatter: Error.StringFormatter)
   end
 
-  test "xx" do
+  test "allows attibute to have value nil if nullable is not specified" do
+    assert :ok = validate(%{"type" => "string"}, nil, error_formatter: Error.StringFormatter)
+  end
+
+  test "allows attibute to have value nil if nullable is allowed" do
     assert :ok = validate(%{"type" => "string", "nullable" => true}, nil, error_formatter: Error.StringFormatter)
+  end
+
+  test "does not allowe nil values" do
+    assert {:error, [{"Nullable value is not allowed.", "#"}]} =
+             validate(%{"type" => "string", "nullable" => false}, nil, error_formatter: Error.StringFormatter)
   end
 
   test "using the string formatter by default" do

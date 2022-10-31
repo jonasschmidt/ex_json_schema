@@ -194,6 +194,12 @@ defmodule ExJsonSchema.Validator.Error.StringFormatter do
     end
   end
 
+  defimpl String.Chars, for: Error.Nullable do
+    def to_string(%Error.Nullable{allowed: false}) do
+      "Nullable value is not allowed."
+    end
+  end
+
   defimpl String.Chars, for: Error.Type do
     def to_string(%Error.Type{expected: expected, actual: actual}) do
       "Type mismatch. Expected #{type_names(expected)} but got #{type_names(actual)}."
