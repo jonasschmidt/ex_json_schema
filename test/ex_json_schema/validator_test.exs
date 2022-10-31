@@ -764,6 +764,10 @@ defmodule ExJsonSchema.ValidatorTest do
              validate(%{"type" => "string"}, 666, error_formatter: Error.StringFormatter)
   end
 
+  test "xx" do
+    assert :ok = validate(%{"type" => "string", "nullable" => true}, nil, error_formatter: Error.StringFormatter)
+  end
+
   test "using the string formatter by default" do
     assert {:error, [{"Type mismatch. Expected String but got Integer.", "#"}]} = validate(%{"type" => "string"}, 666)
   end

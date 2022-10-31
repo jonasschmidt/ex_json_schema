@@ -14,6 +14,11 @@ defmodule ExJsonSchema.Validator.Type do
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
+
+  def validate(%{version: version}, %{"nullable" => nullable}, {"type", type}, data, _) do
+    do_validate(version, type, data, nullable: nullable)
+  end
+
   def validate(%{version: version}, _, {"type", type}, data, _) do
     do_validate(version, type, data)
   end
@@ -27,11 +32,11 @@ defmodule ExJsonSchema.Validator.Type do
           type :: ExJsonSchema.data(),
           data :: ExJsonSchema.data()
         ) :: Validator.errors()
-  defp do_validate(version, type, data) do
-    if valid?(version, type, data) do
-      []
-    else
-      [%Error{error: %Error.Type{expected: List.wrap(type), actual: data_type(data)}}]
+  defp do_validate(version, type, data, [nullable: nullable] \\ [nullable: false]) do
+    cond do
+      nullable && is_nil(data) -> []
+      valid?(version, type, data) -> []
+      true -> [%Error{error: %Error.Type{expected: List.wrap(type), actual: data_type(data)}}]
     end
   end
 
