@@ -1,4 +1,4 @@
-import Config
+use Mix.Config
 
 defmodule CustomFormatValidator do
   def validate(_format, _data), do: true
