@@ -724,7 +724,7 @@ defmodule ExJsonSchema.ValidatorTest do
     end
 
     def validate("custom_validation_error_format_name", _data) do
-      {false, %Error.Format{expected: "custom_format_fieldname"}}
+      {:error, %Error.Format{expected: "custom_format_fieldname"}}
     end
 
     def validate("zipcode", data) do
