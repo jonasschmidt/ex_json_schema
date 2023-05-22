@@ -168,7 +168,7 @@ Or by passing an option when resolving the schema:
 ExJsonSchema.Schema.resolve(%{"format" => "custom"}, custom_format_validator: {MyModule, :validate})
 ```
 
-The configured function is called with the arguments `(format, data)` and is expected to return either `true` or `false`, depending whether the data is valid for the given format. For compatibility with JSON schema, it is expected to return `true` when the format is unknown by your callback function.
+The configured function is called with the arguments `(format, data)` and is expected to return `true`, `false` or a `{:error, %Error.Format{expected: "something"}}` tuple, depending whether the data is valid for the given format. For compatibility with JSON schema, it is expected to return `true` when the format is unknown by your callback function.
 
 [format-spec]: https://json-schema.org/understanding-json-schema/reference/string.html#format
 

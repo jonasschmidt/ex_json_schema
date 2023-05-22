@@ -723,6 +723,10 @@ defmodule ExJsonSchema.ValidatorTest do
       false
     end
 
+    def validate("custom_validation_error_format_name", _data) do
+      {:error, %Error.Format{expected: "custom_format_fieldname"}}
+    end
+
     def validate("zipcode", data) do
       Regex.match?(~r/^\d+$/, data)
     end
@@ -754,6 +758,25 @@ defmodule ExJsonSchema.ValidatorTest do
       %{"zip" => "asdf"},
       [{"Expected to be a valid zipcode.", "#/zip"}],
       [%Error{error: %Error.Format{expected: "zipcode"}, path: "#/zip"}]
+    )
+  end
+
+  test "configuring a custom format validator with custom error message" do
+    schema =
+      Schema.resolve(
+        %{
+          "properties" => %{
+            "error" => %{"format" => "custom_validation_error_format_name"}
+          }
+        },
+        custom_format_validator: {MyFormatValidator, :validate}
+      )
+
+    assert_validation_errors(
+      schema,
+      %{"error" => ""},
+      [{"Expected to be a valid custom_format_fieldname.", "#/error"}],
+      [%Error{error: %Error.Format{expected: "custom_format_fieldname"}, path: "#/error"}]
     )
   end
 
