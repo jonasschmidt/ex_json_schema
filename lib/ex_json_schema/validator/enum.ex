@@ -8,6 +8,7 @@ defmodule ExJsonSchema.Validator.Enum do
   https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-6.1.2
   """
 
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -18,17 +19,17 @@ defmodule ExJsonSchema.Validator.Enum do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(enum, data) when is_list(enum) do
     case Enum.any?(enum, &(&1 == data)) do
-      true -> []
-      false -> [%Error{error: %Error.Enum{}}]
+      true -> Result.new()
+      false -> Result.with_errors([%Error{error: %Error.Enum{}}])
     end
   end
 
   defp do_validate(_, _) do
-    []
+    Result.new()
   end
 end

@@ -6,6 +6,7 @@ defmodule ExJsonSchema.Validator.Pattern do
 
   """
 
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -16,7 +17,7 @@ defmodule ExJsonSchema.Validator.Pattern do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(pattern, data) when is_bitstring(data) do
@@ -26,13 +27,13 @@ defmodule ExJsonSchema.Validator.Pattern do
       |> Regex.match?(data)
 
     if matches? do
-      []
+      Result.new()
     else
-      [%Error{error: %Error.Pattern{expected: pattern}}]
+      Result.with_errors([%Error{error: %Error.Pattern{expected: pattern}}])
     end
   end
 
   defp do_validate(_, _) do
-    []
+    Result.new()
   end
 end

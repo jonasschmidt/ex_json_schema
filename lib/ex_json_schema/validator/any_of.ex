@@ -9,6 +9,7 @@ defmodule ExJsonSchema.Validator.AnyOf do
   """
 
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -19,7 +20,7 @@ defmodule ExJsonSchema.Validator.AnyOf do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(root, any_of, data, path) when is_list(any_of) do
@@ -28,21 +29,21 @@ defmodule ExJsonSchema.Validator.AnyOf do
       |> Enum.with_index()
       |> Enum.reduce_while([], fn
         {schema, index}, acc ->
-          case Validator.validation_errors(root, schema, data, path) do
-            [] -> {:halt, []}
-            errors -> {:cont, [{errors, index} | acc]}
+          case Validator.validation_result(root, schema, data, path) do
+            %Result{errors: []} -> {:halt, []}
+            result -> {:cont, [{result, index} | acc]}
           end
       end)
       |> Enum.reverse()
       |> Validator.map_to_invalid_errors()
 
     case Enum.empty?(invalid) do
-      true -> []
-      false -> [%Error{error: %Error.AnyOf{invalid: invalid}}]
+      true -> Result.new()
+      false -> Result.with_errors([%Error{error: %Error.AnyOf{invalid: invalid}}])
     end
   end
 
   defp do_validate(_, _, _, _) do
-    []
+    Result.new()
   end
 end

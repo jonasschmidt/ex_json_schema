@@ -8,6 +8,7 @@ defmodule ExJsonSchema.Validator.UniqueItems do
   https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-6.4.5
   """
 
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -18,7 +19,7 @@ defmodule ExJsonSchema.Validator.UniqueItems do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(true, items) when is_list(items) do
@@ -29,13 +30,13 @@ defmodule ExJsonSchema.Validator.UniqueItems do
       |> Kernel.==(Enum.count(items))
 
     if unique? do
-      []
+      Result.new()
     else
-      [%Error{error: %Error.UniqueItems{}}]
+      Result.with_errors([%Error{error: %Error.UniqueItems{}}])
     end
   end
 
   defp do_validate(_, _) do
-    []
+    Result.new()
   end
 end

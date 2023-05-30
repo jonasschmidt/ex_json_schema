@@ -1,0 +1,3 @@
+* 2019-09
+  * meta-schemas are fetched remotely, they need to be cached locally in .ex files
+  * Optimize result merging (try to reduce ++ usage)

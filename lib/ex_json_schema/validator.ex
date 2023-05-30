@@ -1,5 +1,7 @@
 defmodule ExJsonSchema.Validator do
   alias ExJsonSchema.Validator.Error
+  alias ExJsonSchema.Validator.Result
+  alias ExJsonSchema.Validator.Context
   alias ExJsonSchema.Schema
   alias ExJsonSchema.Schema.Root
 
@@ -34,10 +36,10 @@ defmodule ExJsonSchema.Validator do
         ) :: :ok | {:error, errors} | Schema.invalid_reference_error() | no_return
   def validate_fragment(root, schema_or_ref, data, options \\ []) when is_list(options) do
     result =
-      case validation_errors(root, schema_or_ref, data) do
+      case validation_result(root, schema_or_ref, data) do
         {:error, _error} = error -> error
-        [] -> :ok
-        errors -> {:error, errors}
+        %Result{errors: []} -> :ok
+        %Result{errors: errors} -> {:error, errors}
       end
 
     case Keyword.get(options, :error_formatter, Error.StringFormatter) do
@@ -46,45 +48,63 @@ defmodule ExJsonSchema.Validator do
     end
   end
 
-  @spec validation_errors(
+  @spec validation_result(
           Root.t(),
           ExJsonSchema.json_path() | Schema.resolved(),
           ExJsonSchema.data(),
           String.t()
         ) :: errors | Schema.invalid_reference_error() | no_return
-  def validation_errors(root, schema_or_ref, data, path \\ "#")
+  def validation_result(root, schema_or_ref, data, context \\ Context.new())
 
-  def validation_errors(root, ref, data, path) when is_binary(ref) do
+  def validation_result(root, ref, data, context) when is_binary(ref) do
     case Schema.get_fragment(root, ref) do
-      {:ok, schema} -> validation_errors(root, schema, data, path)
+      {:ok, schema} -> validation_result(root, schema, data, context)
       error -> error
     end
   end
 
-  def validation_errors(%Root{}, true, _data, _path) do
-    []
+  def validation_result(%Root{}, true, _data, _path) do
+    Result.new()
   end
 
-  def validation_errors(%Root{}, false, _data, path) do
-    [%Error{error: %Error.False{}, path: path}]
+  def validation_result(%Root{}, false, _data, context) do
+    Result.with_errors([%Error{error: %Error.False{}, path: Context.path(context)}])
   end
 
-  def validation_errors(root = %Root{}, schema = %{}, data, path) do
-    do_validation_errors(root, schema, data, path)
-  end
+  def validation_result(root = %Root{}, schema = %{}, data, context) do
+    result =
+      schema
+      |> Enum.reduce(Result.new(), fn {propertyName, _} = property, result ->
+        case validator_for(propertyName) do
+          nil ->
+            result
 
-  def do_validation_errors(root = %Root{}, schema = %{}, data, path) do
-    schema
-    |> Enum.flat_map(fn {propertyName, _} = property ->
-      case validator_for(propertyName) do
-        nil -> []
-        validator -> validator.validate(root, schema, property, data, path)
+          validator ->
+            result |> Result.merge(validator.validate(root, schema, property, data, context))
+        end
+      end)
+
+    result =
+      case schema do
+        %{"unevaluatedProperties" => unevaluated_properties} ->
+          context = %Context{context | result: result}
+
+          result
+          |> Result.merge(
+            ExJsonSchema.Validator.UnevaluatedProperties.validate(
+              root,
+              schema,
+              {"unevaluatedProperties", unevaluated_properties},
+              data,
+              context
+            )
+          )
+
+        _ ->
+          result
       end
-    end)
-    |> Enum.map(fn
-      %Error{path: nil} = error -> %{error | path: path}
-      error -> error
-    end)
+
+    result |> Result.ensure_paths(Context.path(context))
   end
 
   @spec valid?(Root.t() | ExJsonSchema.object(), ExJsonSchema.data()) :: boolean | no_return
@@ -98,16 +118,15 @@ defmodule ExJsonSchema.Validator do
           ExJsonSchema.data()
         ) :: boolean | Schema.invalid_reference_error() | no_return
   def valid_fragment?(root, schema_or_ref, data) do
-    case validation_errors(root, schema_or_ref, data) do
+    case validation_result(root, schema_or_ref, data) do
       {:error, _error} = error -> error
-      [] -> true
-      _errors -> false
+      result -> Result.valid?(result)
     end
   end
 
-  def map_to_invalid_errors(errors_with_index) do
-    errors_with_index
-    |> Enum.map(fn {errors, index} ->
+  def map_to_invalid_errors(results_with_index) do
+    results_with_index
+    |> Enum.map(fn {%Result{errors: errors}, index} ->
       %Error.InvalidAtIndex{errors: errors, index: index}
     end)
   end
@@ -124,10 +143,7 @@ defmodule ExJsonSchema.Validator do
   defp validator_for("anyOf"), do: ExJsonSchema.Validator.AnyOf
   defp validator_for("const"), do: ExJsonSchema.Validator.Const
   defp validator_for("contains"), do: ExJsonSchema.Validator.Contains
-
-  defp validator_for("contentEncoding"),
-    do: ExJsonSchema.Validator.ContentEncodingContentMediaType
-
+  defp validator_for("contentEncoding"), do: ExJsonSchema.Validator.ContentEncodingContentMediaType
   defp validator_for("dependencies"), do: ExJsonSchema.Validator.Dependencies
   defp validator_for("enum"), do: ExJsonSchema.Validator.Enum
   defp validator_for("exclusiveMaximum"), do: ExJsonSchema.Validator.ExclusiveMaximum

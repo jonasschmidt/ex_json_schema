@@ -7,6 +7,7 @@ defmodule ExJsonSchema.Validator.Not do
   """
 
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -17,13 +18,13 @@ defmodule ExJsonSchema.Validator.Not do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(root, not_schema, data) do
     case Validator.valid_fragment?(root, not_schema, data) do
-      true -> [%Error{error: %Error.Not{}}]
-      false -> []
+      true -> Result.with_errors([%Error{error: %Error.Not{}}])
+      false -> Result.new()
     end
   end
 end

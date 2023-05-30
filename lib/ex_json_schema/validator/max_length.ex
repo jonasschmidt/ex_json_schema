@@ -6,6 +6,7 @@ defmodule ExJsonSchema.Validator.MaxLength do
 
   """
 
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -16,20 +17,20 @@ defmodule ExJsonSchema.Validator.MaxLength do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(max_length, data) when is_bitstring(data) do
     length = String.length(data)
 
     if length <= max_length do
-      []
+      Result.new()
     else
-      [%Error{error: %Error.MaxLength{expected: max_length, actual: length}}]
+      Result.with_errors([%Error{error: %Error.MaxLength{expected: max_length, actual: length}}])
     end
   end
 
   defp do_validate(_, _) do
-    []
+    Result.new()
   end
 end

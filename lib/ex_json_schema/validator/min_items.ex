@@ -6,6 +6,7 @@ defmodule ExJsonSchema.Validator.MinItems do
 
   """
 
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -16,20 +17,20 @@ defmodule ExJsonSchema.Validator.MinItems do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(min_items, items) when is_list(items) do
     count = Enum.count(items)
 
     if count >= min_items do
-      []
+      Result.new()
     else
-      [%Error{error: %Error.MinItems{expected: min_items, actual: count}}]
+      Result.with_errors([%Error{error: %Error.MinItems{expected: min_items, actual: count}}])
     end
   end
 
   defp do_validate(_, _) do
-    []
+    Result.new()
   end
 end
