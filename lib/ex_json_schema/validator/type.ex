@@ -9,6 +9,7 @@ defmodule ExJsonSchema.Validator.Type do
   """
 
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -19,7 +20,7 @@ defmodule ExJsonSchema.Validator.Type do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   @spec do_validate(
@@ -29,9 +30,9 @@ defmodule ExJsonSchema.Validator.Type do
         ) :: Validator.errors()
   defp do_validate(version, type, data) do
     if valid?(version, type, data) do
-      []
+      Result.new()
     else
-      [%Error{error: %Error.Type{expected: List.wrap(type), actual: data_type(data)}}]
+      Result.with_errors([%Error{error: %Error.Type{expected: List.wrap(type), actual: data_type(data)}}])
     end
   end
 

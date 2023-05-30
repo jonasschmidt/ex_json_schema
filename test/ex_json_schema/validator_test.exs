@@ -4,6 +4,7 @@ defmodule ExJsonSchema.ValidatorTest do
   import ExJsonSchema.Validator
 
   alias ExJsonSchema.Validator.Error
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Schema
 
   @schema_with_ref Schema.resolve(%{
@@ -84,8 +85,7 @@ defmodule ExJsonSchema.ValidatorTest do
       },
       %{"foo" => "foo"},
       [
-        {"Expected all of the schemata to match, but the schemata at the following indexes did not: 0, 2.",
-         "#/foo"}
+        {"Expected all of the schemata to match, but the schemata at the following indexes did not: 0, 2.", "#/foo"}
       ],
       [
         %Error{
@@ -239,13 +239,13 @@ defmodule ExJsonSchema.ValidatorTest do
       },
       %{"foo" => true, "bar" => true, "baz" => 1, "xyz" => false},
       [
-        {"Type mismatch. Expected String but got Boolean.", "#/foo"},
         {"Type mismatch. Expected Boolean but got Integer.", "#/baz"},
+        {"Type mismatch. Expected String but got Boolean.", "#/foo"},
         {"Schema does not allow additional properties.", "#/xyz"}
       ],
       [
-        %Error{error: %Error.Type{expected: ["string"], actual: "boolean"}, path: "#/foo"},
         %Error{error: %Error.Type{expected: ["boolean"], actual: "integer"}, path: "#/baz"},
+        %Error{error: %Error.Type{expected: ["string"], actual: "boolean"}, path: "#/foo"},
         %Error{error: %Error.AdditionalProperties{}, path: "#/xyz"}
       ]
     )
@@ -256,6 +256,32 @@ defmodule ExJsonSchema.ValidatorTest do
       %{
         "properties" => %{"foo" => %{"type" => "string"}},
         "additionalProperties" => %{"type" => "boolean"}
+      },
+      %{"foo" => "bar", "bar" => "baz"},
+      [{"Type mismatch. Expected Boolean but got String.", "#/bar"}],
+      [%Error{error: %Error.Type{expected: ["boolean"], actual: "string"}, path: "#/bar"}]
+    )
+  end
+
+  test "validation errors for unevaluated properties with false" do
+    assert_validation_errors(
+      %{
+        "properties" => %{"foo" => %{"type" => "string"}},
+        "unevaluatedProperties" => false
+      },
+      %{"foo" => "bar", "bar" => "baz"},
+      [{"Type mismatch. Expected Boolean but got String.", "#/bar"}],
+      [%Error{error: %Error.Type{expected: ["boolean"], actual: "string"}, path: "#/bar"}]
+    )
+  end
+
+  test "validation errors for unevaluated properties" do
+    assert_validation_errors(
+      %{
+        "properties" => %{"foo" => %{"type" => "string"}},
+        "unevaluatedProperties" => %{
+          "type" => "boolean"
+        }
       },
       %{"foo" => "bar", "bar" => "baz"},
       [{"Type mismatch. Expected Boolean but got String.", "#/bar"}],
@@ -441,10 +467,10 @@ defmodule ExJsonSchema.ValidatorTest do
         }
       },
       %{"foo" => 1, "bar" => 2},
-      [{"Expected the value to be > 2", "#/bar"}, {"Expected the value to be >= 2", "#/foo"}],
+      [{"Expected the value to be >= 2", "#/foo"}, {"Expected the value to be > 2", "#/bar"}],
       [
-        %Error{error: %Error.Minimum{expected: 2, exclusive?: true}, path: "#/bar"},
-        %Error{error: %Error.Minimum{expected: 2, exclusive?: false}, path: "#/foo"}
+        %Error{error: %Error.Minimum{expected: 2, exclusive?: false}, path: "#/foo"},
+        %Error{error: %Error.Minimum{expected: 2, exclusive?: true}, path: "#/bar"}
       ]
     )
   end
@@ -458,10 +484,10 @@ defmodule ExJsonSchema.ValidatorTest do
         }
       },
       %{"foo" => 3, "bar" => 2},
-      [{"Expected the value to be < 2", "#/bar"}, {"Expected the value to be <= 2", "#/foo"}],
+      [{"Expected the value to be <= 2", "#/foo"}, {"Expected the value to be < 2", "#/bar"}],
       [
-        %Error{error: %Error.Maximum{expected: 2, exclusive?: true}, path: "#/bar"},
-        %Error{error: %Error.Maximum{expected: 2, exclusive?: false}, path: "#/foo"}
+        %Error{error: %Error.Maximum{expected: 2, exclusive?: false}, path: "#/foo"},
+        %Error{error: %Error.Maximum{expected: 2, exclusive?: true}, path: "#/bar"}
       ]
     )
   end
@@ -486,7 +512,7 @@ defmodule ExJsonSchema.ValidatorTest do
 
   test "multiple of validator division by 0" do
     assert ExJsonSchema.Validator.MultipleOf.validate(nil, nil, {"multipleOf", 0}, 5, nil) ==
-             [%Error{error: %Error.MultipleOf{expected: 0}}]
+             %Result{errors: [%Error{error: %Error.MultipleOf{expected: 0}}]}
   end
 
   test "multiple of precision" do
@@ -623,8 +649,7 @@ defmodule ExJsonSchema.ValidatorTest do
       %{"properties" => %{"foo" => %{"propertyNames" => %{"minLength" => 3, "maxLength" => 5}}}},
       %{"foo" => %{"f" => true, "foo" => true, "barbaz" => true}},
       [
-        {"Expected the property names to be valid but the following were not: barbaz, f.",
-         "#/foo"}
+        {"Expected the property names to be valid but the following were not: barbaz, f.", "#/foo"}
       ],
       [
         %Error{
@@ -767,8 +792,7 @@ defmodule ExJsonSchema.ValidatorTest do
   end
 
   test "using the string formatter by default" do
-    assert {:error, [{"Type mismatch. Expected String but got Integer.", "#"}]} =
-             validate(%{"type" => "string"}, 666)
+    assert {:error, [{"Type mismatch. Expected String but got Integer.", "#"}]} = validate(%{"type" => "string"}, 666)
   end
 
   defp assert_validation_errors(schema, data, expected_errors, expected_error_structs) do

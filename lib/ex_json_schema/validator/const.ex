@@ -7,6 +7,7 @@ defmodule ExJsonSchema.Validator.Const do
   https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-6.1.3
   """
 
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -17,14 +18,14 @@ defmodule ExJsonSchema.Validator.Const do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(const, data) do
     if const == data do
-      []
+      Result.new()
     else
-      [%Error{error: %Error.Const{expected: const}}]
+      Result.with_errors([%Error{error: %Error.Const{expected: const}}])
     end
   end
 end

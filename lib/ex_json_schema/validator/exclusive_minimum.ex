@@ -9,6 +9,7 @@ defmodule ExJsonSchema.Validator.ExclusiveMinimum do
   """
 
   alias ExJsonSchema.Schema.Root
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -20,7 +21,7 @@ defmodule ExJsonSchema.Validator.ExclusiveMinimum do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(true, data) do
@@ -29,13 +30,13 @@ defmodule ExJsonSchema.Validator.ExclusiveMinimum do
 
   defp do_validate(minimum, data) when is_number(data) do
     if data > minimum do
-      []
+      Result.new()
     else
-      [%Error{error: %Error.Minimum{expected: minimum, exclusive?: true}}]
+      Result.with_errors([%Error{error: %Error.Minimum{expected: minimum, exclusive?: true}}])
     end
   end
 
   defp do_validate(_, _) do
-    []
+    Result.new()
   end
 end

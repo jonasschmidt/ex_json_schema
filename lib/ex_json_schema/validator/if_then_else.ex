@@ -8,6 +8,7 @@ defmodule ExJsonSchema.Validator.IfThenElse do
 
   alias ExJsonSchema.Schema.Root
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -19,7 +20,7 @@ defmodule ExJsonSchema.Validator.IfThenElse do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp validate_with_if(root, %{"then" => then_schema, "else" => else_schema}, if_schema, data) do
@@ -35,29 +36,29 @@ defmodule ExJsonSchema.Validator.IfThenElse do
   end
 
   defp validate_with_if(_, _, _, _) do
-    []
+    Result.new()
   end
 
   defp validate_with_if_then_else(root, if_schema, then_schema, else_schema, data) do
     case Validator.valid_fragment?(root, if_schema, data) do
       true ->
         case then_schema do
-          nil -> []
+          nil -> Result.new()
           then_schema -> validation_errors(root, then_schema, data, :then)
         end
 
       false ->
         case else_schema do
-          nil -> []
+          nil -> Result.new()
           else_schema -> validation_errors(root, else_schema, data, :else)
         end
     end
   end
 
   defp validation_errors(root, schema, data, branch) do
-    case Validator.validation_errors(root, schema, data) do
-      [] -> []
-      errors -> [%Error{error: %Error.IfThenElse{branch: branch, errors: errors}}]
+    case Validator.validation_result(root, schema, data) do
+      %Result{errors: []} -> Result.new()
+      %Result{errors: errors} -> Result.with_errors([%Error{error: %Error.IfThenElse{branch: branch, errors: errors}}])
     end
   end
 end

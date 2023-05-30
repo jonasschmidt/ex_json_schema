@@ -6,6 +6,7 @@ defmodule ExJsonSchema.Validator.MinProperties do
 
   """
 
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -16,18 +17,18 @@ defmodule ExJsonSchema.Validator.MinProperties do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(min_properties, data) when is_map(data) do
     if map_size(data) >= min_properties do
-      []
+      Result.new()
     else
-      [%Error{error: %Error.MinProperties{expected: min_properties, actual: map_size(data)}}]
+      Result.with_errors([%Error{error: %Error.MinProperties{expected: min_properties, actual: map_size(data)}}])
     end
   end
 
   defp do_validate(_, _) do
-    []
+    Result.new()
   end
 end

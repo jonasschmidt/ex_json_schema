@@ -7,6 +7,7 @@ defmodule ExJsonSchema.Validator.Maximum do
   """
 
   alias ExJsonSchema.Schema.Root
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -22,20 +23,20 @@ defmodule ExJsonSchema.Validator.Maximum do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(maximum, exclusive, data) when is_number(data) do
     valid = if exclusive, do: data < maximum, else: data <= maximum
 
     if valid do
-      []
+      Result.new()
     else
-      [%Error{error: %Error.Maximum{expected: maximum, exclusive?: exclusive}}]
+      Result.with_errors([%Error{error: %Error.Maximum{expected: maximum, exclusive?: exclusive}}])
     end
   end
 
   defp do_validate(_, _, _) do
-    []
+    Result.new()
   end
 end

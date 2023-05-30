@@ -8,6 +8,7 @@ defmodule ExJsonSchema.Validator.Required do
   https://tools.ietf.org/html/draft-handrews-json-schema-validation-01#section-6.5.3
   """
 
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -18,17 +19,17 @@ defmodule ExJsonSchema.Validator.Required do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(required, data = %{}) do
     case Enum.filter(List.wrap(required), &(!Map.has_key?(data, &1))) do
-      [] -> []
-      missing -> [%Error{error: %Error.Required{missing: missing}}]
+      [] -> Result.new()
+      missing -> Result.with_errors([%Error{error: %Error.Required{missing: missing}}])
     end
   end
 
   defp do_validate(_, _) do
-    []
+    Result.new()
   end
 end

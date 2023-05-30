@@ -7,6 +7,7 @@ defmodule ExJsonSchema.Validator.OneOf do
   """
 
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
@@ -17,37 +18,37 @@ defmodule ExJsonSchema.Validator.OneOf do
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
   defp do_validate(root, one_of, data, path) do
-    {valid_count, valid_indices, errors} =
+    {valid_count, valid_indices, results} =
       one_of
       |> Enum.with_index()
       |> Enum.reduce({0, [], []}, fn
-        {schema, index}, {valid_count, valid_indices, errors} ->
-          case Validator.validation_errors(root, schema, data, path) do
-            [] -> {valid_count + 1, [index | valid_indices], errors}
-            e -> {valid_count, valid_indices, [{e, index} | errors]}
+        {schema, index}, {valid_count, valid_indices, results} ->
+          case Validator.validation_result(root, schema, data, path) do
+            %Result{errors: []} -> {valid_count + 1, [index | valid_indices], results}
+            result -> {valid_count, valid_indices, [{result, index} | results]}
           end
       end)
 
     case valid_count do
       1 ->
-        []
+        Result.new()
 
       0 ->
-        [
+        Result.with_errors([
           %Error{
             error: %Error.OneOf{
               valid_indices: [],
-              invalid: errors |> Enum.reverse() |> Validator.map_to_invalid_errors()
+              invalid: results |> Enum.reverse() |> Validator.map_to_invalid_errors()
             }
           }
-        ]
+        ])
 
       _ ->
-        [%Error{error: %Error.OneOf{valid_indices: Enum.reverse(valid_indices), invalid: []}}]
+        Result.with_errors([%Error{error: %Error.OneOf{valid_indices: Enum.reverse(valid_indices), invalid: []}}])
     end
   end
 end

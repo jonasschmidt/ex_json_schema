@@ -7,38 +7,40 @@ defmodule ExJsonSchema.Validator.PropertyNames do
   """
 
   alias ExJsonSchema.Validator
+  alias ExJsonSchema.Validator.Context
+  alias ExJsonSchema.Validator.Result
   alias ExJsonSchema.Validator.Error
 
   @behaviour ExJsonSchema.Validator
 
   @impl ExJsonSchema.Validator
-  def validate(root, _, {"propertyNames", property_names}, data, path) do
-    do_validate(root, property_names, data, path)
+  def validate(root, _, {"propertyNames", property_names}, data, context) do
+    do_validate(root, property_names, data, context)
   end
 
   def validate(_, _, _, _, _) do
-    []
+    Result.new()
   end
 
-  defp do_validate(root, property_names, data = %{}, path) do
+  defp do_validate(root, property_names, data = %{}, context) do
     invalid =
       data
       |> Enum.flat_map(fn {name, _} ->
-        case Validator.validation_errors(root, property_names, name, path <> "/#{name}") do
-          [] -> []
-          errors -> [{name, errors}]
+        case Validator.validation_result(root, property_names, name, Context.append_path(context, "/#{name}")) do
+          %Result{errors: []} -> []
+          %Result{errors: errors} -> [{name, errors}]
         end
       end)
       |> Enum.into(%{})
 
     if map_size(invalid) == 0 do
-      []
+      Result.new()
     else
-      [%Error{error: %Error.PropertyNames{invalid: invalid}}]
+      Result.with_errors([%Error{error: %Error.PropertyNames{invalid: invalid}}])
     end
   end
 
   defp do_validate(_, _, _, _) do
-    []
+    Result.new()
   end
 end
