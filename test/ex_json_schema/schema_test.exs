@@ -34,9 +34,18 @@ defmodule ExJsonSchema.SchemaTest do
   test "schema is validated against its meta-schema" do
     schema = %{"properties" => "foo"}
 
+    schema_meta_draft7 = %{
+      "$schema" => "http://json-schema.org/draft-07/schema#",
+      "properties" => "foo"
+    }
+
     assert_raise ExJsonSchema.Schema.InvalidSchemaError,
                  ~s(schema did not pass validation against its meta-schema: [%ExJsonSchema.Validator.Error{error: %ExJsonSchema.Validator.Error.Type{expected: ["object"], actual: "string"}, path: "#/properties"}]),
                  fn -> resolve(schema) end
+
+    assert_raise ExJsonSchema.Schema.InvalidSchemaError,
+                 ~s(schema did not pass validation against its meta-schema: [%ExJsonSchema.Validator.Error{error: %ExJsonSchema.Validator.Error.Type{actual: "string", expected: ["object"]}, path: "#/properties"}]),
+                 fn -> resolve(schema_meta_draft7) end
   end
 
   test "resolving an absolute reference in a scoped schema" do

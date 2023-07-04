@@ -372,13 +372,13 @@ defmodule ExJsonSchema.Schema do
     end)
   end
 
-  defp meta04?(%{"$schema" => @draft4_schema_url <> _}), do: true
+  defp meta04?(%{"$id" => @draft4_schema_url <> _}), do: true
   defp meta04?(_), do: false
 
-  defp meta06?(%{"$schema" => @draft6_schema_url <> _}), do: true
+  defp meta06?(%{"$id" => @draft6_schema_url <> _}), do: true
   defp meta06?(_), do: false
 
-  defp meta07?(%{"$schema" => @draft7_schema_url <> _}), do: true
+  defp meta07?(%{"$id" => @draft7_schema_url <> _}), do: true
   defp meta07?(_), do: false
 
   defp do_get_fragment(nil, _, _ref), do: {:error, :invalid_reference}
