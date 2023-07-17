@@ -21,7 +21,7 @@ defmodule ExJsonSchema.Mixfile do
       preferred_cli_env: [coveralls: :test, dialyzer: :test],
       dialyzer: [
         plt_add_apps: [:ex_unit],
-        plt_core_path: ".",
+        plt_core_path: "_build/#{Mix.env()}",
         plt_add_deps: :transitive
       ]
     ]

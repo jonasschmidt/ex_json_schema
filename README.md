@@ -1,6 +1,6 @@
 # Elixir JSON Schema Validator
 
-[![Build Status](https://app.travis-ci.com/jonasschmidt/ex_json_schema.svg?branch=master)](https://app.travis-ci.com/github/jonasschmidt/ex_json_schema)
+[![Build Status](https://github.com/jonasschmidt/ex_json_schema/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/jonasschmidt/ex_json_schema/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/jonasschmidt/ex_json_schema/badge.svg?branch=master)](https://coveralls.io/github/jonasschmidt/ex_json_schema?branch=master)
 [![Module Version](https://img.shields.io/hexpm/v/ex_json_schema.svg)](https://hex.pm/packages/ex_json_schema)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/ex_json_schema/)
