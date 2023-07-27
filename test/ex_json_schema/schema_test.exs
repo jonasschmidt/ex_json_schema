@@ -37,6 +37,15 @@ defmodule ExJsonSchema.SchemaTest do
     assert_raise ExJsonSchema.Schema.InvalidSchemaError,
                  ~s(schema did not pass validation against its meta-schema: [%ExJsonSchema.Validator.Error{error: %ExJsonSchema.Validator.Error.Type{expected: ["object"], actual: "string"}, path: "#/properties"}]),
                  fn -> resolve(schema) end
+
+    assert_raise ExJsonSchema.Schema.InvalidSchemaError,
+                 fn -> resolve(schema |> Map.put("$schema", "http://json-schema.org/draft-04/schema")) end
+
+    assert_raise ExJsonSchema.Schema.InvalidSchemaError,
+                 fn -> resolve(schema |> Map.put("$schema", "http://json-schema.org/draft-06/schema")) end
+
+    assert_raise ExJsonSchema.Schema.InvalidSchemaError,
+                 fn -> resolve(schema |> Map.put("$schema", "http://json-schema.org/draft-07/schema")) end
   end
 
   test "resolving an absolute reference in a scoped schema" do

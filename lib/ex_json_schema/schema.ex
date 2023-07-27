@@ -149,9 +149,9 @@ defmodule ExJsonSchema.Schema do
 
   @spec assert_valid_schema(map) :: :ok | {:error, Validator.errors()}
   defp assert_valid_schema(schema) do
-    with false <- meta04?(schema),
-         false <- meta06?(schema),
-         false <- meta07?(schema) do
+    if meta_schema?(schema) do
+      :ok
+    else
       schema_module =
         schema
         |> Map.get("$schema", @current_draft_schema_url <> "#")
@@ -160,8 +160,6 @@ defmodule ExJsonSchema.Schema do
       schema_module.schema()
       |> resolve()
       |> ExJsonSchema.Validator.validate(schema, error_formatter: false)
-    else
-      _ -> :ok
     end
   end
 
@@ -372,14 +370,9 @@ defmodule ExJsonSchema.Schema do
     end)
   end
 
-  defp meta04?(%{"$schema" => @draft4_schema_url <> _}), do: true
-  defp meta04?(_), do: false
-
-  defp meta06?(%{"$schema" => @draft6_schema_url <> _}), do: true
-  defp meta06?(_), do: false
-
-  defp meta07?(%{"$schema" => @draft7_schema_url <> _}), do: true
-  defp meta07?(_), do: false
+  defp meta_schema?(%{"id" => "http://json-schema.org/" <> _}), do: true
+  defp meta_schema?(%{"$id" => "http://json-schema.org/" <> _}), do: true
+  defp meta_schema?(_), do: false
 
   defp do_get_fragment(nil, _, _ref), do: {:error, :invalid_reference}
   defp do_get_fragment(schema, [], _), do: {:ok, schema}
