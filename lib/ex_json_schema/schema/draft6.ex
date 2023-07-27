@@ -1,159 +1,76 @@
 defmodule ExJsonSchema.Schema.Draft6 do
   @schema %{
-    "$schema" => "http://json-schema.org/draft-06/schema#",
     "$id" => "http://json-schema.org/draft-06/schema#",
-    "title" => "Core schema meta-schema",
+    "$schema" => "http://json-schema.org/draft-06/schema#",
+    "default" => %{},
     "definitions" => %{
-      "schemaArray" => %{
-        "type" => "array",
-        "minItems" => 1,
-        "items" => %{"$ref" => "#"}
-      },
-      "nonNegativeInteger" => %{
-        "type" => "integer",
-        "minimum" => 0
-      },
-      "nonNegativeIntegerDefault0" => %{
-        "allOf" => [
-          %{"$ref" => "#/definitions/nonNegativeInteger"},
-          %{"default" => 0}
-        ]
-      },
-      "simpleTypes" => %{
-        "enum" => [
-          "array",
-          "boolean",
-          "integer",
-          "null",
-          "number",
-          "object",
-          "string"
-        ]
-      },
-      "stringArray" => %{
-        "type" => "array",
-        "items" => %{"type" => "string"},
-        "uniqueItems" => true,
-        "default" => []
-      }
+      "nonNegativeInteger" => %{"minimum" => 0, "type" => "integer"},
+      "nonNegativeIntegerDefault0" => %{"allOf" => [%{"$ref" => "#/definitions/nonNegativeInteger"}, %{"default" => 0}]},
+      "schemaArray" => %{"items" => %{"$ref" => "#"}, "minItems" => 1, "type" => "array"},
+      "simpleTypes" => %{"enum" => ["array", "boolean", "integer", "null", "number", "object", "string"]},
+      "stringArray" => %{"default" => [], "items" => %{"type" => "string"}, "type" => "array", "uniqueItems" => true}
     },
-    "type" => ["object", "boolean"],
     "properties" => %{
-      "$id" => %{
-        "type" => "string",
-        "format" => "uri-reference"
-      },
-      "$schema" => %{
-        "type" => "string",
-        "format" => "uri"
-      },
-      "$ref" => %{
-        "type" => "string",
-        "format" => "uri-reference"
-      },
-      "title" => %{
-        "type" => "string"
-      },
-      "description" => %{
-        "type" => "string"
-      },
-      "default" => %{},
-      "examples" => %{
-        "type" => "array",
-        "items" => %{}
-      },
-      "multipleOf" => %{
-        "type" => "number",
-        "exclusiveMinimum" => 0
-      },
-      "maximum" => %{
-        "type" => "number"
-      },
-      "exclusiveMaximum" => %{
-        "type" => "number"
-      },
-      "minimum" => %{
-        "type" => "number"
-      },
-      "exclusiveMinimum" => %{
-        "type" => "number"
-      },
-      "maxLength" => %{"$ref" => "#/definitions/nonNegativeInteger"},
-      "minLength" => %{"$ref" => "#/definitions/nonNegativeIntegerDefault0"},
-      "pattern" => %{
-        "type" => "string",
-        "format" => "regex"
-      },
-      "additionalItems" => %{"$ref" => "#"},
-      "items" => %{
-        "anyOf" => [
-          %{"$ref" => "#"},
-          %{"$ref" => "#/definitions/schemaArray"}
-        ],
-        "default" => %{}
-      },
-      "maxItems" => %{"$ref" => "#/definitions/nonNegativeInteger"},
-      "minItems" => %{"$ref" => "#/definitions/nonNegativeIntegerDefault0"},
-      "uniqueItems" => %{
-        "type" => "boolean",
-        "default" => false
-      },
-      "contains" => %{"$ref" => "#"},
-      "maxProperties" => %{"$ref" => "#/definitions/nonNegativeInteger"},
-      "minProperties" => %{"$ref" => "#/definitions/nonNegativeIntegerDefault0"},
-      "required" => %{"$ref" => "#/definitions/stringArray"},
-      "additionalProperties" => %{"$ref" => "#"},
-      "definitions" => %{
-        "type" => "object",
-        "additionalProperties" => %{"$ref" => "#"},
-        "default" => %{}
-      },
-      "properties" => %{
-        "type" => "object",
-        "additionalProperties" => %{"$ref" => "#"},
-        "default" => %{}
-      },
-      "patternProperties" => %{
-        "type" => "object",
-        "additionalProperties" => %{"$ref" => "#"},
-        "default" => %{}
-      },
+      "title" => %{"type" => "string"},
       "dependencies" => %{
-        "type" => "object",
-        "additionalProperties" => %{
-          "anyOf" => [
-            %{"$ref" => "#"},
-            %{"$ref" => "#/definitions/stringArray"}
-          ]
-        }
+        "additionalProperties" => %{"anyOf" => [%{"$ref" => "#"}, %{"$ref" => "#/definitions/stringArray"}]},
+        "type" => "object"
       },
-      "propertyNames" => %{"$ref" => "#"},
+      "items" => %{"anyOf" => [%{"$ref" => "#"}, %{"$ref" => "#/definitions/schemaArray"}], "default" => %{}},
+      "definitions" => %{"additionalProperties" => %{"$ref" => "#"}, "default" => %{}, "type" => "object"},
+      "oneOf" => %{"$ref" => "#/definitions/schemaArray"},
+      "anyOf" => %{"$ref" => "#/definitions/schemaArray"},
       "const" => %{},
-      "enum" => %{
-        "type" => "array",
-        "minItems" => 1,
-        "uniqueItems" => true
-      },
       "type" => %{
         "anyOf" => [
           %{"$ref" => "#/definitions/simpleTypes"},
           %{
-            "type" => "array",
             "items" => %{"$ref" => "#/definitions/simpleTypes"},
             "minItems" => 1,
+            "type" => "array",
             "uniqueItems" => true
           }
         ]
       },
-      "format" => %{"type" => "string"},
+      "contains" => %{"$ref" => "#"},
+      "patternProperties" => %{
+        "additionalProperties" => %{"$ref" => "#"},
+        "default" => %{},
+        "propertyNames" => %{"format" => "regex"},
+        "type" => "object"
+      },
+      "maxLength" => %{"$ref" => "#/definitions/nonNegativeInteger"},
+      "$schema" => %{"format" => "uri", "type" => "string"},
+      "$id" => %{"format" => "uri-reference", "type" => "string"},
+      "uniqueItems" => %{"default" => false, "type" => "boolean"},
+      "exclusiveMaximum" => %{"type" => "number"},
+      "additionalItems" => %{"$ref" => "#"},
       "allOf" => %{"$ref" => "#/definitions/schemaArray"},
-      "anyOf" => %{"$ref" => "#/definitions/schemaArray"},
-      "oneOf" => %{"$ref" => "#/definitions/schemaArray"},
-      "not" => %{"$ref" => "#"}
+      "minItems" => %{"$ref" => "#/definitions/nonNegativeIntegerDefault0"},
+      "additionalProperties" => %{"$ref" => "#"},
+      "required" => %{"$ref" => "#/definitions/stringArray"},
+      "not" => %{"$ref" => "#"},
+      "default" => %{},
+      "multipleOf" => %{"exclusiveMinimum" => 0, "type" => "number"},
+      "minimum" => %{"type" => "number"},
+      "pattern" => %{"format" => "regex", "type" => "string"},
+      "$ref" => %{"format" => "uri-reference", "type" => "string"},
+      "exclusiveMinimum" => %{"type" => "number"},
+      "maxItems" => %{"$ref" => "#/definitions/nonNegativeInteger"},
+      "maxProperties" => %{"$ref" => "#/definitions/nonNegativeInteger"},
+      "description" => %{"type" => "string"},
+      "propertyNames" => %{"$ref" => "#"},
+      "minProperties" => %{"$ref" => "#/definitions/nonNegativeIntegerDefault0"},
+      "properties" => %{"additionalProperties" => %{"$ref" => "#"}, "default" => %{}, "type" => "object"},
+      "minLength" => %{"$ref" => "#/definitions/nonNegativeIntegerDefault0"},
+      "format" => %{"type" => "string"},
+      "examples" => %{"items" => %{}, "type" => "array"},
+      "maximum" => %{"type" => "number"},
+      "enum" => %{"minItems" => 1, "type" => "array", "uniqueItems" => true}
     },
-    "default" => %{}
+    "title" => "Core schema meta-schema",
+    "type" => ["object", "boolean"]
   }
-
   @spec schema() :: ExJsonSchema.data()
   def schema, do: @schema
 
