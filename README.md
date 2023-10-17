@@ -35,7 +35,7 @@ If you have remote schemata that need to be fetched at runtime, you have to regi
 ```elixir
 config :ex_json_schema,
   :remote_schema_resolver,
-  fn url -> HTTPoison.get!(url).body |> Poison.decode! end
+  fn url -> HTTPoison.get!(url).body |> Jason.decode! end
 ```
 
 Alternatively, you can specify a module and function name for situations where using anonymous functions is not possible (i.e. working with Erlang releases):
