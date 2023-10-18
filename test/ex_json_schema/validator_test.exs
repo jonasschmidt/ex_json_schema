@@ -8,7 +8,7 @@ defmodule ExJsonSchema.ValidatorTest do
 
   @schema_with_ref Schema.resolve(%{
                      "properties" => %{
-                       "foo" => %{"$ref" => "http://localhost:8000/subschema.json#/foo"}
+                       "foo" => %{"$ref" => "http://localhost:1234/subschema.json#/foo"}
                      }
                    })
 
@@ -66,7 +66,7 @@ defmodule ExJsonSchema.ValidatorTest do
 
   test "validation errors with a remote reference within a remote reference" do
     assert_validation_errors(
-      %{"$ref" => "http://localhost:8000/subschema.json#/foo"},
+      %{"$ref" => "http://localhost:1234/subschema.json#/foo"},
       "foo",
       [{"Type mismatch. Expected Integer but got String.", "#"}],
       [%Error{error: %Error.Type{expected: ["integer"], actual: "string"}, path: "#"}]

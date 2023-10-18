@@ -21,7 +21,7 @@ defmodule ExJsonSchema.Mixfile do
       preferred_cli_env: [coveralls: :test, dialyzer: :test],
       dialyzer: [
         plt_add_apps: [:ex_unit],
-        plt_core_path: ".",
+        plt_core_path: "_build/#{Mix.env()}",
         plt_add_deps: :transitive
       ]
     ]
@@ -39,7 +39,9 @@ defmodule ExJsonSchema.Mixfile do
       {:excoveralls, "~> 0.14", only: :test},
       {:httpoison, "~> 1.8", only: :test},
       {:mix_test_watch, "~> 0.7", only: [:dev, :test]},
-      {:poison, "~> 5.0", only: :test}
+      {:jason, "~> 1.4", only: :test},
+      {:plug_cowboy, "~> 2.5", only: :test},
+      {:phoenix, "~> 1.6", only: :test}
     ]
   end
 

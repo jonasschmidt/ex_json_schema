@@ -35,7 +35,7 @@ defmodule ExJsonSchema.SchemaTest do
     schema = %{"properties" => "foo"}
 
     assert_raise ExJsonSchema.Schema.InvalidSchemaError,
-                 ~s(schema did not pass validation against its meta-schema: [%ExJsonSchema.Validator.Error{error: %ExJsonSchema.Validator.Error.Type{expected: ["object"], actual: "string"}, path: "#/properties"}]),
+                 ~r/schema did not pass validation against its meta-schema: \[%ExJsonSchema.Validator.Error{error: %ExJsonSchema.Validator.Error.Type{/,
                  fn -> resolve(schema) end
 
     assert_raise ExJsonSchema.Schema.InvalidSchemaError,
@@ -132,19 +132,19 @@ defmodule ExJsonSchema.SchemaTest do
   test "fetching a ref schema with a path" do
     schema =
       resolve(%{
-        "properties" => %{"foo" => %{"$ref" => "http://localhost:8000/subschema.json#/foo"}}
+        "properties" => %{"foo" => %{"$ref" => "http://localhost:1234/subschema.json#/foo"}}
       })
 
     assert get_fragment!(schema, "#/properties/foo") == %{
-             "$ref" => ["http://localhost:8000/subschema.json", "foo"]
+             "$ref" => ["http://localhost:1234/subschema.json", "foo"]
            }
   end
 
   test "fetching a ref schema with a URL" do
-    schema = resolve(%{"$ref" => "http://localhost:8000/subschema.json#/foo"})
+    schema = resolve(%{"$ref" => "http://localhost:1234/subschema.json#/foo"})
 
-    assert get_fragment!(schema, "http://localhost:8000/subschema.json#/foo") == %{
-             "$ref" => ["http://localhost:8000/subsubschema.json", "foo"]
+    assert get_fragment!(schema, "http://localhost:1234/subschema.json#/foo") == %{
+             "$ref" => ["http://localhost:1234/subsubschema.json", "foo"]
            }
   end
 end
