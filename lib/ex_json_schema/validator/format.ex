@@ -99,6 +99,7 @@ defmodule ExJsonSchema.Validator.Format do
   defp do_validate(%Root{custom_format_validator: nil}, format, data) do
     case Application.fetch_env(:ex_json_schema, :custom_format_validator) do
       :error -> []
+      {:ok, validator} when is_function(validator, 2) -> validate_with_custom_validator(validator, format, data)
       {:ok, validator = {_mod, _fun}} -> validate_with_custom_validator(validator, format, data)
     end
   end
@@ -107,8 +108,16 @@ defmodule ExJsonSchema.Validator.Format do
     validate_with_custom_validator(validator, format, data)
   end
 
-  defp validate_with_custom_validator({mod, fun}, format, data) do
-    case apply(mod, fun, [format, data]) do
+  defp do_validate(%Root{custom_format_validator: validator}, format, data) when is_function(validator) do
+    validate_with_custom_validator(validator, format, data)
+  end
+
+  defp validate_with_custom_validator(validator, format, data) do
+    result = case validator do
+      {mod, fun} -> apply(mod, fun, [format, data])
+      fun when is_function(fun, 2) -> fun.(format, data)
+    end
+    case result do
       true -> []
       false -> [%Error{error: %Error.Format{expected: format}}]
       {:error, error} -> [%Error{error: error}]

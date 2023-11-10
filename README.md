@@ -170,6 +170,12 @@ ExJsonSchema.Schema.resolve(%{"format" => "custom"}, custom_format_validator: {M
 
 The configured function is called with the arguments `(format, data)` and is expected to return `true`, `false` or a `{:error, %Error.Format{expected: "something"}}` tuple, depending whether the data is valid for the given format. For compatibility with JSON schema, it is expected to return `true` when the format is unknown by your callback function.
 
+The custom function can also be an anonymous function:
+
+```elixir
+ExJsonSchema.Schema.resolve(%{"format" => "custom"}, custom_format_validator: fn format, data -> true end)
+```
+
 [format-spec]: https://json-schema.org/understanding-json-schema/reference/string.html#format
 
 ## License
@@ -180,5 +186,5 @@ Released under the [MIT license](https://github.com/jonasschmidt/ex_json_schema/
 
 ## TODO
 
-* Add some source code documentation
-* Enable providing JSON for known schemata at resolve time
+- Add some source code documentation
+- Enable providing JSON for known schemata at resolve time
