@@ -176,6 +176,8 @@ The custom function can also be an anonymous function:
 ExJsonSchema.Schema.resolve(%{"format" => "custom"}, custom_format_validator: fn format, data -> true end)
 ```
 
+> Note that the anonymous function version of the custom validator is only available in the option to Schema.resolve/2 and not as Application config, as using anonymous functions as configuration is not allowed.
+
 [format-spec]: https://json-schema.org/understanding-json-schema/reference/string.html#format
 
 ## License
