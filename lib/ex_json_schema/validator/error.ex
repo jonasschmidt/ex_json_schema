@@ -117,6 +117,10 @@ defmodule ExJsonSchema.Validator.Error do
     defstruct([:missing])
   end
 
+  defmodule Nullable do
+    defstruct([:allowed])
+  end
+
   defmodule Type do
     defstruct([:expected, :actual])
   end

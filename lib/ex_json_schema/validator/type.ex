@@ -35,6 +35,7 @@ defmodule ExJsonSchema.Validator.Type do
     end
   end
 
+  defp valid?(_, _, nil), do: true
   defp valid?(_, "number", data), do: is_number(data)
   defp valid?(_, "array", data), do: is_list(data)
   defp valid?(_, "object", data), do: is_map(data)
