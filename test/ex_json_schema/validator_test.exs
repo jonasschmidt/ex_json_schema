@@ -780,6 +780,31 @@ defmodule ExJsonSchema.ValidatorTest do
     )
   end
 
+  test "configuring an anonymous function as custom format validator" do
+    anonymous_validation_fn = fn "myformat", data ->
+      data == "mydata"
+    end
+
+    schema =
+      Schema.resolve(
+        %{
+          "properties" => %{
+            "error" => %{"format" => "myformat"}
+          }
+        },
+        custom_format_validator: anonymous_validation_fn
+      )
+
+    assert :ok = validate(schema, %{"error" => "mydata"})
+
+    assert_validation_errors(
+      schema,
+      %{"error" => ""},
+      [{"Expected to be a valid myformat.", "#/error"}],
+      [%Error{error: %Error.Format{expected: "myformat"}, path: "#/error"}]
+    )
+  end
+
   test "passing the formatter as an option" do
     assert :ok = validate(%{"type" => "string"}, "foo", error_formatter: Error.StringFormatter)
 

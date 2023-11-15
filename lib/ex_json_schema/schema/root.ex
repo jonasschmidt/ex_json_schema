@@ -12,6 +12,6 @@ defmodule ExJsonSchema.Schema.Root do
           location: :root | String.t(),
           definitions: %{String.t() => ExJsonSchema.Schema.resolved()},
           version: non_neg_integer | nil,
-          custom_format_validator: {module(), atom()} | nil
+          custom_format_validator: {module(), atom()} | (String.t(), any() -> boolean | {:error, any()}) | nil
         }
 end
