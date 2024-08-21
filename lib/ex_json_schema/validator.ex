@@ -157,5 +157,5 @@ defmodule ExJsonSchema.Validator do
   defp validator_for("required"), do: ExJsonSchema.Validator.Required
   defp validator_for("type"), do: ExJsonSchema.Validator.Type
   defp validator_for("uniqueItems"), do: ExJsonSchema.Validator.UniqueItems
-  defp validator_for(_), do: nil
+  defp validator_for(_unknown_keyword), do: ExJsonSchema.Validator.CustomKeyword
 end

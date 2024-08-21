@@ -23,7 +23,8 @@ defmodule ExJsonSchema.Mixfile do
         plt_add_apps: [:ex_unit],
         plt_core_path: "_build/#{Mix.env()}",
         plt_add_deps: :transitive
-      ]
+      ],
+      consolidate_protocols: Mix.env() != :test
     ]
   end
 
