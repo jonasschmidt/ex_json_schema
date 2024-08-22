@@ -816,6 +816,126 @@ defmodule ExJsonSchema.ValidatorTest do
     assert {:error, [{"Type mismatch. Expected String but got Integer.", "#"}]} = validate(%{"type" => "string"}, 666)
   end
 
+  defmodule MinDateError do
+    defstruct [:min, :actual]
+  end
+
+  defimpl String.Chars, for: MinDateError do
+    def to_string(%MinDateError{actual: _actual, min: min}), do: "Must be on or after #{min}."
+  end
+
+  defmodule MaxDateError do
+    defstruct [:max, :actual]
+  end
+
+  defimpl String.Chars, for: MaxDateError do
+    def to_string(%MaxDateError{actual: _actual, max: max}), do: "Must be on or before #{max}."
+  end
+
+  defmodule MyCustomKeywordValidator do
+    def validate(_schema, property, data, _path) do
+      case property do
+        {"x-min-date", min_date} -> validate_min_date(min_date, data)
+        {"x-max-date", max_date} -> validate_max_date(max_date, data)
+        _ -> []
+      end
+    end
+
+    defp validate_min_date(min_date, date) do
+      with {:ok, min} <- Date.from_iso8601(min_date),
+           {:ok, current} <- Date.from_iso8601(date) do
+        case Date.compare(current, min) do
+          :lt -> [%Error{error: %MinDateError{actual: date, min: min_date}}]
+          _ -> []
+        end
+      else
+        {:error, error} -> [%Error{error: error}]
+        _ -> []
+      end
+    end
+
+    defp validate_max_date(max_date, date) do
+      with {:ok, max} <- Date.from_iso8601(max_date),
+           {:ok, current} <- Date.from_iso8601(date) do
+        case Date.compare(current, max) do
+          :gt -> [%Error{error: %MaxDateError{actual: date, max: max_date}}]
+          _ -> []
+        end
+      else
+        {:error, error} -> [%Error{error: error}]
+        _ -> []
+      end
+    end
+  end
+
+  test "configuring a custom keyword validator" do
+    schema =
+      Schema.resolve(
+        %{
+          "properties" => %{
+            "date" => %{
+              "type" => "string",
+              "format" => "date",
+              "x-min-date" => "2020-01-01",
+              "x-max-date" => "2038-01-19"
+            }
+          }
+        },
+        custom_keyword_validator: {MyCustomKeywordValidator, :validate}
+      )
+
+    assert :ok = validate(schema, %{"date" => "2024-01-01"})
+
+    assert_validation_errors(
+      schema,
+      %{"date" => "2019-12-31"},
+      [{"Must be on or after 2020-01-01.", "#/date"}],
+      [%Error{error: %MinDateError{actual: "2019-12-31", min: "2020-01-01"}, path: "#/date"}]
+    )
+
+    assert_validation_errors(
+      schema,
+      %{"date" => "2038-01-20"},
+      [{"Must be on or before 2038-01-19.", "#/date"}],
+      [%Error{error: %MaxDateError{actual: "2038-01-20", max: "2038-01-19"}, path: "#/date"}]
+    )
+  end
+
+  test "configuring a custom keyword validator as a function" do
+    validator = fn schema, property, data, path -> MyCustomKeywordValidator.validate(schema, property, data, path) end
+
+    schema =
+      Schema.resolve(
+        %{
+          "properties" => %{
+            "date" => %{
+              "type" => "string",
+              "format" => "date",
+              "x-min-date" => "2020-01-01",
+              "x-max-date" => "2038-01-19"
+            }
+          }
+        },
+        custom_keyword_validator: validator
+      )
+
+    assert :ok = validate(schema, %{"date" => "2024-01-01"})
+
+    assert_validation_errors(
+      schema,
+      %{"date" => "2019-12-31"},
+      [{"Must be on or after 2020-01-01.", "#/date"}],
+      [%Error{error: %MinDateError{actual: "2019-12-31", min: "2020-01-01"}, path: "#/date"}]
+    )
+
+    assert_validation_errors(
+      schema,
+      %{"date" => "2038-01-20"},
+      [{"Must be on or before 2038-01-19.", "#/date"}],
+      [%Error{error: %MaxDateError{actual: "2038-01-20", max: "2038-01-19"}, path: "#/date"}]
+    )
+  end
+
   defp assert_validation_errors(schema, data, expected_errors, expected_error_structs) do
     assert {:error, errors} = validate(schema, data, error_formatter: false)
     assert errors == expected_error_structs

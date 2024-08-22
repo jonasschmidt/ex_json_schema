@@ -48,7 +48,8 @@ defmodule ExJsonSchema.Schema do
   end
 
   @spec resolve(boolean | Root.t() | ExJsonSchema.object(),
-          custom_format_validator: {module(), atom()}
+          custom_format_validator: {module(), atom()},
+          custom_keyword_validator: {module(), atom()}
         ) ::
           Root.t() | no_return
   def resolve(schema, options \\ [])
@@ -59,6 +60,7 @@ defmodule ExJsonSchema.Schema do
 
   def resolve(root = %Root{}, options) do
     root = %Root{root | custom_format_validator: Keyword.get(options, :custom_format_validator)}
+    root = %Root{root | custom_keyword_validator: Keyword.get(options, :custom_keyword_validator)}
     resolve_root(root)
   end
 

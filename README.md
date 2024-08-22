@@ -180,6 +180,41 @@ ExJsonSchema.Schema.resolve(%{"format" => "custom"}, custom_format_validator: fn
 
 [format-spec]: https://json-schema.org/understanding-json-schema/reference/string.html#format
 
+## Custom keywords
+
+Keywords which are not part of the JSON Schema spec are ignored and not subjected to any validation by default.
+Should custom validation for extended keywords be required, you can provide a custom keyword validator which will be called with `(schema, property, data, path)` as parameters and is expected to return a list of `%Error{}` structs.
+
+This validator can be configured globally:
+
+```elixir
+config :ex_json_schema,
+  :custom_keyword_validator,
+  {MyKeywordValidator, :validate}
+```
+
+Or by passing an option as either a `{module, function_name}` tuple or an anonymous function when resolving the schema:
+
+```elixir
+ExJsonSchema.Schema.resolve(%{"x-my-keyword" => "value"}, custom_keyword_validator: {MyKeywordValidator, :validate})
+```
+
+A partical example of how to use this functionality would be to extend a schema to support validating if strings contain a certain value via a custom keyword - `x-contains`. A simple implementation:
+
+```elixir
+defmodule CustomValidator do
+  def validate(_schema, {"x-contains", contains}, data, _path) do
+    if not String.contains?(data, contains) do
+      [%Error{error: "#{data} does not contain #{contains}"}]
+    else
+      []
+    end
+  end
+
+  def validate(_, _, _, _), do: []
+end
+```
+
 ## License
 
 Copyright (c) 2015 Jonas Schmidt
