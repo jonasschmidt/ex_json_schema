@@ -81,8 +81,8 @@ defmodule ExJsonSchema.Validator do
     schema
     |> Enum.flat_map(fn {propertyName, _} = property ->
       case validator_for(propertyName) do
-        nil -> []
-        validator -> validator.validate(root, schema, property, data, path)
+        {:ok, validator} -> validator.validate(root, schema, property, data, path)
+        :error -> []
       end
     end)
     |> Enum.map(fn
@@ -124,38 +124,35 @@ defmodule ExJsonSchema.Validator do
 
   defp format_errors({:error, _} = error, _error_formatter), do: error
 
-  defp validator_for("allOf"), do: ExJsonSchema.Validator.AllOf
-  defp validator_for("anyOf"), do: ExJsonSchema.Validator.AnyOf
-  defp validator_for("const"), do: ExJsonSchema.Validator.Const
-  defp validator_for("contains"), do: ExJsonSchema.Validator.Contains
-
-  defp validator_for("contentEncoding"),
-    do: ExJsonSchema.Validator.ContentEncodingContentMediaType
-
-  defp validator_for("dependencies"), do: ExJsonSchema.Validator.Dependencies
-  defp validator_for("enum"), do: ExJsonSchema.Validator.Enum
-  defp validator_for("exclusiveMaximum"), do: ExJsonSchema.Validator.ExclusiveMaximum
-  defp validator_for("exclusiveMinimum"), do: ExJsonSchema.Validator.ExclusiveMinimum
-  defp validator_for("format"), do: ExJsonSchema.Validator.Format
-  defp validator_for("if"), do: ExJsonSchema.Validator.IfThenElse
-  defp validator_for("items"), do: ExJsonSchema.Validator.Items
-  defp validator_for("maxItems"), do: ExJsonSchema.Validator.MaxItems
-  defp validator_for("maxLength"), do: ExJsonSchema.Validator.MaxLength
-  defp validator_for("maxProperties"), do: ExJsonSchema.Validator.MaxProperties
-  defp validator_for("maximum"), do: ExJsonSchema.Validator.Maximum
-  defp validator_for("minItems"), do: ExJsonSchema.Validator.MinItems
-  defp validator_for("minLength"), do: ExJsonSchema.Validator.MinLength
-  defp validator_for("minProperties"), do: ExJsonSchema.Validator.MinProperties
-  defp validator_for("minimum"), do: ExJsonSchema.Validator.Minimum
-  defp validator_for("multipleOf"), do: ExJsonSchema.Validator.MultipleOf
-  defp validator_for("not"), do: ExJsonSchema.Validator.Not
-  defp validator_for("oneOf"), do: ExJsonSchema.Validator.OneOf
-  defp validator_for("pattern"), do: ExJsonSchema.Validator.Pattern
-  defp validator_for("properties"), do: ExJsonSchema.Validator.Properties
-  defp validator_for("propertyNames"), do: ExJsonSchema.Validator.PropertyNames
-  defp validator_for("$ref"), do: ExJsonSchema.Validator.Ref
-  defp validator_for("required"), do: ExJsonSchema.Validator.Required
-  defp validator_for("type"), do: ExJsonSchema.Validator.Type
-  defp validator_for("uniqueItems"), do: ExJsonSchema.Validator.UniqueItems
-  defp validator_for(_), do: nil
+  defp validator_for("allOf"), do: {:ok, ExJsonSchema.Validator.AllOf}
+  defp validator_for("anyOf"), do: {:ok, ExJsonSchema.Validator.AnyOf}
+  defp validator_for("const"), do: {:ok, ExJsonSchema.Validator.Const}
+  defp validator_for("contains"), do: {:ok, ExJsonSchema.Validator.Contains}
+  defp validator_for("contentEncoding"), do: {:ok, ExJsonSchema.Validator.ContentEncodingContentMediaType}
+  defp validator_for("dependencies"), do: {:ok, ExJsonSchema.Validator.Dependencies}
+  defp validator_for("enum"), do: {:ok, ExJsonSchema.Validator.Enum}
+  defp validator_for("exclusiveMaximum"), do: {:ok, ExJsonSchema.Validator.ExclusiveMaximum}
+  defp validator_for("exclusiveMinimum"), do: {:ok, ExJsonSchema.Validator.ExclusiveMinimum}
+  defp validator_for("format"), do: {:ok, ExJsonSchema.Validator.Format}
+  defp validator_for("if"), do: {:ok, ExJsonSchema.Validator.IfThenElse}
+  defp validator_for("items"), do: {:ok, ExJsonSchema.Validator.Items}
+  defp validator_for("maxItems"), do: {:ok, ExJsonSchema.Validator.MaxItems}
+  defp validator_for("maxLength"), do: {:ok, ExJsonSchema.Validator.MaxLength}
+  defp validator_for("maxProperties"), do: {:ok, ExJsonSchema.Validator.MaxProperties}
+  defp validator_for("maximum"), do: {:ok, ExJsonSchema.Validator.Maximum}
+  defp validator_for("minItems"), do: {:ok, ExJsonSchema.Validator.MinItems}
+  defp validator_for("minLength"), do: {:ok, ExJsonSchema.Validator.MinLength}
+  defp validator_for("minProperties"), do: {:ok, ExJsonSchema.Validator.MinProperties}
+  defp validator_for("minimum"), do: {:ok, ExJsonSchema.Validator.Minimum}
+  defp validator_for("multipleOf"), do: {:ok, ExJsonSchema.Validator.MultipleOf}
+  defp validator_for("not"), do: {:ok, ExJsonSchema.Validator.Not}
+  defp validator_for("oneOf"), do: {:ok, ExJsonSchema.Validator.OneOf}
+  defp validator_for("pattern"), do: {:ok, ExJsonSchema.Validator.Pattern}
+  defp validator_for("properties"), do: {:ok, ExJsonSchema.Validator.Properties}
+  defp validator_for("propertyNames"), do: {:ok, ExJsonSchema.Validator.PropertyNames}
+  defp validator_for("$ref"), do: {:ok, ExJsonSchema.Validator.Ref}
+  defp validator_for("required"), do: {:ok, ExJsonSchema.Validator.Required}
+  defp validator_for("type"), do: {:ok, ExJsonSchema.Validator.Type}
+  defp validator_for("uniqueItems"), do: {:ok, ExJsonSchema.Validator.UniqueItems}
+  defp validator_for(_), do: :error
 end
