@@ -38,7 +38,7 @@ defmodule ExJsonSchema.Mixfile do
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:excoveralls, "~> 0.14", only: :test},
       {:httpoison, "~> 1.8", only: :test},
-      {:mix_test_watch, "~> 0.7", only: [:dev, :test]},
+      {:mix_test_watch, "~> 1.2", only: [:dev, :test]},
       {:jason, "~> 1.4", only: :test},
       {:plug_cowboy, "~> 2.5", only: :test},
       {:phoenix, "~> 1.6", only: :test}
