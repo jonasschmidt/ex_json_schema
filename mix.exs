@@ -20,9 +20,7 @@ defmodule ExJsonSchema.Mixfile do
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [coveralls: :test, dialyzer: :test],
       dialyzer: [
-        plt_add_apps: [:ex_unit],
-        plt_core_path: "_build/#{Mix.env()}",
-        plt_add_deps: :transitive
+        plt_add_apps: [:ex_unit]
       ]
     ]
   end
@@ -34,7 +32,7 @@ defmodule ExJsonSchema.Mixfile do
   defp deps do
     [
       {:decimal, "~> 2.0"},
-      {:dialyxir, "~> 1.2", only: [:test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:excoveralls, "~> 0.14", only: :test},
       {:httpoison, "~> 1.8", only: :test},

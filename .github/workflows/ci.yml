@@ -49,7 +49,7 @@ jobs:
       - name: Compile
         run: mix compile --warnings-as-errors
       - name: Dialyzer
-        run: mix dialyzer --halt-exit-status
+        run: mix dialyzer --format github --format dialyxir
       - name: Run tests
         run: mix coveralls.github
         env:
