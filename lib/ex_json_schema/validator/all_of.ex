@@ -24,18 +24,27 @@ defmodule ExJsonSchema.Validator.AllOf do
   end
 
   defp do_validate(root, all_of, data, path) do
-    invalid =
+    results =
       all_of
       |> Enum.with_index()
       |> Enum.map(fn {schema, index} ->
         {Validator.validation_result(root, schema, data, path), index}
       end)
+
+    invalid =
+      results
       |> Enum.filter(fn {result, _index} -> !Result.valid?(result) end)
       |> Validator.map_to_invalid_errors()
 
+    result =
+      results
+      |> Enum.reduce(Result.new(), fn {result, _}, acc ->
+        acc |> Result.merge_annotations(result)
+      end)
+
     case Enum.empty?(invalid) do
-      true -> Result.new()
-      false -> Result.with_errors([%Error{error: %Error.AllOf{invalid: invalid}}])
+      true -> result
+      false -> result |> Result.add_error(%Error{error: %Error.AllOf{invalid: invalid}})
     end
   end
 end

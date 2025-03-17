@@ -11,8 +11,12 @@ defmodule ExJsonSchema.Validator.Result do
     %__MODULE__{errors: errors}
   end
 
-  def merge(%__MODULE__{errors: e1, annotations: a1}, %__MODULE__{errors: e2, annotations: a2}) do
-    %__MODULE__{errors: e1 ++ e2, annotations: Map.merge(a1, a2)}
+  def merge(%__MODULE__{errors: e1} = r1, %__MODULE__{errors: e2} = r2) do
+    %__MODULE__{r1 | errors: e1 ++ e2} |> merge_annotations(r2)
+  end
+
+  def merge_annotations(%__MODULE__{annotations: a1} = result, %__MODULE__{annotations: a2}) do
+    %__MODULE__{result | annotations: Map.merge(a1, a2)}
   end
 
   def add_error(%__MODULE__{errors: errors} = result, error) do

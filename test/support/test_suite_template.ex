@@ -35,7 +35,7 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
             end
 
             @active [
-              "refs with relative uris and defs"
+              "unevaluatedProperties with nested properties"
             ]
             if description in @active and
                  name not in @ignored_tests do
