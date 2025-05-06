@@ -2,7 +2,7 @@ defmodule ExJsonSchema.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/jonasschmidt/ex_json_schema"
-  @version "0.10.2"
+  @version "0.11.0"
 
   def project do
     [
