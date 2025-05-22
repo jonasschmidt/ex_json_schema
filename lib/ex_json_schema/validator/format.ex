@@ -13,7 +13,7 @@ defmodule ExJsonSchema.Validator.Format do
 
   @behaviour ExJsonSchema.Validator
 
-  @formats %{
+  defp formats, do: %{
     "email" => ~r<^[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*@(?:[A-Z0-9-]+\.)+[a-z]{2,}$>i,
     "hostname" => ~r/^[\pL0-9](?:[\pL0-9-]{0,61}[\pL0-9])?(?:\.[\pL0-9](?:[-0-9\pL]{0,61}[0-9\pL])?)*$/iu,
     "idn-email" => ~r<^[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*@(?:[\pL0-9-]+\.)+[\pL]{2,6}$>iu,
@@ -83,7 +83,7 @@ defmodule ExJsonSchema.Validator.Format do
               "uri",
               "uri-template"
             ] do
-    case Regex.match?(@formats[format], data) do
+    case Regex.match?(formats()[format], data) do
       true -> []
       false -> [%Error{error: %Error.Format{expected: format}}]
     end
