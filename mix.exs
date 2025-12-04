@@ -18,7 +18,6 @@ defmodule ExJsonSchema.Mixfile do
       package: package(),
       elixirc_paths: elixirc_paths(Mix.env()),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [coveralls: :test, dialyzer: :test],
       dialyzer: [
         plt_add_apps: [:ex_unit]
       ]
@@ -27,6 +26,10 @@ defmodule ExJsonSchema.Mixfile do
 
   def application do
     [extra_applications: []]
+  end
+
+  def cli do
+    [preferred_envs: [coveralls: :test, dialyzer: :test]]
   end
 
   defp deps do

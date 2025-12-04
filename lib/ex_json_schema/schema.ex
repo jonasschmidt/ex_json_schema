@@ -121,10 +121,10 @@ defmodule ExJsonSchema.Schema do
           message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
     end
 
-    root = %Root{root | version: schema_version}
+    root = %{root | version: schema_version}
     {root, schema} = resolve_with_root(root, root_schema, scope)
 
-    %Root{root | schema: schema}
+    %{root | schema: schema}
     |> resolve_refs(schema)
   end
 
@@ -366,5 +366,5 @@ defmodule ExJsonSchema.Schema do
     do: raise(InvalidReferenceError, message: "invalid reference #{ref}")
 
   def raise_invalid_reference_error(ref),
-    do: ref |> to_string() |> raise_invalid_reference_error
+    do: ref |> to_string() |> raise_invalid_reference_error()
 end
