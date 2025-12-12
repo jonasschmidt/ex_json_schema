@@ -121,10 +121,10 @@ defmodule ExJsonSchema.Schema do
           message: "schema did not pass validation against its meta-schema: #{inspect(errors)}"
     end
 
-    root = %{root | version: schema_version}
-    {root, schema} = resolve_with_root(root, root_schema, scope)
+    root = %Root{root | version: schema_version}
+    {%Root{} = root, schema} = resolve_with_root(root, root_schema, scope)
 
-    %{root | schema: schema}
+    %Root{root | schema: schema}
     |> resolve_refs(schema)
   end
 
