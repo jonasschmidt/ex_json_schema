@@ -45,7 +45,7 @@ defmodule ExJsonSchema.Schema.Ref do
     %{ref | fragment: pointer, fragment_pointer?: true}
   end
 
-  defp parse_fragment(ref, id), do: %{ref | fragment: [id]}
+  defp parse_fragment(%__MODULE__{} = ref, id), do: %__MODULE__{ref | fragment: [id]}
 
   defp unescaped_ref_segments(ref) do
     ref
