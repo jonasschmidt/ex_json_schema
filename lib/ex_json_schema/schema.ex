@@ -122,7 +122,7 @@ defmodule ExJsonSchema.Schema do
     end
 
     root = %Root{root | version: schema_version}
-    {root, schema} = resolve_with_root(root, root_schema, scope)
+    {%Root{} = root, schema} = resolve_with_root(root, root_schema, scope)
 
     %Root{root | schema: schema}
     |> resolve_refs(schema)
@@ -366,5 +366,5 @@ defmodule ExJsonSchema.Schema do
     do: raise(InvalidReferenceError, message: "invalid reference #{ref}")
 
   def raise_invalid_reference_error(ref),
-    do: ref |> to_string() |> raise_invalid_reference_error
+    do: ref |> to_string() |> raise_invalid_reference_error()
 end

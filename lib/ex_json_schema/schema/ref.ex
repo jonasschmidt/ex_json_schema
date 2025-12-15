@@ -29,9 +29,9 @@ defmodule ExJsonSchema.Schema.Ref do
     %__MODULE__{location: location} |> parse_fragment(fragment)
   end
 
-  defp parse_fragment(ref, fragment) when fragment in [nil, ""], do: %__MODULE__{ref | fragment: []}
+  defp parse_fragment(%__MODULE__{} = ref, fragment) when fragment in [nil, ""], do: %__MODULE__{ref | fragment: []}
 
-  defp parse_fragment(ref, "/" <> _ = pointer) do
+  defp parse_fragment(%__MODULE__{} = ref, "/" <> _ = pointer) do
     keys = unescaped_ref_segments(pointer)
 
     pointer =
@@ -45,7 +45,7 @@ defmodule ExJsonSchema.Schema.Ref do
     %__MODULE__{ref | fragment: pointer, fragment_pointer?: true}
   end
 
-  defp parse_fragment(ref, id), do: %__MODULE__{ref | fragment: [id]}
+  defp parse_fragment(%__MODULE__{} = ref, id), do: %__MODULE__{ref | fragment: [id]}
 
   defp unescaped_ref_segments(ref) do
     ref
