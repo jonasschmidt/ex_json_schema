@@ -1,5 +1,5 @@
 defmodule SamplePhoenix.SampleController do
-  use Phoenix.Controller
+  use Phoenix.Controller, formats: [json: "View"]
 
   def show(conn, %{"path" => path}) do
     test_path = Path.join(__DIR__, "..") |> Path.expand()
