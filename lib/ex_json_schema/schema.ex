@@ -163,6 +163,10 @@ defmodule ExJsonSchema.Schema do
   end
 
   defp schema_module(schema_url, default \\ Draft7)
+
+  defp schema_module("https://json-schema.org/" <> rest, default),
+    do: schema_module("http://json-schema.org/" <> rest, default)
+
   defp schema_module(@draft4_schema_url <> _, _), do: Draft4
   defp schema_module(@draft6_schema_url <> _, _), do: Draft6
   defp schema_module(@draft7_schema_url <> _, _), do: Draft7
@@ -257,6 +261,9 @@ defmodule ExJsonSchema.Schema do
   end
 
   @spec remote_schema(String.t()) :: ExJsonSchema.object()
+  defp remote_schema("https://json-schema.org/" <> rest),
+    do: remote_schema("http://json-schema.org/" <> rest)
+
   defp remote_schema(@current_draft_schema_url <> _), do: Draft7.schema()
   defp remote_schema(@draft4_schema_url <> _), do: Draft4.schema()
   defp remote_schema(@draft6_schema_url <> _), do: Draft6.schema()
