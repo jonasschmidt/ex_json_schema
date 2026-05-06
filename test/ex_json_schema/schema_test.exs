@@ -31,6 +31,20 @@ defmodule ExJsonSchema.SchemaTest do
     assert resolve(schema) == %ExJsonSchema.Schema.Root{refs: %{}, schema: schema, version: 7}
   end
 
+  test "accepts both http:// and https:// forms of the JSON Schema URI" do
+    http_schema = %{"$schema" => "http://json-schema.org/draft-07/schema#"}
+    https_schema = %{"$schema" => "https://json-schema.org/draft-07/schema#"}
+
+    assert resolve(http_schema).version == 7
+    assert resolve(https_schema).version == 7
+
+    http_draft6 = %{"$schema" => "http://json-schema.org/draft-06/schema#"}
+    https_draft6 = %{"$schema" => "https://json-schema.org/draft-06/schema#"}
+
+    assert resolve(http_draft6).version == 6
+    assert resolve(https_draft6).version == 6
+  end
+
   test "schema is validated against its meta-schema" do
     schema = %{"properties" => "foo"}
 
