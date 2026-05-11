@@ -34,7 +34,7 @@ defmodule ExJsonSchema.Mixfile do
 
   defp deps do
     [
-      {:decimal, "~> 2.0"},
+      {:decimal, "~> 3.0"},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:excoveralls, "~> 0.14", only: :test},
