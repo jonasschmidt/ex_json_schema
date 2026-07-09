@@ -189,8 +189,8 @@ defmodule ExJsonSchema.Schema do
     end
   end
 
-  defp resolve_with_root(root, %{"$ref" => ref}, scope) when is_binary(ref) do
-    do_resolve(root, %{"$ref" => ref}, scope)
+  defp resolve_with_root(root, schema = %{"$ref" => ref}, scope) when is_binary(ref) do
+    do_resolve(root, schema, scope)
   end
 
   defp resolve_with_root(root, schema = %{"$id" => id}, scope) when is_binary(id) do

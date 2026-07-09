@@ -93,6 +93,12 @@ defmodule ExJsonSchema.SchemaTest do
     end
   end
 
+  test "resolves a reference to a sibling definition" do
+    schema = %{"$ref" => "#/definitions/foo", "definitions" => %{"foo" => %{"type" => "string"}}}
+    resolved = resolve(schema)
+    assert get_fragment!(resolved, resolved.schema["$ref"]) == %{"type" => "string"}
+  end
+
   test "catches references with an invalid index in the path" do
     schema = %{"$ref" => "http://json-schema.org/schema#/1"}
 

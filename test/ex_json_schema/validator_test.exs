@@ -64,6 +64,31 @@ defmodule ExJsonSchema.ValidatorTest do
     )
   end
 
+  test "validation errors with a reference to a sibling definition" do
+    assert_validation_errors(
+      %{"$ref" => "#/definitions/foo", "definitions" => %{"foo" => %{"type" => "string"}}},
+      5,
+      [{"Type mismatch. Expected String but got Integer.", "#"}],
+      [%Error{error: %Error.Type{expected: ["string"], actual: "integer"}, path: "#"}]
+    )
+  end
+
+  test "validation errors with a reference to a nested sibling definition" do
+    assert_validation_errors(
+      %{
+        "properties" => %{
+          "foo" => %{
+            "$ref" => "#/properties/foo/definitions/bar",
+            "definitions" => %{"bar" => %{"type" => "string"}}
+          }
+        }
+      },
+      %{"foo" => 5},
+      [{"Type mismatch. Expected String but got Integer.", "#/foo"}],
+      [%Error{error: %Error.Type{expected: ["string"], actual: "integer"}, path: "#/foo"}]
+    )
+  end
+
   test "validation errors with a remote reference within a remote reference" do
     assert_validation_errors(
       %{"$ref" => "http://localhost:1234/subschema.json#/foo"},
