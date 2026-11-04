@@ -1,9 +1,51 @@
 defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
   use ExUnit.CaseTemplate
 
+  alias ExJsonSchema.Test.Support.TestHelpers
+
+  @remote_schemas TestHelpers.remote_schemas()
+
+  def valid?(
+        %{"$schema" => "https://json-schema.org/draft/2020-12/schema" <> _rest} = schema,
+        data
+      ) do
+    compiled_valid?(schema, data)
+  end
+
+  def valid?(
+        %{"$schema" => "http://localhost:1234/draft2020-12/" <> _rest} = schema,
+        data
+      ) do
+    compiled_valid?(schema, data)
+  end
+
+  def valid?(schema, data) do
+    compiled_valid?(schema, data)
+  end
+
+  defp compiled_valid?(schema, data) do
+    schema
+    |> ExJsonSchema.Compiler.compile!(
+      resources: @remote_schemas,
+      content_decoder: &Jason.decode/1
+    )
+    |> then(&ExJsonSchema.Evaluator.valid?(data, &1))
+  end
+
+  def ignored_suite?(name, ignored_suites) do
+    Enum.any?(ignored_suites, fn
+      pattern when is_binary(pattern) ->
+        case String.split(pattern, "/**", parts: 2) do
+          [^pattern] -> name == pattern
+          [prefix, ""] -> String.starts_with?(name, prefix)
+        end
+    end)
+  end
+
   using opts do
     quote bind_quoted: [opts: opts] do
       alias ExJsonSchema.Test.Support.TestHelpers
+      alias ExJsonSchema.Test.Support.TestSuiteTemplate
 
       @schema_tests_path opts[:schema_tests_path]
       @schema_url opts[:schema_url]
@@ -29,31 +71,14 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
           |> Enum.each(fn t ->
             @test t
 
-            if name in @ignored_suites or
+            if TestSuiteTemplate.ignored_suite?(name, @ignored_suites) or
                  "#{description}: #{@test["description"]}" in @ignored_tests do
               @tag :skip
             end
 
-            @active [
-              "base URI change - change folder in subschema: number is valid"
-            ]
-            if "#{description}: #{@test["description"]}" in @active and
-                 name not in @ignored_tests do
-              @tag :only
-            end
-
             @tag String.to_atom("json_schema_" <> name)
             test "[#{name}] #{description}: #{@test["description"]}" do
-              valid? =
-                try do
-                  @schema
-                  |> ExJsonSchema.Schema.resolve()
-                  |> ExJsonSchema.Validator.valid?(@test["data"])
-                rescue
-                  e in ExJsonSchema.Schema.InvalidSchemaError ->
-                    false
-                end
-
+              valid? = TestSuiteTemplate.valid?(@schema, @test["data"])
               assert(valid? == @test["valid"])
             end
           end)

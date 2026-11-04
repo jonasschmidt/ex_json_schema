@@ -5,10 +5,10 @@ defmodule ExJsonSchema.JsonSchemaDraft6TestSuiteTest do
     schema_tests_path: "test/JSON-Schema-Test-Suite/tests/draft6/",
     schema_url: "http://json-schema.org/draft-06/schema",
     ignored_suites: [
+      # Re-enable individual formats as they pass the expanded upstream suites.
+      "optional/format/**",
       "optional/non-bmp-regex",
       "optional/ecmascript-regex",
-      # TODO: check this one
-      "optional/format/ipv6",
       "optional/float-overflow"
     ],
     ignored_tests: [

@@ -1,4 +1,8 @@
 defmodule ExJsonSchema.Schema.Draft7 do
+  @moduledoc false
+
+  # Embeds the official Draft 7 meta-schema for local dialect validation.
+
   @schema %{
     "$id" => "http://json-schema.org/draft-07/schema#",
     "$schema" => "http://json-schema.org/draft-07/schema#",
