@@ -11,9 +11,7 @@ defmodule ExJsonSchema.Evaluator.Engine do
   alias ExJsonSchema.Compiler.Location
   alias ExJsonSchema.Compiler.Pointer
   alias ExJsonSchema.Compiler.Reference
-  alias ExJsonSchema.Compiler.Registry
   alias ExJsonSchema.Compiler.Resource
-  alias ExJsonSchema.Compiler.Vocabulary
   alias ExJsonSchema.Evaluator.Context
   alias ExJsonSchema.Evaluator.Dispatcher
   alias ExJsonSchema.Evaluator.Format
@@ -885,17 +883,11 @@ defmodule ExJsonSchema.Evaluator.Engine do
          schema,
          %Context{dialect: %Dialect{version: :"2020-12"}} = context
        ) do
-    known_keywords =
-      Registry.vocabularies()
-      |> Map.values()
-      |> Enum.reduce(MapSet.new(), fn %Vocabulary{keywords: keywords}, known ->
-        MapSet.union(known, keywords)
-      end)
-      |> MapSet.union(MapSet.new(~w[$schema $id $vocabulary $anchor $dynamicAnchor]))
+    known_keywords = EvaluationPlan.known_keywords()
 
     schema
     |> Map.keys()
-    |> Enum.reject(&MapSet.member?(known_keywords, &1))
+    |> Enum.reject(&Map.has_key?(known_keywords, &1))
     |> Enum.sort()
     |> Enum.map(fn keyword -> annotation(context, keyword, schema[keyword]) end)
   end
@@ -1061,12 +1053,17 @@ defmodule ExJsonSchema.Evaluator.Engine do
        ) do
     pointer = schema_pointer ++ relative_path
 
-    %Resource{location_index: location_index} =
+    %Resource{} =
+      resource =
       resource_data ||
         Map.fetch!(CompiledSchema.resources(compiled), resource_uri)
 
-    target = Map.get(location_index, pointer)
-    target = target || %Location{resource: resource_uri, pointer: pointer}
+    target =
+      case Resource.fetch_location(resource, pointer) do
+        {:ok, location} -> location
+        :error -> %Location{resource: resource_uri, pointer: pointer}
+      end
+
     Context.at_schema(context, target)
   end
 

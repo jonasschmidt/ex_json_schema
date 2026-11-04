@@ -12,6 +12,7 @@ defmodule ExJsonSchema.Compiler do
   alias ExJsonSchema.Compiler.Loader
   alias ExJsonSchema.Compiler.Location
   alias ExJsonSchema.Compiler.Options
+  alias ExJsonSchema.Compiler.Pointer
   alias ExJsonSchema.Compiler.Resource
   alias ExJsonSchema.Compiler.URI, as: SchemaURI
   alias ExJsonSchema.Evaluator
@@ -63,7 +64,7 @@ defmodule ExJsonSchema.Compiler do
     with {:ok, graph} <- Loader.load(schema, options),
          compiled <- build_compiled_schema(graph, options),
          :ok <- validate_graph(compiled, options) do
-      {:ok, compiled}
+      {:ok, compact_runtime_dialects(compiled)}
     end
   end
 
@@ -86,6 +87,79 @@ defmodule ExJsonSchema.Compiler do
       annotations?: annotations?(graph.resources),
       track_evaluated?: track_evaluated?(graph.resources)
     )
+  end
+
+  defp compact_runtime_dialects(compiled) do
+    resources =
+      compiled
+      |> CompiledSchema.resources()
+      |> Map.new(fn
+        {uri,
+         %Resource{
+           dialect: dialect,
+           location_index: location_index,
+           evaluation_plans: evaluation_plans
+         } = resource} ->
+          {nodes, plan_table} =
+            compact_nodes(location_index, evaluation_plans, uri)
+
+          resource = %Resource{
+            resource
+            | retrieval_uri: "",
+              aliases: MapSet.new(),
+              dialect: Dialect.runtime(dialect),
+              locations: %{},
+              location_index: %{},
+              base_uri_overrides: %{},
+              evaluation_plans: %{},
+              nodes: nodes,
+              plan_table: plan_table
+          }
+
+          {uri, resource}
+      end)
+
+    CompiledSchema.with_resources(compiled, resources)
+  end
+
+  defp compact_nodes(location_index, evaluation_plans, resource_uri) do
+    {nodes, {_plan_indexes, reversed_plans}} =
+      Enum.map_reduce(
+        location_index,
+        {%{}, []},
+        fn {pointer, location}, {plan_indexes, reversed_plans} ->
+          location =
+            case location do
+              %Location{resource: ^resource_uri, pointer: ^pointer} -> nil
+              %Location{} -> location
+            end
+
+          {plan_index, plan_indexes, reversed_plans} =
+            intern_plan(
+              Map.get(evaluation_plans, pointer),
+              plan_indexes,
+              reversed_plans
+            )
+
+          {{pointer, {location, plan_index}}, {plan_indexes, reversed_plans}}
+        end
+      )
+
+    {Map.new(nodes), reversed_plans |> Enum.reverse() |> List.to_tuple()}
+  end
+
+  defp intern_plan(nil, indexes, reversed_plans),
+    do: {nil, indexes, reversed_plans}
+
+  defp intern_plan(%EvaluationPlan{} = plan, indexes, reversed_plans) do
+    case Map.fetch(indexes, plan) do
+      {:ok, index} ->
+        {index, indexes, reversed_plans}
+
+      :error ->
+        index = map_size(indexes)
+        {index, Map.put(indexes, plan, index), [plan | reversed_plans]}
+    end
   end
 
   defp annotations?(resources) do
@@ -215,11 +289,19 @@ defmodule ExJsonSchema.Compiler do
     Map.fetch(CompiledSchema.resources(compiled), canonical)
   end
 
-  defp fetch_location(%Resource{locations: locations}, fragment) when fragment in [nil, ""],
-    do: Map.fetch(locations, "")
+  defp fetch_location(%Resource{} = resource, fragment)
+       when fragment in [nil, ""],
+       do: Resource.fetch_location(resource, [])
 
-  defp fetch_location(%Resource{locations: locations}, "/" <> _rest = pointer),
-    do: Map.fetch(locations, pointer)
+  defp fetch_location(
+         %Resource{schema: schema} = resource,
+         "/" <> _rest = pointer
+       ) do
+    with {:ok, segments} <- Pointer.decode(pointer),
+         {:ok, normalized} <- normalize_pointer(schema, segments) do
+      Resource.fetch_location(resource, normalized)
+    end
+  end
 
   defp fetch_location(
          %Resource{anchors: anchors, dynamic_anchors: dynamic_anchors},
@@ -231,6 +313,40 @@ defmodule ExJsonSchema.Compiler do
       :error -> Map.fetch(dynamic_anchors, anchor)
     end
   end
+
+  defp normalize_pointer(schema, segments), do: normalize_pointer(schema, segments, [])
+
+  defp normalize_pointer(_schema, [], normalized), do: {:ok, Enum.reverse(normalized)}
+
+  defp normalize_pointer(schema, [segment | rest], normalized) when is_map(schema) do
+    case Map.fetch(schema, segment) do
+      {:ok, child} -> normalize_pointer(child, rest, [segment | normalized])
+      :error -> :error
+    end
+  end
+
+  defp normalize_pointer(schema, [segment | rest], normalized) when is_list(schema) do
+    with {:ok, index} <- array_index(segment),
+         {:ok, child} <- Enum.fetch(schema, index) do
+      normalize_pointer(child, rest, [index | normalized])
+    else
+      _invalid_or_missing_index -> :error
+    end
+  end
+
+  defp normalize_pointer(_schema, _segments, _normalized), do: :error
+
+  defp array_index("0"), do: {:ok, 0}
+
+  defp array_index(<<first, rest::binary>> = segment) when first in ?1..?9 do
+    if rest == "" or Regex.match?(~r/\A[0-9]+\z/, rest) do
+      {:ok, String.to_integer(segment)}
+    else
+      :error
+    end
+  end
+
+  defp array_index(_segment), do: :error
 
   defp reference_error(reference, base_uri) do
     %ReferenceError{

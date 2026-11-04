@@ -188,6 +188,9 @@ defmodule ExJsonSchema.Compiler.Registry do
 
   def default_dialect, do: Map.fetch!(@dialects, @draft7)
 
+  @spec keyword_order() :: [String.t()]
+  def keyword_order, do: @keyword_order
+
   @spec dialect_for_schema(ExJsonSchema.data()) :: {:ok, Dialect.t()} | {:error, CompileError.t()}
   def dialect_for_schema(schema) when is_boolean(schema), do: {:ok, default_dialect()}
 

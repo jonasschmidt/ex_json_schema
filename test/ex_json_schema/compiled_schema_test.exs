@@ -240,9 +240,11 @@ defmodule ExJsonSchema.CompiledSchemaTest do
   defp evaluation_plan(compiled, pointer) do
     %Location{resource: resource_uri} = CompiledSchema.entrypoint(compiled)
 
-    %Resource{evaluation_plans: evaluation_plans} =
+    %Resource{} =
+      resource =
       Map.fetch!(CompiledSchema.resources(compiled), resource_uri)
 
-    Map.fetch!(evaluation_plans, pointer)
+    {:ok, plan} = Resource.fetch_evaluation_plan(resource, pointer)
+    plan
   end
 end

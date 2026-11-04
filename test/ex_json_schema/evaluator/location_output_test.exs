@@ -69,6 +69,13 @@ defmodule ExJsonSchema.Evaluator.LocationOutputTest do
 
     assert error["absoluteKeywordLocation"] ==
              "https://example.com/root#/$defs/integer/type"
+
+    assert ExJsonSchema.validate(1, fetched, output: :basic) == %{
+             "valid" => true,
+             "keywordLocation" => "/$defs/integer",
+             "absoluteKeywordLocation" => "https://example.com/root#/$defs/integer",
+             "instanceLocation" => ""
+           }
   end
 
   defp output_units(output) do

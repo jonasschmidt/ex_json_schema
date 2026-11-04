@@ -5,6 +5,7 @@ defmodule ExJsonSchema.Evaluator.ContextTest do
   alias ExJsonSchema.Compiler.Dialect
   alias ExJsonSchema.Compiler.Location
   alias ExJsonSchema.Evaluator.Context
+  alias ExJsonSchema.Evaluator.Options
 
   test "tracks schema, instance, dialect, vocabulary, and policy transitions" do
     schema = %{
@@ -19,7 +20,12 @@ defmodule ExJsonSchema.Evaluator.ContextTest do
     }
 
     compiled = Compiler.compile!(schema, validate_schema: false)
-    context = Context.new(compiled, output: :flag, assert_formats?: true)
+
+    context =
+      Context.new(
+        compiled,
+        %Options{output: :flag, assert_formats?: true}
+      )
 
     assert %Context{
              resource: "https://example.com/root",

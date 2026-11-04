@@ -2,6 +2,10 @@ defmodule ExJsonSchema.Evaluator.ApplicatorTest do
   use ExUnit.Case, async: true
 
   alias ExJsonSchema.Compiler
+  alias ExJsonSchema.CompiledSchema
+  alias ExJsonSchema.Compiler.EvaluationPlan
+  alias ExJsonSchema.Compiler.Location
+  alias ExJsonSchema.Compiler.Resource
   alias ExJsonSchema.Evaluator
   alias ExJsonSchema.Evaluator.Result
 
@@ -14,6 +18,73 @@ defmodule ExJsonSchema.Evaluator.ApplicatorTest do
 
     assert valid?(2, %{"oneOf" => [%{"type" => "integer"}, %{"minimum" => 3}]})
     refute valid?(4, %{"oneOf" => [%{"type" => "integer"}, %{"minimum" => 3}]})
+  end
+
+  test "compiles supported combinators into fast validation plans" do
+    for {keyword, instruction} <- [
+          {"allOf", :all_of},
+          {"anyOf", :any_of},
+          {"oneOf", :one_of}
+        ] do
+      %CompiledSchema{
+        entrypoint: %Location{resource: resource_uri, pointer: pointer},
+        resources: resources
+      } = compile(%{keyword => [%{"type" => "integer"}, %{"minimum" => 1}]})
+
+      %Resource{} = resource = Map.fetch!(resources, resource_uri)
+
+      assert {:ok,
+              %EvaluationPlan{
+                validity: {:all, [{^instruction, [_first, _second]}]}
+              }} = Resource.fetch_evaluation_plan(resource, pointer)
+    end
+  end
+
+  test "fast combinator plans preserve basic error output" do
+    schema = %{"anyOf" => [%{"type" => "integer"}, %{"type" => "string"}]}
+    output = Evaluator.validate(true, compile(schema), output: :basic)
+
+    assert output["valid"] == false
+
+    assert [
+             %{"keywordLocation" => "/anyOf"},
+             %{"keywordLocation" => "/anyOf/0/type"},
+             %{"keywordLocation" => "/anyOf/1/type"}
+           ] = output["errors"]
+  end
+
+  test "combinators with unevaluated bookkeeping retain the full evaluation path" do
+    schema = %{
+      "$schema" => "https://json-schema.org/draft/2020-12/schema",
+      "anyOf" => [%{"properties" => %{"name" => true}}],
+      "unevaluatedProperties" => false
+    }
+
+    assert valid?(%{"name" => "Ada"}, schema)
+    refute valid?(%{"other" => "Ada"}, schema)
+  end
+
+  test "basic validation falls back for unevaluated-property diagnostics" do
+    schema = %{
+      "$schema" => "https://json-schema.org/draft/2020-12/schema",
+      "properties" => %{"name" => %{"type" => "string"}},
+      "unevaluatedProperties" => false
+    }
+
+    output = Evaluator.validate(%{"name" => 1}, compile(schema), output: :basic)
+
+    assert output["valid"] == false
+    assert is_list(output["errors"])
+
+    nested_output =
+      Evaluator.validate(
+        [%{"name" => 1}],
+        compile(%{"items" => schema}),
+        output: :basic
+      )
+
+    assert nested_output["valid"] == false
+    assert is_list(nested_output["errors"])
   end
 
   test "not reverses validity and suppresses evaluated annotations" do

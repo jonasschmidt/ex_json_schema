@@ -8,7 +8,9 @@ defmodule ExJsonSchema.Evaluator.Context do
   alias ExJsonSchema.Compiler.Dialect
   alias ExJsonSchema.Compiler.EvaluationPlan
   alias ExJsonSchema.Compiler.Location
+  alias ExJsonSchema.Compiler.Registry
   alias ExJsonSchema.Compiler.Resource
+  alias ExJsonSchema.Evaluator.Options
 
   @type output_format :: :flag | :basic | :detailed | :verbose
   @type t :: %__MODULE__{compiled: CompiledSchema.t()}
@@ -33,8 +35,17 @@ defmodule ExJsonSchema.Evaluator.Context do
             evaluation_path: [],
             seen: MapSet.new()
 
-  @spec new(CompiledSchema.t(), keyword()) :: t()
-  def new(compiled, options \\ []) do
+  @spec new(CompiledSchema.t()) :: t()
+  def new(compiled), do: new(compiled, %Options{})
+
+  @spec new(CompiledSchema.t(), Options.t()) :: t()
+  def new(
+        compiled,
+        %Options{
+          output: output_format,
+          assert_formats?: assert_formats?
+        }
+      ) do
     %Location{resource: resource_uri} = entrypoint = CompiledSchema.entrypoint(compiled)
 
     %Resource{
@@ -43,7 +54,6 @@ defmodule ExJsonSchema.Evaluator.Context do
       vocabularies: vocabularies
     } = resource = Map.fetch!(CompiledSchema.resources(compiled), resource_uri)
 
-    output_format = Keyword.get(options, :output, :basic)
     {active_keywords, keyword_positions} = keyword_metadata(resource)
 
     %__MODULE__{
@@ -60,7 +70,7 @@ defmodule ExJsonSchema.Evaluator.Context do
       keyword_metadata_vocabularies: vocabularies,
       keyword_plan: keyword_plan(resource, entrypoint),
       output_format: output_format,
-      assert_formats?: Keyword.get(options, :assert_formats?, :default),
+      assert_formats?: assert_formats?,
       collect_annotations?: output_format != :flag,
       track_evaluated?: false
     }
@@ -211,6 +221,7 @@ defmodule ExJsonSchema.Evaluator.Context do
          dialect: %Dialect{keyword_order: keyword_order}
        }) do
     active_keywords = EvaluationPlan.active_keywords(vocabularies)
+    keyword_order = if keyword_order == [], do: Registry.keyword_order(), else: keyword_order
 
     keyword_positions =
       keyword_order
@@ -220,10 +231,10 @@ defmodule ExJsonSchema.Evaluator.Context do
     {active_keywords, keyword_positions}
   end
 
-  defp keyword_plan(
-         %Resource{evaluation_plans: evaluation_plans},
-         %Location{pointer: pointer}
-       ) do
-    Map.get(evaluation_plans, pointer)
+  defp keyword_plan(%Resource{} = resource, %Location{pointer: pointer}) do
+    case Resource.fetch_evaluation_plan(resource, pointer) do
+      {:ok, plan} -> plan
+      :error -> nil
+    end
   end
 end

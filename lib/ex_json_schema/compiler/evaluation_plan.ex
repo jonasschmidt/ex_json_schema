@@ -18,6 +18,7 @@ defmodule ExJsonSchema.Compiler.EvaluationPlan do
   @unevaluated_set MapSet.new(@unevaluated)
 
   @count_keywords ~w[maxLength minLength maxItems minItems maxProperties minProperties]
+  @combinator_keywords ~w[allOf anyOf oneOf]
 
   @annotation_keywords ~w[
     title description default deprecated readOnly writeOnly examples
@@ -32,6 +33,7 @@ defmodule ExJsonSchema.Compiler.EvaluationPlan do
                     end
                   )
                   |> MapSet.union(@identifier_set)
+                  |> Map.new(&{&1, true})
 
   @type t :: %__MODULE__{
           identifiers: [String.t()],
@@ -57,6 +59,9 @@ defmodule ExJsonSchema.Compiler.EvaluationPlan do
           | {:properties, %{String.t() => child()}}
           | {:properties_with_unevaluated, %{String.t() => child()}, child()}
           | {:contains, child(), non_neg_integer(), non_neg_integer() | :infinity}
+          | {:all_of, [child()]}
+          | {:any_of, [child()]}
+          | {:one_of, [child()]}
           | {:unevaluated_properties, child()}
   @type validity :: {:all, [instruction()]} | {:boolean, boolean()} | :fallback
 
@@ -118,6 +123,9 @@ defmodule ExJsonSchema.Compiler.EvaluationPlan do
       end
     end)
   end
+
+  @spec known_keywords() :: %{String.t() => true}
+  def known_keywords, do: @known_keywords
 
   defp sort([], _positions), do: []
   defp sort([keyword], _positions), do: [keyword]
@@ -232,28 +240,24 @@ defmodule ExJsonSchema.Compiler.EvaluationPlan do
        when is_map(properties) do
     properties
     |> Enum.reduce_while({:ok, %{}, %{}}, fn {name, child}, {:ok, properties, support_cache} ->
-      {supported?, support_cache} =
-        child_supported?(child, dialect, vocabularies, support_cache)
+      {support, support_cache} =
+        child_support(child, dialect, vocabularies, support_cache)
 
-      if supported? do
-        child =
-          cond do
-            is_boolean(child) ->
-              {:boolean, child}
+      case support do
+        {:boolean, valid} ->
+          child = {:boolean, valid}
+          {:cont, {:ok, Map.put(properties, name, child), support_cache}}
 
-            match?(
-              %__MODULE__{validity: {:all, []}},
-              new(child, dialect, vocabularies)
-            ) ->
-              {:boolean, true}
+        :always_valid ->
+          child = {:boolean, true}
+          {:cont, {:ok, Map.put(properties, name, child), support_cache}}
 
-            true ->
-              {:plan, ["properties", name]}
-          end
+        :plan ->
+          child = {:plan, ["properties", name]}
+          {:cont, {:ok, Map.put(properties, name, child), support_cache}}
 
-        {:cont, {:ok, Map.put(properties, name, child), support_cache}}
-      else
-        {:halt, :fallback}
+        :fallback ->
+          {:halt, :fallback}
       end
     end)
     |> case do
@@ -280,6 +284,46 @@ defmodule ExJsonSchema.Compiler.EvaluationPlan do
 
     child_instruction(schema["contains"], ["contains"], dialect, vocabularies)
     |> map_instruction(&{:contains, &1, minimum, maximum})
+  end
+
+  defp compile_instruction(keyword, schema, dialect, vocabularies)
+       when keyword in @combinator_keywords do
+    case schema[keyword] do
+      children when is_list(children) ->
+        children
+        |> Enum.with_index()
+        |> Enum.reduce_while(
+          {:ok, [], %{}},
+          fn {child, index}, {:ok, instructions, support_cache} ->
+            {support, support_cache} =
+              child_support(child, dialect, vocabularies, support_cache)
+
+            case support do
+              {:boolean, valid} ->
+                {:cont, {:ok, [{:boolean, valid} | instructions], support_cache}}
+
+              :always_valid ->
+                {:cont, {:ok, [{:boolean, true} | instructions], support_cache}}
+
+              :plan ->
+                {:cont, {:ok, [{:plan, [keyword, index]} | instructions], support_cache}}
+
+              :fallback ->
+                {:halt, :fallback}
+            end
+          end
+        )
+        |> case do
+          {:ok, instructions, _support_cache} ->
+            {:ok, {combinator_instruction(keyword), Enum.reverse(instructions)}}
+
+          :fallback ->
+            :fallback
+        end
+
+      _invalid_children ->
+        :fallback
+    end
   end
 
   defp compile_instruction("unevaluatedProperties", schema, dialect, vocabularies) do
@@ -321,8 +365,13 @@ defmodule ExJsonSchema.Compiler.EvaluationPlan do
          vocabularies,
          ordinary,
          ["unevaluatedProperties"] = unevaluated
-       ),
-       do: compile_validity(schema, dialect, vocabularies, ordinary ++ unevaluated)
+       ) do
+    if Enum.any?(ordinary, &(&1 in @combinator_keywords)) do
+      :fallback
+    else
+      compile_validity(schema, dialect, vocabularies, ordinary ++ unevaluated)
+    end
+  end
 
   defp compile_validity_plan(_schema, _dialect, _vocabularies, _ordinary, _unevaluated),
     do: :fallback
@@ -376,11 +425,20 @@ defmodule ExJsonSchema.Compiler.EvaluationPlan do
       "properties" ->
         case schema["properties"] do
           properties when is_map(properties) ->
-            Enum.any?(properties, fn {_name, child} ->
-              subschema_annotations?(child, dialect, vocabularies)
-            end)
+            properties
+            |> Map.values()
+            |> subschemata_annotations?(dialect, vocabularies)
 
           _invalid_properties ->
+            false
+        end
+
+      keyword when keyword in @combinator_keywords ->
+        case schema[keyword] do
+          children when is_list(children) ->
+            subschemata_annotations?(children, dialect, vocabularies)
+
+          _invalid_children ->
             false
         end
 
@@ -396,8 +454,30 @@ defmodule ExJsonSchema.Compiler.EvaluationPlan do
 
   defp subschema_annotations?(_child, _dialect, _vocabularies), do: false
 
+  defp subschemata_annotations?(children, dialect, vocabularies) do
+    children
+    |> Enum.reduce_while({false, %{}}, fn child, {false, cache} ->
+      case Map.fetch(cache, child) do
+        {:ok, true} ->
+          {:halt, {true, cache}}
+
+        {:ok, false} ->
+          {:cont, {false, cache}}
+
+        :error ->
+          annotations? = subschema_annotations?(child, dialect, vocabularies)
+          cache = Map.put(cache, child, annotations?)
+
+          if annotations?,
+            do: {:halt, {true, cache}},
+            else: {:cont, {false, cache}}
+      end
+    end)
+    |> elem(0)
+  end
+
   defp has_unknown_keyword?(schema) do
-    Enum.any?(Map.keys(schema), &(not MapSet.member?(@known_keywords, &1)))
+    Enum.any?(Map.keys(schema), &(not Map.has_key?(@known_keywords, &1)))
   end
 
   defp child_instruction(child, _relative_path, _dialect, _vocabularies) when is_boolean(child),
@@ -417,27 +497,31 @@ defmodule ExJsonSchema.Compiler.EvaluationPlan do
 
   defp child_instruction(_child, _relative_path, _dialect, _vocabularies), do: :fallback
 
-  defp child_supported?(child, _dialect, _vocabularies, cache) when is_boolean(child),
-    do: {true, cache}
+  defp child_support(child, _dialect, _vocabularies, cache) when is_boolean(child),
+    do: {{:boolean, child}, cache}
 
-  defp child_supported?(child, dialect, vocabularies, cache) when is_map(child) do
+  defp child_support(child, dialect, vocabularies, cache) when is_map(child) do
     case Map.fetch(cache, child) do
-      {:ok, supported?} ->
-        {supported?, cache}
+      {:ok, support} ->
+        {support, cache}
 
       :error ->
-        supported? =
-          not resource_boundary?(child, dialect) and
-            not match?(
-              %__MODULE__{validity: :fallback},
-              new(child, dialect, vocabularies)
-            )
+        support =
+          if resource_boundary?(child, dialect) do
+            :fallback
+          else
+            case new(child, dialect, vocabularies) do
+              %__MODULE__{validity: {:all, []}} -> :always_valid
+              %__MODULE__{validity: :fallback} -> :fallback
+              %__MODULE__{} -> :plan
+            end
+          end
 
-        {supported?, Map.put(cache, child, supported?)}
+        {support, Map.put(cache, child, support)}
     end
   end
 
-  defp child_supported?(_child, _dialect, _vocabularies, cache), do: {false, cache}
+  defp child_support(_child, _dialect, _vocabularies, cache), do: {:fallback, cache}
 
   defp resource_boundary?(schema, %Dialect{version: version}) do
     identifier = if version == 4, do: "id", else: "$id"
@@ -446,4 +530,8 @@ defmodule ExJsonSchema.Compiler.EvaluationPlan do
 
   defp map_instruction({:ok, value}, fun), do: {:ok, fun.(value)}
   defp map_instruction(:fallback, _fun), do: :fallback
+
+  defp combinator_instruction("allOf"), do: :all_of
+  defp combinator_instruction("anyOf"), do: :any_of
+  defp combinator_instruction("oneOf"), do: :one_of
 end

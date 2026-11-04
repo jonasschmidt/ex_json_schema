@@ -1,7 +1,8 @@
 Mix.install(
   [
     {:ex_json_schema, path: Path.expand("..", __DIR__)},
-    {:jsv, "~> 0.26.2"}
+    {:jsv, "~> 0.26.2"},
+    {:decimal, "~> 2.0 or ~> 3.0"}
   ],
   consolidate_protocols: false
 )

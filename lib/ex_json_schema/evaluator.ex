@@ -11,20 +11,33 @@ defmodule ExJsonSchema.Evaluator do
   alias ExJsonSchema.Evaluator.Context
   alias ExJsonSchema.Evaluator.Engine
   alias ExJsonSchema.Evaluator.FlagEngine
+  alias ExJsonSchema.Evaluator.Options
   alias ExJsonSchema.Evaluator.Output
   alias ExJsonSchema.Evaluator.Result
 
-  @spec evaluate(ExJsonSchema.data(), CompiledSchema.t(), keyword()) :: Result.t()
-  def evaluate(instance, compiled, options \\ []) do
+  @spec evaluate(ExJsonSchema.data(), CompiledSchema.t()) :: Result.t()
+  def evaluate(instance, compiled), do: evaluate(instance, compiled, %Options{})
+
+  @spec evaluate(ExJsonSchema.data(), CompiledSchema.t(), keyword() | Options.t()) :: Result.t()
+  def evaluate(instance, compiled, options) when is_list(options) do
+    evaluate(instance, compiled, Options.parse!(options))
+  end
+
+  def evaluate(instance, compiled, %Options{} = options) do
     context = Context.new(compiled, options)
     schema = schema_at!(compiled, CompiledSchema.entrypoint(compiled))
     Engine.evaluate(schema, instance, context)
   end
 
-  @spec validate(ExJsonSchema.data(), CompiledSchema.t(), keyword()) :: map()
-  def validate(instance, compiled, options \\ []) do
-    format = Keyword.get(options, :output, :basic)
+  @spec validate(ExJsonSchema.data(), CompiledSchema.t()) :: map()
+  def validate(instance, compiled), do: validate(instance, compiled, %Options{})
 
+  @spec validate(ExJsonSchema.data(), CompiledSchema.t(), keyword() | Options.t()) :: map()
+  def validate(instance, compiled, options) when is_list(options) do
+    validate(instance, compiled, Options.parse!(options))
+  end
+
+  def validate(instance, compiled, %Options{output: format} = options) do
     if format == :basic do
       case BasicEngine.validate(instance, compiled) do
         {:ok, output} -> output
@@ -35,15 +48,22 @@ defmodule ExJsonSchema.Evaluator do
     end
   end
 
-  @spec valid?(ExJsonSchema.data(), CompiledSchema.t(), keyword()) :: boolean()
-  def valid?(instance, compiled, options \\ []) do
+  @spec valid?(ExJsonSchema.data(), CompiledSchema.t()) :: boolean()
+  def valid?(instance, compiled), do: valid?(instance, compiled, %Options{})
+
+  @spec valid?(ExJsonSchema.data(), CompiledSchema.t(), keyword() | Options.t()) :: boolean()
+  def valid?(instance, compiled, options) when is_list(options) do
+    valid?(instance, compiled, Options.parse!(options))
+  end
+
+  def valid?(instance, compiled, %Options{} = options) do
     case FlagEngine.valid?(instance, compiled) do
       {:ok, valid} ->
         valid
 
       :fallback ->
         %Result{valid: valid} =
-          evaluate(instance, compiled, Keyword.put(options, :output, :flag))
+          evaluate(instance, compiled, %Options{options | output: :flag})
 
         valid
     end

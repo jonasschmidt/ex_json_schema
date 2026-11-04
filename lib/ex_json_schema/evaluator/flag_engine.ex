@@ -15,10 +15,9 @@ defmodule ExJsonSchema.Evaluator.FlagEngine do
     %Location{resource: resource_uri, pointer: pointer} =
       CompiledSchema.entrypoint(compiled)
 
-    %Resource{evaluation_plans: evaluation_plans} =
-      resource = Map.fetch!(CompiledSchema.resources(compiled), resource_uri)
+    %Resource{} = resource = Map.fetch!(CompiledSchema.resources(compiled), resource_uri)
 
-    case Map.fetch(evaluation_plans, pointer) do
+    case Resource.fetch_evaluation_plan(resource, pointer) do
       {:ok, %EvaluationPlan{validity: :fallback}} ->
         :fallback
 
@@ -177,6 +176,18 @@ defmodule ExJsonSchema.Evaluator.FlagEngine do
     end
   end
 
+  defp evaluate_instruction({:all_of, children}, instance, resource, pointer) do
+    Enum.all?(children, &evaluate_child(&1, instance, resource, pointer))
+  end
+
+  defp evaluate_instruction({:any_of, children}, instance, resource, pointer) do
+    Enum.any?(children, &evaluate_child(&1, instance, resource, pointer))
+  end
+
+  defp evaluate_instruction({:one_of, children}, instance, resource, pointer) do
+    one_of_valid?(children, instance, resource, pointer, 0)
+  end
+
   defp evaluate_instruction(
          {:unevaluated_properties, child},
          instance,
@@ -216,11 +227,14 @@ defmodule ExJsonSchema.Evaluator.FlagEngine do
 
   defp resolve_child(
          {:plan, relative},
-         %Resource{evaluation_plans: evaluation_plans},
+         %Resource{} = resource,
          pointer
        ) do
     pointer = pointer ++ relative
-    %EvaluationPlan{validity: validity} = Map.fetch!(evaluation_plans, pointer)
+
+    {:ok, %EvaluationPlan{validity: validity}} =
+      Resource.fetch_evaluation_plan(resource, pointer)
+
     {:plan, validity, pointer}
   end
 
@@ -228,6 +242,20 @@ defmodule ExJsonSchema.Evaluator.FlagEngine do
 
   defp evaluate_resolved_child({:plan, validity, pointer}, instance, resource),
     do: evaluate(validity, instance, resource, pointer)
+
+  defp evaluate_child(child, instance, resource, pointer) do
+    child
+    |> resolve_child(resource, pointer)
+    |> evaluate_resolved_child(instance, resource)
+  end
+
+  defp one_of_valid?(_children, _instance, _resource, _pointer, 2), do: false
+  defp one_of_valid?([], _instance, _resource, _pointer, matches), do: matches == 1
+
+  defp one_of_valid?([child | rest], instance, resource, pointer, matches) do
+    matches = if evaluate_child(child, instance, resource, pointer), do: matches + 1, else: matches
+    one_of_valid?(rest, instance, resource, pointer, matches)
+  end
 
   defp contains_valid?([], _child, _resource, matches, minimum, maximum) do
     matches >= minimum and (maximum == :infinity or matches <= maximum)

@@ -15,16 +15,26 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
     %Location{resource: resource_uri, pointer: pointer} =
       location = CompiledSchema.entrypoint(compiled)
 
-    %Resource{evaluation_plans: evaluation_plans} =
-      resource = Map.fetch!(CompiledSchema.resources(compiled), resource_uri)
+    %Resource{} = resource = Map.fetch!(CompiledSchema.resources(compiled), resource_uri)
 
     with {:ok, %EvaluationPlan{validity: validity, annotations?: annotations?}} <-
-           Map.fetch(evaluation_plans, pointer),
-         false <- validity == :fallback,
-         {valid, errors} <-
-           evaluate(validity, instance, resource, pointer, []),
-         false <- valid and annotations? do
-      {:ok, root_output(valid, errors, resource, location)}
+           Resource.fetch_evaluation_plan(resource, pointer),
+         false <- validity == :fallback do
+      valid = evaluate_valid?(validity, instance, resource, pointer)
+
+      cond do
+        valid and annotations? ->
+          :fallback
+
+        valid ->
+          {:ok, CompiledSchema.basic_success_output(compiled)}
+
+        true ->
+          case evaluate(validity, instance, resource, pointer, []) do
+            {false, errors} -> {:ok, root_error_output(errors, resource, location)}
+            :fallback -> :fallback
+          end
+      end
     else
       _unsupported_or_annotated -> :fallback
     end
@@ -213,31 +223,34 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
       {valid, errors} =
         instance
         |> Enum.with_index()
-        |> Enum.reduce({true, []}, fn {item, index}, {valid, chunks} ->
+        |> Enum.reduce_while({true, []}, fn {item, index}, {valid, chunks} ->
           item_pointer = instance_pointer ++ [index]
 
           if evaluate_resolved_child_valid?(child, item, resource) do
-            {valid, chunks}
+            {:cont, {valid, chunks}}
           else
-            {false,
-             [
-               evaluate_resolved_child(child, item, resource, item_pointer) |> elem(1)
-               | chunks
-             ]}
+            case evaluate_resolved_child(child, item, resource, item_pointer) do
+              {false, errors} -> {:cont, {false, [errors | chunks]}}
+              :fallback -> {:halt, :fallback}
+            end
           end
         end)
-        |> then(fn {valid, chunks} ->
-          {valid, chunks |> Enum.reverse() |> :lists.append()}
-        end)
+        |> flatten_error_chunks()
 
-      applicator_outcome(
-        valid,
-        errors,
-        resource,
-        pointer ++ ["items"],
-        instance_pointer,
-        "items failed"
-      )
+      case {valid, errors} do
+        {:fallback, :fallback} ->
+          :fallback
+
+        {valid, errors} ->
+          applicator_outcome(
+            valid,
+            errors,
+            resource,
+            pointer ++ ["items"],
+            instance_pointer,
+            "items failed"
+          )
+      end
     else
       {true, []}
     end
@@ -263,26 +276,29 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
             if evaluate_resolved_child_valid?(child, value, resource) do
               {valid, chunks}
             else
-              {false,
-               [
-                 evaluate_resolved_child(child, value, resource, property_pointer) |> elem(1)
-                 | chunks
-               ]}
+              case evaluate_resolved_child(child, value, resource, property_pointer) do
+                {false, errors} -> {false, [errors | chunks]}
+                :fallback -> :fallback
+              end
             end
           end
         )
-        |> then(fn {valid, chunks} ->
-          {valid, chunks |> Enum.reverse() |> :lists.append()}
-        end)
+        |> flatten_error_chunks()
 
-      applicator_outcome(
-        valid,
-        errors,
-        resource,
-        pointer ++ ["properties"],
-        instance_pointer,
-        "properties failed"
-      )
+      case {valid, errors} do
+        {:fallback, :fallback} ->
+          :fallback
+
+        {valid, errors} ->
+          applicator_outcome(
+            valid,
+            errors,
+            resource,
+            pointer ++ ["properties"],
+            instance_pointer,
+            "properties failed"
+          )
+      end
     else
       {true, []}
     end
@@ -311,6 +327,97 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
       )
     else
       {true, []}
+    end
+  end
+
+  defp evaluate_instruction({:all_of, children}, instance, resource, pointer, instance_pointer) do
+    result =
+      Enum.reduce_while(children, {0, []}, fn child, {matches, chunks} ->
+        if evaluate_child_valid?(child, instance, resource, pointer) do
+          {:cont, {matches + 1, chunks}}
+        else
+          case evaluate_child(child, instance, resource, pointer, instance_pointer) do
+            {false, errors} -> {:cont, {matches, [errors | chunks]}}
+            :fallback -> {:halt, :fallback}
+          end
+        end
+      end)
+
+    case result do
+      :fallback ->
+        :fallback
+
+      {matches, chunks} ->
+        applicator_outcome(
+          matches == length(children),
+          chunks |> Enum.reverse() |> :lists.append(),
+          resource,
+          pointer ++ ["allOf"],
+          instance_pointer,
+          "allOf matched #{matches} branches"
+        )
+    end
+  end
+
+  defp evaluate_instruction({:any_of, children}, instance, resource, pointer, instance_pointer) do
+    if Enum.any?(children, &evaluate_child_valid?(&1, instance, resource, pointer)) do
+      {true, []}
+    else
+      result =
+        Enum.reduce_while(children, [], fn child, chunks ->
+          case evaluate_child(child, instance, resource, pointer, instance_pointer) do
+            {false, errors} -> {:cont, [errors | chunks]}
+            :fallback -> {:halt, :fallback}
+          end
+        end)
+
+      case result do
+        :fallback ->
+          :fallback
+
+        chunks ->
+          applicator_outcome(
+            false,
+            chunks |> Enum.reverse() |> :lists.append(),
+            resource,
+            pointer ++ ["anyOf"],
+            instance_pointer,
+            "anyOf matched 0 branches"
+          )
+      end
+    end
+  end
+
+  defp evaluate_instruction({:one_of, children}, instance, resource, pointer, instance_pointer) do
+    matches = Enum.count(children, &evaluate_child_valid?(&1, instance, resource, pointer))
+
+    errors =
+      if matches == 0 do
+        Enum.reduce_while(children, [], fn child, chunks ->
+          case evaluate_child(child, instance, resource, pointer, instance_pointer) do
+            {false, errors} -> {:cont, [errors | chunks]}
+            :fallback -> {:halt, :fallback}
+          end
+        end)
+        |> case do
+          :fallback -> :fallback
+          chunks -> chunks |> Enum.reverse() |> :lists.append()
+        end
+      else
+        []
+      end
+
+    if errors == :fallback do
+      :fallback
+    else
+      applicator_outcome(
+        matches == 1,
+        errors,
+        resource,
+        pointer ++ ["oneOf"],
+        instance_pointer,
+        "oneOf matched #{matches} branches"
+      )
     end
   end
 
@@ -421,22 +528,35 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
     do: list_count_until(rest, minimum, matches + 1)
 
   defp reduce_present_properties(instance, properties, accumulator, reducer) do
-    if map_size(instance) < map_size(properties) do
-      Enum.reduce(instance, accumulator, fn {name, value}, accumulator ->
-        case Map.fetch(properties, name) do
-          {:ok, child} -> reducer.(name, child, value, accumulator)
-          :error -> accumulator
+    enumerable =
+      if map_size(instance) < map_size(properties),
+        do: {:instance, instance},
+        else: {:properties, properties}
+
+    Enum.reduce_while(elem(enumerable, 1), accumulator, fn {name, value}, accumulator ->
+      next =
+        case enumerable do
+          {:instance, _instance} ->
+            case Map.fetch(properties, name) do
+              {:ok, child} -> reducer.(name, child, value, accumulator)
+              :error -> accumulator
+            end
+
+          {:properties, _properties} ->
+            case Map.fetch(instance, name) do
+              {:ok, instance_value} -> reducer.(name, value, instance_value, accumulator)
+              :error -> accumulator
+            end
         end
-      end)
-    else
-      Enum.reduce(properties, accumulator, fn {name, child}, accumulator ->
-        case Map.fetch(instance, name) do
-          {:ok, value} -> reducer.(name, child, value, accumulator)
-          :error -> accumulator
-        end
-      end)
-    end
+
+      if next == :fallback, do: {:halt, :fallback}, else: {:cont, next}
+    end)
   end
+
+  defp flatten_error_chunks(:fallback), do: {:fallback, :fallback}
+
+  defp flatten_error_chunks({valid, chunks}),
+    do: {valid, chunks |> Enum.reverse() |> :lists.append()}
 
   defp resolve_child({:boolean, valid}, _resource, pointer, relative) do
     {{:boolean, valid}, pointer ++ relative}
@@ -444,12 +564,15 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
 
   defp resolve_child(
          {:plan, relative},
-         %Resource{evaluation_plans: evaluation_plans},
+         %Resource{} = resource,
          pointer,
          _fallback_relative
        ) do
     pointer = pointer ++ relative
-    %EvaluationPlan{validity: validity} = Map.fetch!(evaluation_plans, pointer)
+
+    {:ok, %EvaluationPlan{validity: validity}} =
+      Resource.fetch_evaluation_plan(resource, pointer)
+
     {validity, pointer}
   end
 
@@ -458,6 +581,18 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
 
   defp evaluate_resolved_child_valid?({validity, pointer}, instance, resource),
     do: evaluate_valid?(validity, instance, resource, pointer)
+
+  defp evaluate_child(child, instance, resource, pointer, instance_pointer) do
+    child
+    |> resolve_child(resource, pointer, [])
+    |> evaluate_resolved_child(instance, resource, instance_pointer)
+  end
+
+  defp evaluate_child_valid?(child, instance, resource, pointer) do
+    child
+    |> resolve_child(resource, pointer, [])
+    |> evaluate_resolved_child_valid?(instance, resource)
+  end
 
   defp evaluate_valid?({:boolean, valid}, _instance, _resource, _pointer), do: valid
 
@@ -558,6 +693,18 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
     end
   end
 
+  defp evaluate_instruction_valid?({:all_of, children}, instance, resource, pointer) do
+    Enum.all?(children, &evaluate_child_valid?(&1, instance, resource, pointer))
+  end
+
+  defp evaluate_instruction_valid?({:any_of, children}, instance, resource, pointer) do
+    Enum.any?(children, &evaluate_child_valid?(&1, instance, resource, pointer))
+  end
+
+  defp evaluate_instruction_valid?({:one_of, children}, instance, resource, pointer) do
+    one_of_valid?(children, instance, resource, pointer, 0)
+  end
+
   defp evaluate_instruction_valid?(
          {:properties_with_unevaluated, properties, unevaluated},
          instance,
@@ -598,6 +745,14 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
     end
   end
 
+  defp one_of_valid?(_children, _instance, _resource, _pointer, 2), do: false
+  defp one_of_valid?([], _instance, _resource, _pointer, matches), do: matches == 1
+
+  defp one_of_valid?([child | rest], instance, resource, pointer, matches) do
+    matches = if evaluate_child_valid?(child, instance, resource, pointer), do: matches + 1, else: matches
+    one_of_valid?(rest, instance, resource, pointer, matches)
+  end
+
   defp applicator_outcome(true, _errors, _resource, _pointer, _instance_pointer, _message),
     do: {true, []}
 
@@ -618,15 +773,14 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
     {false, [error_unit(resource, pointer, instance_pointer, message)]}
   end
 
-  defp root_output(valid, errors, resource, %Location{pointer: pointer}) do
+  defp root_error_output(errors, resource, %Location{pointer: pointer}) do
     resource
-    |> output_unit(pointer, [], valid)
-    |> maybe_put_errors(valid, errors)
+    |> output_unit(pointer, [], false)
+    |> put_errors(errors)
   end
 
-  defp maybe_put_errors(output, true, _errors), do: output
-  defp maybe_put_errors(output, false, []), do: Map.put(output, "error", "validation failed")
-  defp maybe_put_errors(output, false, errors), do: Map.put(output, "errors", errors)
+  defp put_errors(output, []), do: Map.put(output, "error", "validation failed")
+  defp put_errors(output, errors), do: Map.put(output, "errors", errors)
 
   defp error_unit(resource, pointer, instance_pointer, message) do
     resource

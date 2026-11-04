@@ -81,18 +81,26 @@ defmodule ExJsonSchema do
 
   The default output format is `:basic`.
   """
+  @spec validate(data(), CompiledSchema.t()) :: map()
+  def validate(instance, compiled) do
+    ExJsonSchema.Evaluator.validate(instance, compiled, [])
+  end
+
   @spec validate(data(), CompiledSchema.t(), [validation_option()]) :: map()
-  def validate(instance, compiled, options \\ []) do
-    validate_options!(options)
+  def validate(instance, compiled, options) do
     ExJsonSchema.Evaluator.validate(instance, compiled, options)
   end
 
   @doc """
   Returns only whether `instance` is valid.
   """
+  @spec valid?(data(), CompiledSchema.t()) :: boolean()
+  def valid?(instance, compiled) do
+    ExJsonSchema.Evaluator.valid?(instance, compiled, [])
+  end
+
   @spec valid?(data(), CompiledSchema.t(), [validation_option()]) :: boolean()
-  def valid?(instance, compiled, options \\ []) do
-    validate_options!(options)
+  def valid?(instance, compiled, options) do
     ExJsonSchema.Evaluator.valid?(instance, compiled, options)
   end
 
@@ -144,31 +152,5 @@ defmodule ExJsonSchema do
     |> Map.keys()
     |> Enum.reject(&(&1 == ""))
     |> Enum.sort()
-  end
-
-  defp validate_options!(options) when is_list(options) do
-    unless Keyword.keyword?(options) do
-      raise ArgumentError, "validation options must be a keyword list"
-    end
-
-    unknown = Keyword.keys(options) -- [:output, :assert_formats?]
-
-    if unknown != [] do
-      raise ArgumentError, "unknown validation options: #{inspect(unknown)}"
-    end
-
-    unless Keyword.get(options, :output, :basic) in [:flag, :basic, :detailed, :verbose] do
-      raise ArgumentError, "output must be :flag, :basic, :detailed, or :verbose"
-    end
-
-    unless Keyword.get(options, :assert_formats?, false) in [true, false] do
-      raise ArgumentError, "assert_formats? must be a boolean"
-    end
-
-    :ok
-  end
-
-  defp validate_options!(_options) do
-    raise ArgumentError, "validation options must be a keyword list"
   end
 end

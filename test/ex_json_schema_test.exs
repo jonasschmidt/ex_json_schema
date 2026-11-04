@@ -69,4 +69,14 @@ defmodule ExJsonSchemaTest do
       ExJsonSchema.valid?(nil, compiled, assert_formats?: :default)
     end
   end
+
+  test "validation options are independent of keyword-list order" do
+    compiled = ExJsonSchema.compile!(true)
+
+    assert ExJsonSchema.validate(nil, compiled, output: :flag, assert_formats?: false) ==
+             %{"valid" => true}
+
+    assert ExJsonSchema.validate(nil, compiled, assert_formats?: false, output: :flag) ==
+             %{"valid" => true}
+  end
 end

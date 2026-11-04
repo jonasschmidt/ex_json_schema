@@ -16,7 +16,7 @@ defmodule ExJsonSchema.Benchmark.Compare do
 
     try do
       git!(["worktree", "add", "--detach", baseline, baseline_commit], root)
-      File.cp!(Path.join(root, "mix.lock"), Path.join(baseline, "mix.lock"))
+      prepare_legacy_dependencies!(baseline, temporary)
 
       IO.puts("Running legacy baseline #{String.slice(baseline_commit, 0, 12)}...")
       legacy = workload!(baseline, workload, "legacy", temporary, root, options)
@@ -43,7 +43,7 @@ defmodule ExJsonSchema.Benchmark.Compare do
     end
   end
 
-  defp workload!(checkout, workload, label, _temporary, root, options) do
+  defp workload!(checkout, workload, label, temporary, root, options) do
     arguments = [
       "exec",
       "--",
@@ -63,12 +63,12 @@ defmodule ExJsonSchema.Benchmark.Compare do
 
     environment = [
       {"MIX_ENV", "dev"},
-      {"MIX_DEPS_PATH", Path.join(root, "deps")}
+      {"MIX_DEPS_PATH", dependency_path(label, temporary, root)}
     ]
 
     environment =
       if label == "legacy" do
-        build = Path.join(System.tmp_dir!(), "ex_json_schema-benchmark-build-legacy")
+        build = Path.join(temporary, "legacy_build")
         [{"MIX_BUILD_PATH", build} | environment]
       else
         environment
@@ -333,9 +333,9 @@ defmodule ExJsonSchema.Benchmark.Compare do
 
   defp prepare_dependencies!(root) do
     lock = Path.join(root, "mix.lock")
-    decimal = Path.join([root, "deps", "decimal"])
+    dependency = Path.join([root, "deps", "jason"])
 
-    unless File.exists?(lock) and File.dir?(decimal) do
+    unless File.exists?(lock) and File.dir?(dependency) do
       case System.cmd("mise", ["exec", "--", "mix", "deps.get"],
              cd: root,
              env: [{"MIX_ENV", "dev"}],
@@ -346,6 +346,28 @@ defmodule ExJsonSchema.Benchmark.Compare do
       end
     end
   end
+
+  defp prepare_legacy_dependencies!(baseline, temporary) do
+    case System.cmd("mise", ["exec", "--", "mix", "deps.get"],
+           cd: baseline,
+           env: [
+             {"MIX_ENV", "dev"},
+             {"MIX_DEPS_PATH", Path.join(temporary, "legacy_deps")}
+           ],
+           stderr_to_stdout: true
+         ) do
+      {_output, 0} ->
+        :ok
+
+      {output, status} ->
+        raise "legacy mix deps.get failed (#{status}):\n#{output}"
+    end
+  end
+
+  defp dependency_path("legacy", temporary, _root),
+    do: Path.join(temporary, "legacy_deps")
+
+  defp dependency_path(_label, _temporary, root), do: Path.join(root, "deps")
 
   defp git!(arguments, directory) do
     case System.cmd("git", arguments, cd: directory, stderr_to_stdout: true) do

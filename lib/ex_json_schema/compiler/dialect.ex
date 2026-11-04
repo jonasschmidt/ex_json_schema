@@ -24,4 +24,18 @@ defmodule ExJsonSchema.Compiler.Dialect do
             keyword_order: [],
             assert_formats?: false,
             content_assertion?: false
+
+  def runtime(%__MODULE__{
+        id: id,
+        version: version,
+        assert_formats?: assert_formats?,
+        content_assertion?: content_assertion?
+      }) do
+    %__MODULE__{
+      id: id,
+      version: version,
+      assert_formats?: assert_formats?,
+      content_assertion?: content_assertion?
+    }
+  end
 end
