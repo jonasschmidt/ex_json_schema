@@ -16,6 +16,7 @@ defmodule ExJsonSchema.Evaluator.Engine do
   alias ExJsonSchema.Evaluator.Dispatcher
   alias ExJsonSchema.Evaluator.Format
   alias ExJsonSchema.Evaluator.Number
+  alias ExJsonSchema.Evaluator.PlanEngine
   alias ExJsonSchema.Evaluator.Result
 
   @metadata_keywords ~w[title description default deprecated readOnly writeOnly examples]
@@ -122,7 +123,7 @@ defmodule ExJsonSchema.Evaluator.Engine do
          %Context{dialect: %Dialect{version: version}} = context
        ) do
     expected = schema["type"]
-    valid = type_valid?(expected, instance, version)
+    valid = PlanEngine.type_valid?(expected, instance, version)
     assertion(context, "type", valid, fn -> "value does not match type #{inspect(expected)}" end)
   end
 
@@ -135,12 +136,12 @@ defmodule ExJsonSchema.Evaluator.Engine do
   end
 
   defp evaluate_keyword("enum", schema, instance, context) do
-    valid = Enum.any?(schema["enum"], &json_equal?(&1, instance))
+    valid = Enum.any?(schema["enum"], &PlanEngine.json_equal?(&1, instance))
     assertion(context, "enum", valid, "value is not one of the enumerated values")
   end
 
   defp evaluate_keyword("const", schema, instance, context) do
-    valid = json_equal?(schema["const"], instance)
+    valid = PlanEngine.json_equal?(schema["const"], instance)
     assertion(context, "const", valid, "value does not equal the constant")
   end
 
@@ -275,18 +276,12 @@ defmodule ExJsonSchema.Evaluator.Engine do
 
   defp evaluate_keyword(keyword, schema, instance, context) when keyword in @count_keywords do
     limit = schema[keyword]
-    {comparison, actual} = count_comparison(keyword, instance)
-    valid = is_nil(actual) or comparison.(actual, limit)
+    valid = PlanEngine.count_valid?(keyword, instance, limit)
     assertion(context, keyword, valid, fn -> "#{keyword} constraint failed" end)
   end
 
   defp evaluate_keyword("pattern", schema, instance, context) do
-    valid =
-      not is_binary(instance) or
-        case compile_pattern(schema["pattern"]) do
-          {:ok, regex} -> Regex.match?(regex, instance)
-          {:error, _reason} -> false
-        end
+    valid = not is_binary(instance) or PlanEngine.pattern_matches?(schema["pattern"], instance)
 
     assertion(context, "pattern", valid, "string does not match pattern")
   end
@@ -294,7 +289,7 @@ defmodule ExJsonSchema.Evaluator.Engine do
   defp evaluate_keyword("uniqueItems", schema, instance, context) do
     valid =
       schema["uniqueItems"] != true or not is_list(instance) or
-        unique_json_values?(instance)
+        PlanEngine.unique_json_values?(instance)
 
     assertion(context, "uniqueItems", valid, "array items are not unique")
   end
@@ -453,7 +448,7 @@ defmodule ExJsonSchema.Evaluator.Engine do
     if is_map(instance) do
       matches =
         for {pattern, subschema} <- schema["patternProperties"],
-            {:ok, regex} = compile_pattern(pattern),
+            {:ok, regex} = PlanEngine.compile_pattern(pattern),
             {name, value} <- instance,
             Regex.match?(regex, name),
             do: {pattern, subschema, name, value}
@@ -485,7 +480,7 @@ defmodule ExJsonSchema.Evaluator.Engine do
         Map.get(schema, "patternProperties", %{})
         |> Map.keys()
         |> Enum.map(fn pattern ->
-          {:ok, regex} = compile_pattern(pattern)
+          {:ok, regex} = PlanEngine.compile_pattern(pattern)
           regex
         end)
 
@@ -1364,104 +1359,4 @@ defmodule ExJsonSchema.Evaluator.Engine do
     do: %Result{result | annotation: annotation, annotation?: true}
 
   defp valid_result?(%Result{valid: valid}), do: valid
-
-  defp type_valid?(types, instance, version) when is_list(types),
-    do: Enum.any?(types, &type_valid?(&1, instance, version))
-
-  defp type_valid?("null", instance, _version), do: is_nil(instance)
-  defp type_valid?("boolean", instance, _version), do: is_boolean(instance)
-  defp type_valid?("object", instance, _version), do: is_map(instance)
-  defp type_valid?("array", instance, _version), do: is_list(instance)
-  defp type_valid?("number", instance, _version), do: is_number(instance)
-  defp type_valid?("string", instance, _version), do: is_binary(instance)
-  defp type_valid?("integer", instance, _version) when is_integer(instance), do: true
-  defp type_valid?("integer", instance, 4), do: is_integer(instance)
-
-  defp type_valid?("integer", instance, _version),
-    do: is_float(instance) and Float.floor(instance) == instance
-
-  defp type_valid?(_type, _instance, _version), do: false
-
-  defp count_comparison("maxLength", value) when is_binary(value),
-    do: {&Kernel.<=/2, String.length(value)}
-
-  defp count_comparison("minLength", value) when is_binary(value),
-    do: {&Kernel.>=/2, String.length(value)}
-
-  defp count_comparison("maxItems", value) when is_list(value),
-    do: {&Kernel.<=/2, length(value)}
-
-  defp count_comparison("minItems", value) when is_list(value),
-    do: {&Kernel.>=/2, length(value)}
-
-  defp count_comparison("maxProperties", value) when is_map(value),
-    do: {&Kernel.<=/2, map_size(value)}
-
-  defp count_comparison("minProperties", value) when is_map(value),
-    do: {&Kernel.>=/2, map_size(value)}
-
-  defp count_comparison(keyword, _value) do
-    if String.starts_with?(keyword, "max"),
-      do: {&Kernel.<=/2, nil},
-      else: {&Kernel.>=/2, nil}
-  end
-
-  defp compile_pattern(pattern) do
-    pattern
-    |> String.replace("\\p{Letter}", "\\p{L}")
-    |> String.replace("\\P{Letter}", "\\P{L}")
-    |> Regex.compile("u")
-  end
-
-  defp unique_json_values?(values) do
-    Enum.reduce_while(values, MapSet.new(), fn value, seen ->
-      key = json_equality_key(value)
-      updated = MapSet.put(seen, key)
-
-      if MapSet.size(updated) == MapSet.size(seen) do
-        {:halt, false}
-      else
-        {:cont, updated}
-      end
-    end)
-    |> case do
-      false -> false
-      %MapSet{} -> true
-    end
-  end
-
-  defp json_equality_key(value) when is_integer(value), do: value
-
-  defp json_equality_key(value) when is_float(value) do
-    integer = trunc(value)
-    if(value == integer, do: integer, else: value)
-  end
-
-  defp json_equality_key(value) when is_map(value) do
-    entries =
-      value
-      |> Enum.map(fn {key, child} -> {key, json_equality_key(child)} end)
-      |> Enum.sort()
-
-    {:object, entries}
-  end
-
-  defp json_equality_key(value) when is_list(value),
-    do: {:array, Enum.map(value, &json_equality_key/1)}
-
-  defp json_equality_key(value), do: value
-
-  defp json_equal?(left, right) when is_number(left) and is_number(right), do: left == right
-
-  defp json_equal?(left, right) when is_map(left) and is_map(right) do
-    MapSet.new(Map.keys(left)) == MapSet.new(Map.keys(right)) and
-      Enum.all?(left, fn {key, value} -> json_equal?(value, Map.fetch!(right, key)) end)
-  end
-
-  defp json_equal?(left, right) when is_list(left) and is_list(right) do
-    length(left) == length(right) and
-      Enum.zip(left, right) |> Enum.all?(fn {a, b} -> json_equal?(a, b) end)
-  end
-
-  defp json_equal?(left, right), do: left === right
 end

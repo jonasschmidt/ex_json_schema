@@ -10,9 +10,9 @@ defmodule ExJsonSchema.Evaluator do
   alias ExJsonSchema.Evaluator.BasicEngine
   alias ExJsonSchema.Evaluator.Context
   alias ExJsonSchema.Evaluator.Engine
-  alias ExJsonSchema.Evaluator.FlagEngine
   alias ExJsonSchema.Evaluator.Options
   alias ExJsonSchema.Evaluator.Output
+  alias ExJsonSchema.Evaluator.PlanEngine
   alias ExJsonSchema.Evaluator.Result
 
   @spec evaluate(ExJsonSchema.data(), CompiledSchema.t()) :: Result.t()
@@ -57,7 +57,7 @@ defmodule ExJsonSchema.Evaluator do
   end
 
   def valid?(instance, compiled, %Options{} = options) do
-    case FlagEngine.valid?(instance, compiled) do
+    case PlanEngine.valid?(instance, compiled) do
       {:ok, valid} ->
         valid
 

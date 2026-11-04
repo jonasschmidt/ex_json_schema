@@ -209,7 +209,7 @@ defmodule ExJsonSchema.CompiledSchemaTest do
       ExJsonSchema.Compiler.Resource,
       ExJsonSchema.Compiler.Vocabulary,
       ExJsonSchema.Evaluator.BasicEngine,
-      ExJsonSchema.Evaluator.FlagEngine
+      ExJsonSchema.Evaluator.PlanEngine
     ]
 
     for module <- internal_modules do
