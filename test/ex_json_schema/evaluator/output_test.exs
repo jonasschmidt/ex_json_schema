@@ -159,4 +159,94 @@ defmodule ExJsonSchema.Evaluator.OutputTest do
 
     assert Enum.map(errors, & &1["keywordLocation"]) == ["/minItems"]
   end
+
+  test "basic output retains boolean applicator branch locations" do
+    compiled =
+      Compiler.compile!(
+        %{
+          "$schema" => "https://json-schema.org/draft/2020-12/schema",
+          "allOf" => [false, false]
+        },
+        validate_schema: false
+      )
+
+    assert %{"valid" => false, "errors" => errors} =
+             Evaluator.validate(nil, compiled, output: :basic)
+
+    assert Enum.map(errors, & &1["keywordLocation"]) == [
+             "/allOf",
+             "/allOf/0",
+             "/allOf/1"
+           ]
+  end
+
+  test "detailed recursively prunes successful leaves while verbose retains them" do
+    compiled =
+      Compiler.compile!(
+        %{
+          "$schema" => "https://json-schema.org/draft/2020-12/schema",
+          "allOf" => [true, false]
+        },
+        validate_schema: false
+      )
+
+    detailed = Evaluator.validate(nil, compiled, output: :detailed)
+    verbose = Evaluator.validate(nil, compiled, output: :verbose)
+
+    refute Enum.any?(output_units(detailed), &(&1["keywordLocation"] == "/allOf/0"))
+    assert Enum.any?(output_units(verbose), &(&1["keywordLocation"] == "/allOf/0"))
+  end
+
+  test "detailed output matches the Draft 2020-12 normative hierarchy" do
+    compiled =
+      Compiler.compile!(
+        %{
+          "$id" => "https://example.com/polygon",
+          "$schema" => "https://json-schema.org/draft/2020-12/schema",
+          "$defs" => %{
+            "point" => %{
+              "type" => "object",
+              "properties" => %{
+                "x" => %{"type" => "number"},
+                "y" => %{"type" => "number"}
+              },
+              "additionalProperties" => false,
+              "required" => ["x", "y"]
+            }
+          },
+          "type" => "array",
+          "items" => %{"$ref" => "#/$defs/point"},
+          "minItems" => 3
+        },
+        validate_schema: false
+      )
+
+    output =
+      Evaluator.validate(
+        [%{"x" => 2.5, "y" => 1.3}, %{"x" => 1, "z" => 6.7}],
+        compiled,
+        output: :detailed
+      )
+
+    assert %{"valid" => false, "errors" => errors} = output
+
+    assert %{
+             "absoluteKeywordLocation" => "https://example.com/polygon#/$defs/point",
+             "errors" => reference_errors
+           } = Enum.find(errors, &(&1["keywordLocation"] == "/items/$ref"))
+
+    assert MapSet.new(Enum.map(reference_errors, & &1["keywordLocation"])) ==
+             MapSet.new([
+               "/items/$ref/required",
+               "/items/$ref/additionalProperties"
+             ])
+
+    assert Enum.any?(errors, &(&1["keywordLocation"] == "/minItems"))
+    refute Enum.any?(output_units(output), &(&1["keywordLocation"] == "/items"))
+  end
+
+  defp output_units(unit) do
+    children = Map.get(unit, "errors", []) ++ Map.get(unit, "annotations", [])
+    [unit | Enum.flat_map(children, &output_units/1)]
+  end
 end

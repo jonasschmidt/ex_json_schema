@@ -65,7 +65,6 @@ defmodule ExJsonSchema.Evaluator.Engine do
         %Context{
           dialect: %Dialect{version: version},
           schema_location: schema_location,
-          keyword_location: keyword_location,
           instance_location: instance_location
         } = context
       )
@@ -104,7 +103,7 @@ defmodule ExJsonSchema.Evaluator.Engine do
     children
     |> Result.parent(
       schema_location: schema_location,
-      keyword_location: keyword_location,
+      keyword_location: Context.output_keyword_location(context),
       instance_location: instance_location,
       report_locations: report_locations?(context)
     )
@@ -642,9 +641,8 @@ defmodule ExJsonSchema.Evaluator.Engine do
       child = evaluate_subschema(schema["not"], instance, context, ["not"], :same)
 
     %Context{
-      schema_location: schema_location,
-      keyword_location: keyword_location
-    } = keyword_context(context, "not")
+      schema_location: schema_location
+    } = not_context = keyword_context(context, "not")
 
     %Context{instance_location: instance_location} = context
 
@@ -653,7 +651,7 @@ defmodule ExJsonSchema.Evaluator.Engine do
       kind: :applicator,
       keyword: "not",
       schema_location: schema_location,
-      keyword_location: keyword_location,
+      keyword_location: Context.output_keyword_location(not_context),
       instance_location: instance_location,
       children: [child],
       error: if(child_valid, do: "not subschema matched", else: nil),
@@ -899,15 +897,14 @@ defmodule ExJsonSchema.Evaluator.Engine do
       %Result{valid: valid, kind: :assertion}
     else
       %Context{
-        schema_location: schema_location,
-        keyword_location: keyword_location
-      } = keyword_context(context, keyword)
+        schema_location: schema_location
+      } = assertion_context = keyword_context(context, keyword)
 
       Result.new(valid,
         kind: :assertion,
         keyword: keyword,
         schema_location: schema_location,
-        keyword_location: keyword_location,
+        keyword_location: Context.output_keyword_location(assertion_context),
         instance_location: instance_location,
         error: if(valid, do: nil, else: error_message(message)),
         report_locations: report_locations?(context)
@@ -925,14 +922,15 @@ defmodule ExJsonSchema.Evaluator.Engine do
     else
       %Context{
         schema_location: schema_location,
-        keyword_location: keyword_location
-      } = keyword_context(context, keyword)
+        keyword_location: schema_keyword_location
+      } = annotation_context = keyword_context(context, keyword)
 
       Result.new(true,
         kind: :annotation,
         keyword: keyword,
         schema_location: schema_location,
-        keyword_location: keyword_location,
+        keyword_location: Context.output_keyword_location(annotation_context),
+        schema_keyword_location: schema_keyword_location,
         instance_location: instance_location,
         annotation: value
       )
@@ -964,9 +962,8 @@ defmodule ExJsonSchema.Evaluator.Engine do
 
       true ->
         %Context{
-          schema_location: schema_location,
-          keyword_location: keyword_location
-        } = keyword_context(context, keyword)
+          schema_location: schema_location
+        } = applicator_context = keyword_context(context, keyword)
 
         children
         |> Result.parent(
@@ -974,7 +971,7 @@ defmodule ExJsonSchema.Evaluator.Engine do
           keyword: keyword,
           valid: valid,
           schema_location: schema_location,
-          keyword_location: keyword_location,
+          keyword_location: Context.output_keyword_location(applicator_context),
           instance_location: instance_location,
           evaluated_properties: Keyword.get(options, :evaluated_properties, MapSet.new()),
           evaluated_items: Keyword.get(options, :evaluated_items, MapSet.new()),
@@ -1059,7 +1056,9 @@ defmodule ExJsonSchema.Evaluator.Engine do
         :error -> %Location{resource: resource_uri, pointer: pointer}
       end
 
-    Context.at_schema(context, target)
+    context
+    |> Context.at_evaluation_path(relative_path)
+    |> Context.at_schema(target)
   end
 
   defp evaluate_reference(
@@ -1090,12 +1089,14 @@ defmodule ExJsonSchema.Evaluator.Engine do
       dynamic_scope
     }
 
+    reference_context = Context.at_keyword(context, keyword)
+
     child =
       if MapSet.member?(seen, cycle_key) do
-        schema_result(true, Context.at_schema(context, target))
+        schema_result(true, Context.at_schema(reference_context, target))
       else
         target_context =
-          context
+          reference_context
           |> Context.push_dynamic_scope(resource_uri)
           |> Context.at_schema(target)
 
@@ -1216,7 +1217,6 @@ defmodule ExJsonSchema.Evaluator.Engine do
          %Context{
            output_format: output_format,
            schema_location: schema_location,
-           keyword_location: keyword_location,
            instance_location: instance_location
          } = context,
          options \\ []
@@ -1226,7 +1226,7 @@ defmodule ExJsonSchema.Evaluator.Engine do
     else
       Result.new(valid,
         schema_location: schema_location,
-        keyword_location: keyword_location,
+        keyword_location: Context.output_keyword_location(context),
         instance_location: instance_location,
         error: Keyword.get(options, :error),
         report_locations: report_locations?(context)

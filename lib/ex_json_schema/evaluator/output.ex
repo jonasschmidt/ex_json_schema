@@ -18,15 +18,13 @@ defmodule ExJsonSchema.Evaluator.Output do
   end
 
   def project(%Result{} = result, :detailed) do
-    result
-    |> base_unit()
-    |> put_hierarchy(relevant_children(result))
+    detailed_unit(result, true)
   end
 
   def project(%Result{children: children} = result, :verbose) do
     result
     |> base_unit()
-    |> put_hierarchy(children)
+    |> put_hierarchy(children, :verbose)
   end
 
   defp put_flat_results(unit, %Result{valid: false, error: error} = result) do
@@ -51,21 +49,21 @@ defmodule ExJsonSchema.Evaluator.Output do
     if annotations == [], do: unit, else: Map.put(unit, "annotations", annotations)
   end
 
-  defp put_hierarchy(unit, []), do: put_terminal_payload(unit)
+  defp put_hierarchy(unit, [], _mode), do: put_terminal_payload(unit)
 
-  defp put_hierarchy(unit, children) do
+  defp put_hierarchy(unit, children, mode) do
     {errors, valid_children} =
       Enum.split_with(children, fn %Result{valid: valid} -> not valid end)
 
     unit
     |> maybe_put(
       "errors",
-      Enum.map(errors, &result_unit(&1, :detailed)),
+      Enum.map(errors, &result_unit(&1, mode)),
       errors != []
     )
     |> maybe_put(
       "annotations",
-      Enum.map(valid_children, &result_unit(&1, :detailed)),
+      Enum.map(valid_children, &result_unit(&1, mode)),
       valid_children != []
     )
     |> put_terminal_payload()
@@ -88,9 +86,57 @@ defmodule ExJsonSchema.Evaluator.Output do
       case {mode, children} do
         {:basic, _children} -> unit
         {_mode, []} -> unit
-        {_mode, children} -> put_hierarchy(unit, children)
+        {_mode, children} -> put_hierarchy(unit, children, mode)
       end
     end)
+  end
+
+  defp detailed_unit(
+         %Result{
+           valid: valid,
+           error: error,
+           annotation: annotation,
+           annotation?: annotation?,
+           children: children
+         } = result,
+         root?
+       ) do
+    projected_children =
+      children
+      |> Enum.filter(fn %Result{valid: child_valid} -> child_valid == valid end)
+      |> Enum.map(&detailed_unit(&1, false))
+      |> Enum.reject(&is_nil/1)
+
+    unit =
+      result
+      |> base_unit()
+      |> maybe_put("error", error, is_binary(error))
+      |> maybe_put("annotation", annotation, annotation?)
+      |> put_projected_hierarchy(projected_children)
+      |> put_terminal_payload()
+
+    case {root?, projected_children} do
+      {true, _children} ->
+        unit
+
+      {false, [child]} ->
+        child
+
+      {false, children} when not valid or annotation? or children != [] ->
+        unit
+
+      {false, []} ->
+        nil
+    end
+  end
+
+  defp put_projected_hierarchy(unit, children) do
+    {errors, annotations} =
+      Enum.split_with(children, fn %{"valid" => valid} -> not valid end)
+
+    unit
+    |> maybe_put("errors", errors, errors != [])
+    |> maybe_put("annotations", annotations, annotations != [])
   end
 
   defp base_unit(%Result{
@@ -121,19 +167,6 @@ defmodule ExJsonSchema.Evaluator.Output do
         unit
     end
   end
-
-  defp relevant_children(%Result{valid: false, children: children}),
-    do: Enum.filter(children, fn %Result{valid: valid} -> not valid end)
-
-  defp relevant_children(%Result{valid: true, children: children}),
-    do:
-      Enum.filter(children, fn %Result{
-                                 valid: valid,
-                                 annotation?: annotation?,
-                                 children: child_results
-                               } ->
-        valid and (annotation? or child_results != [])
-      end)
 
   defp flatten(%Result{children: children}), do: Enum.flat_map(children, &flatten_error/1)
 

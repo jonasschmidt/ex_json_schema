@@ -4,6 +4,7 @@ defmodule ExJsonSchema.OptionalFormatTestSuiteTest do
   alias ExJsonSchema.Compiler
   alias ExJsonSchema.Evaluator
   alias ExJsonSchema.Test.Support.OptionalSuiteManifest
+  alias ExJsonSchema.Test.Support.OutputAssertions
 
   @root "test/JSON-Schema-Test-Suite/tests/draft2020-12/optional/format"
   @enabled OptionalSuiteManifest.enabled_formats()
@@ -21,6 +22,14 @@ defmodule ExJsonSchema.OptionalFormatTestSuiteTest do
 
         assert Evaluator.valid?(test["data"], schema, assert_formats?: true) == test["valid"],
                "#{test_case["description"]}: #{test["description"]}"
+
+        assert :ok =
+                 OutputAssertions.assert_all!(
+                   test["data"],
+                   schema,
+                   test["valid"],
+                   assert_formats?: true
+                 )
       end
     end
   end

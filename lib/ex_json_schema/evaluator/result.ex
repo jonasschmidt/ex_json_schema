@@ -12,6 +12,7 @@ defmodule ExJsonSchema.Evaluator.Result do
           kind: kind(),
           keyword: String.t() | nil,
           keyword_location: String.t(),
+          schema_keyword_location: String.t(),
           absolute_keyword_location: String.t() | nil,
           instance_location: String.t(),
           error: String.t() | nil,
@@ -27,6 +28,7 @@ defmodule ExJsonSchema.Evaluator.Result do
             kind: :schema,
             keyword: nil,
             keyword_location: "",
+            schema_keyword_location: "",
             absolute_keyword_location: nil,
             instance_location: "",
             error: nil,
@@ -41,6 +43,7 @@ defmodule ExJsonSchema.Evaluator.Result do
   def new(valid, options \\ []) when is_boolean(valid) do
     schema_location = Keyword.get(options, :schema_location, Location.root())
     keyword_location = Keyword.get(options, :keyword_location, schema_location)
+    schema_keyword_location = Keyword.get(options, :schema_keyword_location)
 
     %Location{pointer: instance_path} =
       instance_location = Keyword.get(options, :instance_location, Location.root())
@@ -52,6 +55,11 @@ defmodule ExJsonSchema.Evaluator.Result do
       kind: Keyword.get(options, :kind, :schema),
       keyword: Keyword.get(options, :keyword),
       keyword_location: if(report_locations?, do: Location.pointer(keyword_location), else: ""),
+      schema_keyword_location:
+        if(report_locations? and schema_keyword_location,
+          do: Location.pointer(schema_keyword_location),
+          else: ""
+        ),
       absolute_keyword_location: if(report_locations?, do: Location.absolute_uri(schema_location), else: nil),
       instance_location: if(report_locations?, do: Location.pointer(instance_location), else: ""),
       instance_path: instance_path,

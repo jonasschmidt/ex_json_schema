@@ -4,6 +4,7 @@ defmodule ExJsonSchema.OptionalValidationTestSuiteTest do
   alias ExJsonSchema.Compiler
   alias ExJsonSchema.Evaluator
   alias ExJsonSchema.Test.Support.OptionalSuiteManifest
+  alias ExJsonSchema.Test.Support.OutputAssertions
   alias ExJsonSchema.Test.Support.TestHelpers
 
   @root "test/JSON-Schema-Test-Suite/tests/draft2020-12/optional"
@@ -25,6 +26,8 @@ defmodule ExJsonSchema.OptionalValidationTestSuiteTest do
 
         assert Evaluator.valid?(test["data"], compiled) == test["valid"],
                "#{test_case["description"]}: #{test["description"]}"
+
+        assert :ok = OutputAssertions.assert_all!(test["data"], compiled, test["valid"])
       end
     end
   end

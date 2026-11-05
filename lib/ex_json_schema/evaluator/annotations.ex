@@ -44,9 +44,9 @@ defmodule ExJsonSchema.Evaluator.Annotations do
     end)
   end
 
-  defp annotation_schema_location(%Result{keyword_location: keyword_location}) do
+  defp annotation_schema_location(%Result{schema_keyword_location: schema_keyword_location}) do
     segments =
-      case Pointer.decode(keyword_location) do
+      case Pointer.decode(schema_keyword_location) do
         {:ok, segments} -> Enum.drop(segments, -1)
         :error -> []
       end

@@ -56,12 +56,21 @@ defmodule ExJsonSchema.Evaluator.Context do
 
     {active_keywords, keyword_positions} = keyword_metadata(resource)
 
+    keyword_location =
+      if output_format == :flag, do: nil, else: reporting_location(resource, entrypoint)
+
+    evaluation_path =
+      case keyword_location do
+        %Location{pointer: pointer} -> pointer
+        nil -> []
+      end
+
     %__MODULE__{
       compiled: compiled,
       resource: canonical_uri,
       resource_data: resource,
       schema_location: entrypoint,
-      keyword_location: if(output_format == :flag, do: nil, else: reporting_location(resource, entrypoint)),
+      keyword_location: keyword_location,
       instance_location: Location.root(),
       dialect: dialect,
       vocabularies: vocabularies,
@@ -72,7 +81,8 @@ defmodule ExJsonSchema.Evaluator.Context do
       output_format: output_format,
       assert_formats?: assert_formats?,
       collect_annotations?: output_format != :flag,
-      track_evaluated?: false
+      track_evaluated?: false,
+      evaluation_path: evaluation_path
     }
   end
 
@@ -157,6 +167,25 @@ defmodule ExJsonSchema.Evaluator.Context do
   def at_instance_child(%__MODULE__{instance_location: instance_location} = context, segment) do
     %__MODULE__{context | instance_location: Location.child(instance_location, segment)}
   end
+
+  @spec at_evaluation_path(t(), [Location.pointer_segment()]) :: t()
+  def at_evaluation_path(%__MODULE__{evaluation_path: evaluation_path} = context, relative_path) do
+    %__MODULE__{context | evaluation_path: evaluation_path ++ relative_path}
+  end
+
+  @spec output_keyword_location(t()) :: Location.t() | nil
+  def output_keyword_location(%__MODULE__{output_format: :flag}), do: nil
+
+  def output_keyword_location(%__MODULE__{
+        dialect: %Dialect{version: :"2020-12"},
+        keyword_location: %Location{} = keyword_location,
+        evaluation_path: evaluation_path
+      }) do
+    %Location{keyword_location | pointer: evaluation_path}
+  end
+
+  def output_keyword_location(%__MODULE__{keyword_location: keyword_location}),
+    do: keyword_location
 
   @spec at_keyword(t(), String.t()) :: t()
   def at_keyword(

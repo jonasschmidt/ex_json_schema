@@ -333,11 +333,20 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
 
   defp evaluate_instruction({:all_of, children}, instance, resource, pointer, instance_pointer) do
     result =
-      Enum.reduce_while(children, {0, []}, fn child, {matches, chunks} ->
+      children
+      |> Enum.with_index()
+      |> Enum.reduce_while({0, []}, fn {child, index}, {matches, chunks} ->
         if evaluate_child_valid?(child, instance, resource, pointer) do
           {:cont, {matches + 1, chunks}}
         else
-          case evaluate_child(child, instance, resource, pointer, instance_pointer) do
+          case evaluate_child(
+                 child,
+                 instance,
+                 resource,
+                 pointer,
+                 instance_pointer,
+                 ["allOf", index]
+               ) do
             {false, errors} -> {:cont, {matches, [errors | chunks]}}
             :fallback -> {:halt, :fallback}
           end
@@ -365,8 +374,17 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
       {true, []}
     else
       result =
-        Enum.reduce_while(children, [], fn child, chunks ->
-          case evaluate_child(child, instance, resource, pointer, instance_pointer) do
+        children
+        |> Enum.with_index()
+        |> Enum.reduce_while([], fn {child, index}, chunks ->
+          case evaluate_child(
+                 child,
+                 instance,
+                 resource,
+                 pointer,
+                 instance_pointer,
+                 ["anyOf", index]
+               ) do
             {false, errors} -> {:cont, [errors | chunks]}
             :fallback -> {:halt, :fallback}
           end
@@ -394,8 +412,17 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
 
     errors =
       if matches == 0 do
-        Enum.reduce_while(children, [], fn child, chunks ->
-          case evaluate_child(child, instance, resource, pointer, instance_pointer) do
+        children
+        |> Enum.with_index()
+        |> Enum.reduce_while([], fn {child, index}, chunks ->
+          case evaluate_child(
+                 child,
+                 instance,
+                 resource,
+                 pointer,
+                 instance_pointer,
+                 ["oneOf", index]
+               ) do
             {false, errors} -> {:cont, [errors | chunks]}
             :fallback -> {:halt, :fallback}
           end
@@ -583,9 +610,9 @@ defmodule ExJsonSchema.Evaluator.BasicEngine do
   defp evaluate_resolved_child_valid?({validity, pointer}, instance, resource),
     do: PlanEngine.valid_plan?(validity, instance, resource, pointer)
 
-  defp evaluate_child(child, instance, resource, pointer, instance_pointer) do
+  defp evaluate_child(child, instance, resource, pointer, instance_pointer, fallback_relative) do
     child
-    |> resolve_child(resource, pointer, [])
+    |> resolve_child(resource, pointer, fallback_relative)
     |> evaluate_resolved_child(instance, resource, instance_pointer)
   end
 

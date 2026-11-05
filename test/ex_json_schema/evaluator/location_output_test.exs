@@ -33,7 +33,7 @@ defmodule ExJsonSchema.Evaluator.LocationOutputTest do
            end)
 
     assert Enum.any?(units, fn unit ->
-             unit["keywordLocation"] == "/type" and
+             unit["keywordLocation"] == "/properties/a~1b~0c/$ref/type" and
                unit["absoluteKeywordLocation"] == "https://example.com/external#/type"
            end)
   end

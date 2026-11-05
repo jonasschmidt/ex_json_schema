@@ -5,6 +5,13 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
 
   @remote_schemas TestHelpers.remote_schemas()
 
+  def compile!(schema) do
+    ExJsonSchema.Compiler.compile!(schema,
+      resources: @remote_schemas,
+      content_decoder: &Jason.decode/1
+    )
+  end
+
   def valid?(
         %{"$schema" => "https://json-schema.org/draft/2020-12/schema" <> _rest} = schema,
         data
@@ -25,10 +32,7 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
 
   defp compiled_valid?(schema, data) do
     schema
-    |> ExJsonSchema.Compiler.compile!(
-      resources: @remote_schemas,
-      content_decoder: &Jason.decode/1
-    )
+    |> compile!()
     |> then(&ExJsonSchema.Evaluator.valid?(data, &1))
   end
 
@@ -45,10 +49,12 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
   using opts do
     quote bind_quoted: [opts: opts] do
       alias ExJsonSchema.Test.Support.TestHelpers
+      alias ExJsonSchema.Test.Support.OutputAssertions
       alias ExJsonSchema.Test.Support.TestSuiteTemplate
 
       @schema_tests_path opts[:schema_tests_path]
       @schema_url opts[:schema_url]
+      @assert_outputs? Keyword.get(opts, :assert_outputs?, false)
 
       @ignored_suites Keyword.get(opts, :ignored_suites, [])
       @ignored_tests Keyword.get(opts, :ignored_tests, [])
@@ -78,8 +84,18 @@ defmodule ExJsonSchema.Test.Support.TestSuiteTemplate do
 
             @tag String.to_atom("json_schema_" <> name)
             test "[#{name}] #{description}: #{@test["description"]}" do
-              valid? = TestSuiteTemplate.valid?(@schema, @test["data"])
+              compiled = TestSuiteTemplate.compile!(@schema)
+              valid? = ExJsonSchema.Evaluator.valid?(@test["data"], compiled)
               assert(valid? == @test["valid"])
+
+              if @assert_outputs? do
+                assert :ok =
+                         OutputAssertions.assert_all!(
+                           @test["data"],
+                           compiled,
+                           @test["valid"]
+                         )
+              end
             end
           end)
         end)
