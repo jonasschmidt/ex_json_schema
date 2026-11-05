@@ -2,16 +2,15 @@ defmodule ExJsonSchema.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/jonasschmidt/ex_json_schema"
-  @version "0.11.5"
+  @version "1.0.0"
 
   def project do
     [
       app: :ex_json_schema,
       version: @version,
-      elixir: "~> 1.6",
+      elixir: "~> 1.15",
       description: """
-        A JSON Schema validator with full support for the draft 4 specification
-        and zero dependencies.
+        A JSON Schema compiler and validator for drafts 4, 6, 7, and 2020-12
       """,
       deps: deps(),
       docs: docs(),
@@ -34,13 +33,12 @@ defmodule ExJsonSchema.Mixfile do
 
   defp deps do
     [
-      {:decimal, "~> 3.0"},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:excoveralls, "~> 0.14", only: :test},
       {:httpoison, "~> 1.8", only: :test},
-      {:mix_test_watch, "~> 1.2", only: [:dev, :test]},
-      {:jason, "~> 1.4", only: :test},
+      {:mix_test_watch, "~> 1.3.0", only: [:dev, :test]},
+      {:jason, "~> 1.4", only: [:dev, :test]},
       {:plug_cowboy, "~> 2.5", only: :test},
       {:phoenix, "~> 1.6", only: :test}
     ]
@@ -48,7 +46,14 @@ defmodule ExJsonSchema.Mixfile do
 
   defp docs do
     [
-      extras: ["README.md"],
+      extras: [
+        "README.md",
+        "CHANGELOG.md",
+        "guides/migration-to-1.0.md",
+        "guides/format-support.md",
+        "guides/security.md",
+        "guides/conformance.md"
+      ],
       main: "readme",
       source_url: @source_url,
       source_ref: "v#{@version}"
@@ -57,7 +62,7 @@ defmodule ExJsonSchema.Mixfile do
 
   defp package do
     [
-      files: ~w(lib mix.exs README.md LICENSE),
+      files: ~w(lib guides mix.exs README.md CHANGELOG.md LICENSE),
       maintainers: ["Jonas Schmidt"],
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url}

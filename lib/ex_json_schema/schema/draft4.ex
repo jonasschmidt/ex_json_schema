@@ -1,4 +1,8 @@
 defmodule ExJsonSchema.Schema.Draft4 do
+  @moduledoc false
+
+  # Embeds the official Draft 4 meta-schema for local dialect validation.
+
   @schema %{
     "$schema" => "http://json-schema.org/draft-04/schema#",
     "default" => %{},

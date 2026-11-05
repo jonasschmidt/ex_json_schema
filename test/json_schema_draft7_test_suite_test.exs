@@ -5,14 +5,12 @@ defmodule ExJsonSchema.JsonSchemaDraft7TestSuiteTest do
     schema_tests_path: "test/JSON-Schema-Test-Suite/tests/draft7/",
     schema_url: "http://json-schema.org/draft-07/schema",
     ignored_suites: [
+      # Re-enable individual formats as they pass the expanded upstream suites.
+      "optional/format/**",
       "optional/non-bmp-regex",
       "optional/ecmascript-regex",
-      "optional/format/time",
-      "optional/format/idn-hostname",
-      # TODO: check this one
-      "optional/format/ipv6",
       "optional/float-overflow",
-      # TODO: remove this once we have 2019-09 support
+      # Draft 2019-09 is intentionally outside the supported dialect set.
       "optional/cross-draft"
     ],
     ignored_tests: [
